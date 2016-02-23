@@ -15,15 +15,16 @@
 	  aria-valuenow="25%" aria-valuemin="0" aria-valuemax="100" style="width:25%">
 		</div>
 	</div>
-			<button type="button" class="btn btn-primary btn-lg">Large button</button>
-	<script>
-		progressBar = document.getElementsByClassName("progress-bar progress-bar-striped active");
-		progressBar[0].innerHTML = "1 out 4 days complete!";
-	</script>
-
-
-
-
+  <div style="text-align:center">
+			<button type="startSession" class="btn btn-primary btn-lg">Start a new training session</button>
+      <button id = "history" type="button" class="btn btn-secondary btn-lg">View training history</button>
+  </div>
 </div>
+<br>
+
+<script>
+  progressBar = document.getElementsByClassName("progress-bar progress-bar-striped active");
+  progressBar[0].innerHTML = "1 out 4 days complete!";
+</script>
 
 {% endblock %}

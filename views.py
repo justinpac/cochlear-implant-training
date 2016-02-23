@@ -4,10 +4,15 @@ from django.shortcuts import render,redirect
 from hipercore.helpers import NavigationBar
 
 # Import our database models
-from cochlea.models import *
+from cochlear.models import *
 
 def index(request):
 	#Render a basic page
-	context = NavigationBar.generateAppContext(request,app="cochlea",title="index", navbarName=0);
+	context = NavigationBar.generateAppContext(request,app="cochlear",title="index", navbarName=0);
 
-	return render(request,'cochlea/index.html',context)
+	return render(request,'cochlear/index.html',context)
+
+def speaker(request):
+	context = NavigationBar.generateAppContext(request,app="cochlear",title="speaker", navbarName=0);
+
+	return render(request,'cochlear/speaker.html',context)
