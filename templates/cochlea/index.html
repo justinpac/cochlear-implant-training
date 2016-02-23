@@ -1,0 +1,29 @@
+{% extends "cochlea_base.html" %}
+
+{% block cochlea-content %}
+
+{% load staticfiles %}
+<!-- Load our stylesheet -->
+<link href="{% static 'cochlea/index.css' %}" rel="stylesheet">
+  <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+
+
+<div class="container"><!-- This is a bootstrap class -->
+	<h1> Welcome, Jeremy! </h1>
+	<div class="progress">
+	  <div class="progress-bar progress-bar-striped active" role="progressbar"
+	  aria-valuenow="25%" aria-valuemin="0" aria-valuemax="100" style="width:25%">
+		</div>
+	</div>
+			<button type="button" class="btn btn-primary btn-lg">Large button</button>
+	<script>
+		progressBar = document.getElementsByClassName("progress-bar progress-bar-striped active");
+		progressBar[0].innerHTML = "1 out 4 days complete!";
+	</script>
+
+
+
+
+</div>
+
+{% endblock %}
