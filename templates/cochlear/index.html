@@ -9,15 +9,19 @@
 
 
 <div class="container"><!-- This is a bootstrap class -->
-	<h1> Welcome, Jeremy! </h1>
+	<h1> Welcome, {{name}} ! </h1>
 	<div class="progress">
 	  <div class="progress-bar progress-bar-striped active" role="progressbar"
 	  aria-valuenow="25%" aria-valuemin="0" aria-valuemax="100" style="width:25%">
 		</div>
 	</div>
   <div style="text-align:center">
-			<button type="startSession" class="btn btn-primary btn-lg">Start a new training session</button>
+    <a href = "{% url 'cochlear:speaker' %}">
+			<button id = "startTraining" type="button" class="btn btn-primary btn-lg">Start a new training session</button>
+    </a>
+    <a href = "{% url 'cochlear:history' %}" >
       <button id = "history" type="button" class="btn btn-secondary btn-lg">View training history</button>
+    </a>
   </div>
 </div>
 <br>
