@@ -1,6 +1,9 @@
 {% extends "hipercore/base_site.html" %}
 
+{% load staticfiles %}
+
 {% block hcc-app-content %}
+<link href="{% static 'cochlear/base_style.css' %}" rel="stylesheet">
 
         <div id="a-container" class="a-container">
                 {% block cochlear-content %}
