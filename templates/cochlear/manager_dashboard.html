@@ -1,0 +1,14 @@
+{% extends "cochlear_base.html" %}
+
+{% block cochlear-content %}
+
+{% load staticfiles %}
+<!-- Load our stylesheet -->
+<link href="{% static 'cochlear/index.css' %}" rel="stylesheet">
+
+
+<div class="container"><!-- This is a bootstrap class -->
+	<h1> Welcome, {{name}} ! </h1>
+  <p>This is the manager dashboard</p>
+
+{% endblock %}

@@ -4,3 +4,5 @@
 
 # Note: this may overwrite the default hipercore settings, so use with caution
 # more info: http://hipercic-test.cs.stolaf.edu/doc/build-hipercic-apps.html#settings-py
+
+MIDDLEWARE_CLASSES = ('apps.cochlear.middleware.PermissionsCheck',)

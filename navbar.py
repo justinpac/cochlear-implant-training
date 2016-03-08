@@ -7,5 +7,9 @@ appNavList = {
     'default' : [
     		{'text':'Home', 'url':'index'},
     		{'text':'Also Home', 'url':'index'},
-    		]
+    		],
+    'manager': [
+    		{'text':'Manager Dashboard', 'url':'dashboard'},
+    		{'text':'Settings', 'url':'settings'}
+    ]
 }
