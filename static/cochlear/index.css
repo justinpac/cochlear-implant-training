@@ -1,2 +1,28 @@
 /* Empty Stylesheet. Add some styles here! Or delete this file and create your own */
-
+#progressBar {
+    animation: progress-bar-stripes 2s linear infinite;
+    animation-name: progress-bar-stripes;
+    animation-duration: 2s;
+    animation-timing-function: linear;
+    animation-delay: initial;
+    animation-iteration-count: infinite;
+    animation-direction: initial;
+    animation-fill-mode: initial;
+    animation-play-state: initial;
+    background-image: linear-gradient(45deg,rgba(255,255,255,.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,.15) 50%,rgba(255,255,255,.15) 75%,transparent 75%,transparent);
+    background-size: 40px 40px;
+    box-shadow: inset 0 -1px 0 rgba(0,0,0,.15);
+    transition: width .6s ease;
+    transition-property: width;
+    transition-duration: 0.6s;
+    transition-timing-function: ease;
+    transition-delay: initial;
+    width: 25%;
+    height: 100%;
+    font-size: 12px;
+    line-height: 20px;
+    color: #fff;
+    text-align: center;
+    background-color: #337ab7;
+    float: left;
+}

@@ -15,9 +15,10 @@ def index(request):
 	if(permission > 0):
 		return redirect('cochlear:dashboard')
 	#Render a basic page
-	context = NavigationBar.generateAppContext(request,app="cochlear",title="index", navbarName=0);
-	#Fancy database queries
-	context['name'] = "\"False\"";#request.user.username;
+	context = NavigationBar.generateAppContext(request,app="cochlear",title="index", navbarName=0)
+	userList = User_Attrib.objects.filter(username=request.user.username)
+	context['name'] = userList[0].first_name
+	context['sessions'] = userList[0].sessions_this_week
 	return render(request,'cochlear/index.html',context)
 
 def speaker(request):
@@ -39,6 +40,7 @@ def history(request):
 
 def dashboard(request):
 	context = NavigationBar.generateAppContext(request,app="cochlear",title="index", navbarName='manager');
+	context['name'] = request.user.username;
 	return render(request,'cochlear/manager_dashboard.html',context)
 
 def settings(request):

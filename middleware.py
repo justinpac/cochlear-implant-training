@@ -17,6 +17,9 @@ class PermissionsCheck:
 			username = request.user.username;
 			#Check if the user has permission to access this page
 			permission = cochlear.util.GetUserPermission(username);
+			# If not a user, no access for you!
+			if (permission == -1):
+					raise PermissionDenied;
 			#Snip the name of the app from the url
 			url = request.path.replace("app/"+APP_NAME+"/","");
 			for page in ManagerOnlyPages:

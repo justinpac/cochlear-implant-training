@@ -1,9 +1,9 @@
 from django.db import models
 
-
-class User(models.Model):
+class User_Attrib(models.Model):
     username = models.CharField(max_length = 50)
-    name = models.CharField(max_length = 50)
+    first_name = models.CharField(max_length = 50)
+    last_name = models.CharField(max_length = 50)
     email = models.EmailField()
     status = models.PositiveSmallIntegerField(default = 0) # 0 = standard user, 1 = manager, 2 = admin
     sessions_this_week = models.PositiveSmallIntegerField(default = 0) # Field for how many training sessions the user has completed in a week
