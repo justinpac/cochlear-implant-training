@@ -14,20 +14,20 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Closed_Set_Question_Answer',
             fields=[
-                ('id', models.AutoField(primary_key=True, serialize=False, auto_created=True, verbose_name='ID')),
+                ('id', models.AutoField(verbose_name='ID', auto_created=True, primary_key=True, serialize=False)),
                 ('iscorrect', models.BooleanField(default=False)),
             ],
         ),
         migrations.CreateModel(
             name='Closed_Set_Train',
             fields=[
-                ('id', models.AutoField(primary_key=True, serialize=False, auto_created=True, verbose_name='ID')),
+                ('id', models.AutoField(verbose_name='ID', auto_created=True, primary_key=True, serialize=False)),
             ],
         ),
         migrations.CreateModel(
             name='Speach',
             fields=[
-                ('id', models.AutoField(primary_key=True, serialize=False, auto_created=True, verbose_name='ID')),
+                ('id', models.AutoField(verbose_name='ID', auto_created=True, primary_key=True, serialize=False)),
                 ('speach_file', models.FileField(upload_to='/cochlear/speach')),
                 ('difficulty', models.PositiveSmallIntegerField(default=0)),
             ],
@@ -35,7 +35,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Speaker',
             fields=[
-                ('id', models.AutoField(primary_key=True, serialize=False, auto_created=True, verbose_name='ID')),
+                ('id', models.AutoField(verbose_name='ID', auto_created=True, primary_key=True, serialize=False)),
                 ('name', models.CharField(max_length=50)),
                 ('difficulty', models.PositiveSmallIntegerField(default=0)),
             ],
@@ -43,7 +43,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='User_Attrib',
             fields=[
-                ('id', models.AutoField(primary_key=True, serialize=False, auto_created=True, verbose_name='ID')),
+                ('id', models.AutoField(verbose_name='ID', auto_created=True, primary_key=True, serialize=False)),
                 ('username', models.CharField(max_length=50)),
                 ('first_name', models.CharField(max_length=50)),
                 ('last_name', models.CharField(max_length=50)),
@@ -55,12 +55,12 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='speach',
             name='speaker',
-            field=models.ForeignKey(to='cochlear.Speaker', null=True, blank=True, on_delete=django.db.models.deletion.SET_NULL),
+            field=models.ForeignKey(blank=True, to='cochlear.Speaker', on_delete=django.db.models.deletion.SET_NULL, null=True),
         ),
         migrations.AddField(
             model_name='closed_set_train',
             name='choices',
-            field=models.ManyToManyField(through='cochlear.Closed_Set_Question_Answer', related_name='closed_set_choices', to='cochlear.Speach'),
+            field=models.ManyToManyField(related_name='closed_set_choices', to='cochlear.Speach', through='cochlear.Closed_Set_Question_Answer'),
         ),
         migrations.AddField(
             model_name='closed_set_train',
@@ -70,11 +70,11 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='closed_set_question_answer',
             name='answer',
-            field=models.ForeignKey(to='cochlear.Speach', null=True, blank=True, on_delete=django.db.models.deletion.SET_NULL),
+            field=models.ForeignKey(blank=True, to='cochlear.Speach', on_delete=django.db.models.deletion.SET_NULL, null=True),
         ),
         migrations.AddField(
             model_name='closed_set_question_answer',
             name='question',
-            field=models.ForeignKey(to='cochlear.Closed_Set_Train', null=True, blank=True, on_delete=django.db.models.deletion.SET_NULL),
+            field=models.ForeignKey(blank=True, to='cochlear.Closed_Set_Train', on_delete=django.db.models.deletion.SET_NULL, null=True),
         ),
     ]
