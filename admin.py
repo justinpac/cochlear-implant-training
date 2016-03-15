@@ -7,6 +7,6 @@ from cochlear.models import *
 # We need to do this so that they appear in the admin panel.
 admin.site.register(User_Attrib)
 admin.site.register(Speaker)
-admin.site.register(Speach)
+admin.site.register(Speech)
 admin.site.register(Closed_Set_Question_Answer)
 admin.site.register(Closed_Set_Train)
