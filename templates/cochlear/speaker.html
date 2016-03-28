@@ -7,7 +7,39 @@
 <link href="{% static 'cochlear/speaker.css' %}" rel="stylesheet">
 
 <div class = "container">
-  <h1>This is the speaker identification page.</h1>
+  <br>
+  <h1>{{module.test_sound.speech_file.url}}</h1>
+  <audio controls>
+    <source src="{{module.test_sound.speech_file.url}}" type="audio/wav">
+      your browser does not support the audio tag.
+  </audio>
+  <div class = "row">
+    <div style = "text-align:center">
+      <button id = "test" type = "button" class="btn btn-primary btn-lg" style="display:none">test sound</button>
+    </div>
+    <div style = "text-align:center">
+      <button id = "ready" type = "button" class="btn btn-primary btn-lg">Ready to train?</button>
+    </div>
+  </div>
+  <br>
+  <div class = "row">
+    <div style = "text-align:center">
+    	<button type="button" display="inline" class="btn btn-secondary btn-lg">speaker</button>
+      <button type="button" class="btn btn-secondary btn-lg">speaker</button>
+    </div>
+  </div>
+  <br>
 </div>
+
+<script>
+
+$( document ).ready(function() {
+  $("#ready").click(function(event){
+    $("#ready").hide();
+    $("#test").show("slow")
+  })
+});
+
+</script>
 
 {% endblock %}

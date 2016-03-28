@@ -8,28 +8,22 @@
 
 
 <div class="container"><!-- This is a bootstrap class -->
-	<h1> Welcome, {{name}}! </h1>
+		<h1> Welcome, {{name}}! </h1>
 		<div class="progress">
-			  <div id ="progressBar" class="progress-bar progress-bar-striped active" role="progressbar"
-			  aria-valuenow="25%" aria-valuemin="0" aria-valuemax="100" style="width:25%">
-			 	{{sessions}} out 4 days complete!
-				</div>
+			<div id ="progressBar" class="progress-bar progress-bar-striped active" role="progressbar"
+		  aria-valuenow="{{percentComplete}}" aria-valuemin="0" aria-valuemax="100" style="width:{{percentComplete}}">
+			<span>{{sessions}} out of 4 sessions completed this week</span>
+			</div>
 		</div>
-  <div style="text-align:center">
-    <a href = "{% url 'cochlear:speaker' %}">
-			<button id = "startTraining" type="button" class="btn btn-primary btn-lg">Start a new training session</button>
-    </a>
-    <a href = "{% url 'cochlear:history' %}" >
-      <button id = "history" type="button" class="btn btn-secondary btn-lg">View training history</button>
-    </a>
-  </div>
+		<div class="row">
+	    <a href = "{% url 'cochlear:speaker' %}">
+				<button id = "startTraining" type="button" class="btn btn-primary btn-lg">Start a new training session</button>
+	    </a>
+	    <a href = "{% url 'cochlear:history' %}" >
+	      <button id = "history" type="button" class="btn btn-secondary btn-lg">View training history</button>
+	    </a>
+		</div>
 </div>
 <br>
-
-<!--
-<script>
-  progressBar = document.getElementsByClassName("progress-bar progress-bar-striped active");
-  progressBar[0].innerHTML = "1 out 4 days complete!";
-</script> -->
 
 {% endblock %}
