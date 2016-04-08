@@ -50,6 +50,7 @@ def history(request):
 
 	return render(request,'cochlear/history.html',context)
 
+
 ##################
 ## Ajax methods ##
 ##################
@@ -68,6 +69,13 @@ def sessionCompleted(request):
 
 def dashboard(request):
 	context = NavigationBar.generateAppContext(request,app="cochlear",title="index", navbarName='manager')
+	if(request.method == "POST"):#If the user has submitted something, Handle the upload
+		#Get the speaker files
+		for fileObj in request.FILES.getlist('speaker_choices'):
+			print(fileObj)
+		#Get the test sound
+		print(request.FILES['test_sound']) 
+
 	context['name'] = request.user.username;
 	return render(request,'cochlear/manager_dashboard.html',context)
 
