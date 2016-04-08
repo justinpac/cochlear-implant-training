@@ -39,7 +39,7 @@ def speaker(request):
 		speaker_module = speaker_modules.first()
 
 	context['test_sound'] = speaker_module.test_sound
-	context['speaker_choices'] = speaker_module.choices.all()
+	context['speaker_choices'] = speaker_module.choices.all().order_by('?')
 	context['speaker_module_id'] = speaker_module.id
 	context['user_attrib_id'] = userList[0].id
 
@@ -57,6 +57,10 @@ def history(request):
 from django.http import HttpResponse
 
 def sessionCompleted(request):
+	userList = User_Attrib.objects.filter(username=request.user.username)
+	user = userList[0]
+	newSession = User_Session(user = user, date_completed = timezone.now())
+	newSession.save();
 	return HttpResponse("Success")
 
 ###################

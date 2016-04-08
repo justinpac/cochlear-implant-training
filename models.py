@@ -18,7 +18,7 @@ class User_Session(models.Model):
     date_completed = models.DateTimeField('date_completed')
 
     def __str__ (self):
-        return self.user.username + self.date_completed
+        return self.user.username + str(self.date_completed)
 
 # Speaker associated with potentiallly many speech files
 class Speaker(models.Model):
