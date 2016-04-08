@@ -8,35 +8,129 @@
 
 <div class = "container">
   <br>
-  <h1>{{module.test_sound.speech_file.url}}</h1>
-  <audio controls>
-    <source src="{{module.test_sound.speech_file.url}}" type="audio/wav">
-      your browser does not support the audio tag.
-  </audio>
   <div class = "row">
-    <div style = "text-align:center">
-      <button id = "test" type = "button" class="btn btn-primary btn-lg" style="display:none">test sound</button>
+    <div  id="test" style = "text-align:center;display:none">
+      <button id = "test" type = "button" class="btn btn-primary btn-lg" onclick='play_speaker("{{test_sound.speech_file.url}}")'>
+        <span class="glyphicon glyphicon-question-sign" aria-hidden="true"></span> Listen to the unknown speaker
+      </button>
     </div>
     <div style = "text-align:center">
-      <button id = "ready" type = "button" class="btn btn-primary btn-lg">Ready to train?</button>
+      <button id = "ready" type = "button" class="btn btn-primary btn-lg">Start testing</button>
     </div>
   </div>
   <br>
-  <div class = "row">
-    <div style = "text-align:center">
-    	<button type="button" display="inline" class="btn btn-secondary btn-lg">speaker</button>
-      <button type="button" class="btn btn-secondary btn-lg">speaker</button>
+    <div style="height:100%;text-align:center">
+      {% for speech in speaker_choices %}
+
+        <div id = "{{speech.id}}" class="col-md-6" style="height:100%;margin-bottom:20px;">
+          <button type = "button" class="btn btn-secondary btn-lg" onclick='play_speaker("{{speech.speech_file.url}}")'>
+            <span class="glyphicon glyphicon-user" aria-hidden="true"></span> Listen to {{speech.speaker.name}}
+          </button>
+        </div>
+        <div id = "response_{{speech.id}}" class="col-md-6" style="height:100%;display:none;margin-bottom:20px;">
+          <span id="correct_{{speech.id}}"class="glyphicon glyphicon-ok vertical-centered green" aria-hidden="true" style="display:none"></span>
+          <span id="incorrect_{{speech.id}}"class="glyphicon glyphicon-remove vertical-centered red" aria-hidden="true" style="display:none"></span>
+          <button type = "button" class="btn btn-secondary btn-lg" onclick='checkAnswer("{{speech.id}}","{{speech.speaker.name}}","{{test_sound.speaker.name}}" )'>
+            <span class="glyphicon glyphicon-user" aria-hidden="true"></span> The unknown speaker is {{speech.speaker.name}}
+          </button>
+        </div>
+      {% endfor %}
+      <div id ="next" class="col-md-12" style="display:none">
+        <button type = "button" class="btn btn-primary btn-lg" >
+            Repeat this question
+        </button>
+        <button type = "button" class="btn btn-primary btn-lg" >
+            Proceed to the next training module
+        </button>
+      </div>
     </div>
   </div>
+
   <br>
-</div>
 
-<script>
+<script type="text/javascript">
+  var speechIDs = [];
+</script>
 
+{% for speech in speaker_choices %}
+<script type="text/javascript">
+  speechIDs.push("{{speech.id}}");
+</script>
+{% endfor %}
+
+<script src="{% static 'js/jquery.cookie.js' %}"></script>
+<script type="text/javascript">
+
+//Need this CSRF block for ajax calls to work
+  var csrftoken = $.cookie('csrftoken');
+  function csrfSafeMethod(method) {
+    // these HTTP methods do not require CSRF protection
+    return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+}
+$.ajaxSetup({
+    beforeSend: function(xhr, settings) {
+        if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+            xhr.setRequestHeader("X-CSRFToken", csrftoken);
+        }
+    }
+});
+///End CSRF block
+
+var questionUnanswered = true;
+
+/* Pass in an array of html hidden (display:none) elements and their prefix (such as "#" for an ID)
+and i=0. This function will be recursively called to display these elements according to
+the speed and transition (for jquery animation "show") specified in speed and trans */
+function slideIn(i, speed, trans, IDs, prefix) {
+  console.log(prefix + IDs[i]);
+  $(prefix + IDs[i]).show(speed,trans);
+  $(prefix + IDs[i]).promise().done(function(){
+    // will be called when all the animations on the queue finish
+    i = i + 1;
+    if (i < IDs.length) {
+      slideIn(i, speed, trans, IDs, prefix);
+    }
+  });
+}
+
+/* Display an X (if answer was incorrect) or check mark (if answer was incorrect)
+next to the user's answer. show buttons for proceeding to the next training
+module and retrying the current module */
+function checkAnswer(choice_id, answer, correctAnswer) {
+  if(questionUnanswered){
+    if(answer == correctAnswer){
+      $("#correct_" + choice_id).show("fast","linear");
+    } else {
+      $("#incorrect_" + choice_id).show("fast","linear");
+    }
+    questionUnanswered = false;
+    var b = ["repeat","next"];
+    $('#next').show("fast","linear");
+    $.post("{% url 'cochlear:sessionCompleted' %}",{'speaker_module_id':{{speaker_module_id}},'user_attrib_id':{{user_attrib_id}}}).fail(addFail);
+  }
+}
+
+//display database error on console output
+function addFail(failMessage) {
+  console.log(failMessage.responseText);
+}
+
+//Play audio for a speaker
+function play_speaker(speech_file) {
+  var audio = new Audio(speech_file);
+  audio.play();
+}
+
+// Display unknown speaker and possible answer choices
 $( document ).ready(function() {
-  $("#ready").click(function(event){
+    $("#ready").click(function(event){
     $("#ready").hide();
-    $("#test").show("slow")
+    for(i = 0; i < speechIDs.length; i++){
+      $("#" + speechIDs[i]).hide();
+    }
+    $("#test").show("slow","linear").promise().done(function(){
+      slideIn(0,"fast","linear", speechIDs, "#response_")
+    });
   })
 });
 

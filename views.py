@@ -9,6 +9,9 @@ from cochlear.models import *
 #Some helper functions
 import cochlear.util
 
+#Get django timezone utility
+from django.utils import timezone
+
 SESSION_CAP = 4
 
 def index(request):
@@ -34,7 +37,11 @@ def speaker(request):
 	else:
 		speaker_modules = Closed_Set_Train.objects.filter(id != speaker_data.closed_set_train.id)
 		speaker_module = speaker_modules.first()
-	context['module'] = speaker_module
+
+	context['test_sound'] = speaker_module.test_sound
+	context['speaker_choices'] = speaker_module.choices.all()
+	context['speaker_module_id'] = speaker_module.id
+	context['user_attrib_id'] = userList[0].id
 
 	return render(request,'cochlear/speaker.html',context)
 
@@ -42,6 +49,15 @@ def history(request):
 	context = NavigationBar.generateAppContext(request,app="cochlear",title="history", navbarName=0)
 
 	return render(request,'cochlear/history.html',context)
+
+##################
+## Ajax methods ##
+##################
+
+from django.http import HttpResponse
+
+def sessionCompleted(request):
+	return HttpResponse("Success")
 
 ###################
 ## Manager Pages ##

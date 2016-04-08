@@ -9,6 +9,8 @@ urlpatterns = patterns('cochlear',
     #Manager pages
     url(r'^dashboard/$','views.dashboard', name = 'dashboard'),
     url(r'^settings/$','views.settings', name = 'settings'),
+    #ajax methods
+    url(r'^sessionCompleted/$','views.sessionCompleted',name = 'sessionCompleted')
 )
 
 #if settings.DEBUG is True:

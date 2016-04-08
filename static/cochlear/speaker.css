@@ -1,3 +1,27 @@
 .row {
   text-align: center
 }
+
+button {
+  margin-left: 10px
+  margin-right:10px
+}
+
+.col-centered {
+    float: none;
+    margin: 0 auto;
+}
+
+.vertical-centered {
+  font-size: 20px;
+  position: relative;
+  top: 50%;
+  transform: 			translateY(30%);
+}
+
+.red{
+  color:red
+}
+.green{
+  color:green
+}
