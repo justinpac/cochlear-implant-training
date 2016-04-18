@@ -30,9 +30,9 @@ def index(request):
 
 def speaker(request):
 	context = NavigationBar.generateAppContext(request,app="cochlear",title="speaker", navbarName=0)
-	userList = User_Attrib.objects.filter(username=request.user.username)
+	userObj = User_Attrib.objects.get(username=request.user.username)
 	#retrive speaker 'choices' files for this training module
-	speaker_data =  Closed_Set_Data.objects.filter(user = userList[0].id)
+	speaker_data =  Closed_Set_Data.objects.filter(user = userObj.id)
 	if not speaker_data:
 		speaker_module = Closed_Set_Train.objects.first()
 	else:
@@ -42,7 +42,7 @@ def speaker(request):
 	context['test_sound'] = speaker_module.test_sound
 	context['speaker_choices'] = speaker_module.choices.all()
 	context['speaker_module_id'] = speaker_module.id
-	context['user_attrib_id'] = userList[0].id
+	context['user_attrib_id'] = userObj.id
 
 	return render(request,'cochlear/speaker.html',context)
 
