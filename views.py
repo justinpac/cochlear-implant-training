@@ -81,6 +81,9 @@ def dashboard(request):
 	context['name'] = userAttribObj.first_name;
 	#Just for fun, let's randomize the welcome message
 	context['welcome_msg'] = random.choice(["Welcome","Hello","Howdy","What a fine day","Welcome back","Good to see you"])
+	#Get the number of speech files and modules in the app
+	context['file_number'] = Speech.objects.all().count();
+	context['modules'] = Closed_Set_Train.objects.all().count();
 	return render(request,'cochlear/manager_dashboard.html',context)
 
 def analytics(request):
