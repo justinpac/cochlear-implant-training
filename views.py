@@ -69,7 +69,7 @@ def sessionCompleted(request):
 #by managers in middleware.py
 
 def dashboard(request):
-	context = NavigationBar.generateAppContext(request,app="cochlear",title="index", navbarName='manager')
+	context = NavigationBar.generateAppContext(request,app="cochlear",title="index", navbarName='manager',activeLink="Manager Dashboard")
 	if(request.method == "POST"):#If the user has submitted something, Handle the upload
 		#Get the speaker files
 		for fileObj in request.FILES.getlist('speaker_choices'):
@@ -87,5 +87,5 @@ def dashboard(request):
 	return render(request,'cochlear/manager_dashboard.html',context)
 
 def analytics(request):
-	context = NavigationBar.generateAppContext(request,app="cochlear",title="index", navbarName='manager')
+	context = NavigationBar.generateAppContext(request,app="cochlear",title="index", navbarName='manager',activeLink="Analytics")
 	return render(request,'cochlear/analytics.html',context)
