@@ -1,15 +1,4 @@
-.page-title {
-  text-align: center;
-}
-.subtitle {
-  text-align: center;
-  width: 50%;
-  margin-left: auto;
-  margin-right: auto;
-}
-.btn-secondary {
-  color:black;
-}
+
 
 #progressBar {
     animation: progress-bar-stripes 2s linear infinite;

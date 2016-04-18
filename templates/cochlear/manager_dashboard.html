@@ -11,8 +11,8 @@
 	<h3> {{welcome_msg}}, {{name}}! </h3>
 	<hr>
 	<p>There are currently {{file_number}} sound files in the app, and {{modules}} training modules.</p>
-	<a class="btn btn-default" href="#" role="button"><i class="fa fa-plus" aria-hidden="true"></i> New Sound File</a>
-	<a class="btn btn-default" href="#" role="button"><i class="fa fa-plus" aria-hidden="true"></i> New Training Module</a>
+	<a class="btn btn-success" href="{% url 'cochlear:new_sound' %}" role="button"><i class="fa fa-plus" aria-hidden="true"></i> New Sound File</a>
+	<a class="btn btn-success" href="{% url 'cochlear:new_module' %}" role="button"><i class="fa fa-plus" aria-hidden="true"></i> New Training Module</a>
 	<!--<h2>Upload Speaker Identification</h2>
 	<p>Add a new speaker module by uploading the speaker choices and the test sound.</p>
 	<form method="POST" id="speaker_choice_upload" action="" enctype="multipart/form-data">
@@ -41,6 +41,9 @@
 				<li>Pick out at least 2 speech sounds (for the answers)</li>
 				<li>Specify week and day</li>
 			</ul>
+		</li>
+		<li>
+			<p>A way to edit/view data?</p>
 		</li>
 	</ul>
 	

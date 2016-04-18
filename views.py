@@ -86,6 +86,15 @@ def dashboard(request):
 	context['modules'] = Closed_Set_Train.objects.all().count();
 	return render(request,'cochlear/manager_dashboard.html',context)
 
+def new_sound(request):
+	context = NavigationBar.generateAppContext(request,app="cochlear",title="new_sound", navbarName='manager',activeLink="Manager Dashboard")
+	return render(request,'cochlear/new_sound.html',context)
+
+def new_module(request):
+	context = NavigationBar.generateAppContext(request,app="cochlear",title="new_module", navbarName='manager',activeLink="Manager Dashboard")
+
+	return render(request,'cochlear/new_module.html',context)
+
 def analytics(request):
 	context = NavigationBar.generateAppContext(request,app="cochlear",title="index", navbarName='manager',activeLink="Analytics")
 	return render(request,'cochlear/analytics.html',context)
