@@ -1,4 +1,13 @@
-/* Empty Stylesheet. Add some styles here! Or delete this file and create your own */
+.page-title {
+  text-align: center;
+}
+.subtitle {
+  text-align: center;
+  width: 50%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 #progressBar {
     animation: progress-bar-stripes 2s linear infinite;
     animation-name: progress-bar-stripes;

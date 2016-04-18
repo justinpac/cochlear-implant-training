@@ -1,0 +1,21 @@
+{% extends "cochlear_base.html" %}
+
+{% block cochlear-content %}
+
+{% load staticfiles %}
+<!-- Load our stylesheet -->
+<link href="{% static 'cochlear/index.css' %}" rel="stylesheet">
+
+
+<div class="container"><!-- This is a bootstrap class -->
+  <h1 class="page-title"> Analytics </h1>
+  <p class="subtitle"><i>The analytics page allows you to see at a glance the usage of the app, whether across all users or for individual cases. You also have access to the raw data and the ability to run or track custom metrics.</i></p>
+  <p>To Do:</p>
+  <ul>
+  	<li>Print out the number of users in the app</li>
+  	<li>Print out the number of training modules</li>
+  	<li>Think of other things to show here?</li>
+  </ul>
+  
+
+{% endblock %}

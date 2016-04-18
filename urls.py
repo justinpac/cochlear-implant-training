@@ -8,7 +8,7 @@ urlpatterns = patterns('cochlear',
     url(r'^history/$','views.history', name = 'history'),
     #Manager pages
     url(r'^dashboard/$','views.dashboard', name = 'dashboard'),
-    url(r'^settings/$','views.settings', name = 'settings'),
+    url(r'^analytics/$','views.analytics', name = 'analytics'),
     #ajax methods
     url(r'^sessionCompleted/$','views.sessionCompleted',name = 'sessionCompleted')
 )

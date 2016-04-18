@@ -79,6 +79,6 @@ def dashboard(request):
 	context['name'] = request.user.username;
 	return render(request,'cochlear/manager_dashboard.html',context)
 
-def settings(request):
+def analytics(request):
 	context = NavigationBar.generateAppContext(request,app="cochlear",title="index", navbarName='manager')
-	return render(request,'cochlear/settings.html',context)
+	return render(request,'cochlear/analytics.html',context)
