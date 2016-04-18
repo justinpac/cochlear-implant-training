@@ -76,7 +76,8 @@ def dashboard(request):
 		#Get the test sound
 		print(request.FILES['test_sound']) 
 
-	context['name'] = request.user.username;
+	userAttribObj = User_Attrib.objects.get(username=request.user.username)
+	context['name'] = userAttribObj.first_name;
 	return render(request,'cochlear/manager_dashboard.html',context)
 
 def analytics(request):
