@@ -11,6 +11,7 @@ import cochlear.util
 
 #Get django timezone utility
 from django.utils import timezone
+import random #To generate random numbers
 
 SESSION_CAP = 4
 
@@ -78,6 +79,8 @@ def dashboard(request):
 
 	userAttribObj = User_Attrib.objects.get(username=request.user.username)
 	context['name'] = userAttribObj.first_name;
+	#Just for fun, let's randomize the welcome message
+	context['welcome_msg'] = random.choice(["Welcome","Hello","Howdy","What a fine day","Welcome back","Good to see you"])
 	return render(request,'cochlear/manager_dashboard.html',context)
 
 def analytics(request):
