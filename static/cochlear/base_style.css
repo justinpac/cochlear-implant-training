@@ -4,3 +4,16 @@
 #hipercic-banner {
   padding: 10px
 }
+
+.page-title {
+  text-align: center;
+}
+.subtitle {
+  text-align: center;
+  width: 50%;
+  margin-left: auto;
+  margin-right: auto;
+}
+.btn-secondary {
+  color:black;
+}

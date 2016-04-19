@@ -11,6 +11,7 @@ import cochlear.util
 
 #Get django timezone utility
 from django.utils import timezone
+import random #To generate random numbers
 
 SESSION_CAP = 4
 
@@ -29,9 +30,9 @@ def index(request):
 
 def speaker(request):
 	context = NavigationBar.generateAppContext(request,app="cochlear",title="speaker", navbarName=0)
-	userList = User_Attrib.objects.filter(username=request.user.username)
+	userObj = User_Attrib.objects.get(username=request.user.username)
 	#retrive speaker 'choices' files for this training module
-	speaker_data =  Closed_Set_Data.objects.filter(user = userList[0].id)
+	speaker_data =  Closed_Set_Data.objects.filter(user = userObj.id)
 	if not speaker_data:
 		speaker_module = Closed_Set_Train.objects.first()
 	else:
@@ -41,7 +42,7 @@ def speaker(request):
 	context['test_sound'] = speaker_module.test_sound
 	context['speaker_choices'] = speaker_module.choices.all().order_by('?')
 	context['speaker_module_id'] = speaker_module.id
-	context['user_attrib_id'] = userList[0].id
+	context['user_attrib_id'] = userObj.id
 
 	return render(request,'cochlear/speaker.html',context)
 
@@ -72,7 +73,7 @@ def sessionCompleted(request):
 #by managers in middleware.py
 
 def dashboard(request):
-	context = NavigationBar.generateAppContext(request,app="cochlear",title="index", navbarName='manager')
+	context = NavigationBar.generateAppContext(request,app="cochlear",title="index", navbarName='manager',activeLink="Manager Dashboard")
 	if(request.method == "POST"):#If the user has submitted something, Handle the upload
 		#Get the speaker files
 		for fileObj in request.FILES.getlist('speaker_choices'):
@@ -80,9 +81,24 @@ def dashboard(request):
 		#Get the test sound
 		print(request.FILES['test_sound']) 
 
-	context['name'] = request.user.username;
+	userAttribObj = User_Attrib.objects.get(username=request.user.username)
+	context['name'] = userAttribObj.first_name;
+	#Just for fun, let's randomize the welcome message
+	context['welcome_msg'] = random.choice(["Welcome","Hello","Howdy","What a fine day","Welcome back","Good to see you"])
+	#Get the number of speech files and modules in the app
+	context['file_number'] = Speech.objects.all().count();
+	context['modules'] = Closed_Set_Train.objects.all().count();
 	return render(request,'cochlear/manager_dashboard.html',context)
 
-def settings(request):
-	context = NavigationBar.generateAppContext(request,app="cochlear",title="index", navbarName='manager')
-	return render(request,'cochlear/settings.html',context)
+def new_sound(request):
+	context = NavigationBar.generateAppContext(request,app="cochlear",title="new_sound", navbarName='manager',activeLink="Manager Dashboard")
+	return render(request,'cochlear/new_sound.html',context)
+
+def new_module(request):
+	context = NavigationBar.generateAppContext(request,app="cochlear",title="new_module", navbarName='manager',activeLink="Manager Dashboard")
+
+	return render(request,'cochlear/new_module.html',context)
+
+def analytics(request):
+	context = NavigationBar.generateAppContext(request,app="cochlear",title="index", navbarName='manager',activeLink="Analytics")
+	return render(request,'cochlear/analytics.html',context)

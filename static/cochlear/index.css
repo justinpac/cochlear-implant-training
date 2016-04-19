@@ -1,4 +1,5 @@
-/* Empty Stylesheet. Add some styles here! Or delete this file and create your own */
+
+
 #progressBar {
     animation: progress-bar-stripes 2s linear infinite;
     animation-name: progress-bar-stripes;
