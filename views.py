@@ -1,4 +1,6 @@
 from django.shortcuts import render,redirect
+from django.http import HttpResponse
+import json
 
 # We need this to generate the navbar
 from hipercore.helpers import NavigationBar
@@ -56,10 +58,17 @@ def history(request):
 ## Ajax methods ##
 ##################
 
-from django.http import HttpResponse
-
 def sessionCompleted(request):
 	return HttpResponse("Success")
+
+def getSpeakers(request,name):
+	#Gets a list of authors whose names start with 'name'
+	speakerList = Speaker.objects.filter(name__istartswith=name)
+	purelist = []
+	for speaker in speakerList:
+		purelist.append(speaker.name)
+	data = json.dumps(purelist)
+	return HttpResponse(data, content_type='application/json')
 
 ###################
 ## Manager Pages ##
