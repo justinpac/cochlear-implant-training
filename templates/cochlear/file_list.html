@@ -2,7 +2,7 @@
     <thead>
       <tr>
       {% for header in data.headers %}
-      	<th class="col-md-{{ data.colSize }}">{{header}}</th>
+      	<th class="col-md-{{ data.colSize }}" id="{{data.id}}_headbutton_{{forloop.counter0}}">{{header}}</th>
       {% endfor %}
       </tr>
     </thead>
@@ -13,7 +13,7 @@
 	     {% for row in data.rows %}
 	      <tr>
 	       {% for item in row %}
-	        <td class="col-md-{{ data.colSize }}">{{item}}</td>
+	        <td class="col-md-{{ data.colSize }} {{data.id}}_items_{{forloop.counter0}}">{{item}}</td>
 	        {% endfor %}
 	      </tr>
 	      {% endfor %}
