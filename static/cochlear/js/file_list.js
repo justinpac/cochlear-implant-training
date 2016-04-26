@@ -1,9 +1,20 @@
 $(function(){
-	function sortRowD(a,b){
-		return a.innerHTML < b.innerHTML;
-	}
-	function sortRowA(a,b){
-		return a.innerHTML > b.innerHTML;
+	function SortRowArray(array,reverse){
+		//Helper function to apply alphanumeric sorting on an array of row elements
+		//First step is to extract the inner html values
+		var pureArray = []
+		var arrayDict = {}
+		for(var i=0;i<array.length;i++){
+			pureArray.push(array[i].innerHTML)
+			arrayDict[array[i].innerHTML] = array[i]
+		}
+		//Now we sort the pure function
+		pureArray.alphanumSort();
+		if(reverse) pureArray.reverse();//If we want descending
+		//Now we match the original array order with the pure one
+		for(i=0;i<array.length;i++){
+			array[i] = arrayDict[pureArray[i]]
+		}
 	}
 
 	//When any header is clicked, sort its list
@@ -23,11 +34,12 @@ $(function(){
 				if($(evt.target).attr("sorted") == "desc"){
 					$(evt.target).attr("sorted","asc");
 					//Sort ascendlingly
-					itemArray = itemArray.sort(sortRowA);
+					SortRowArray(itemArray);
+
 				} else {
 					//Sort descendingly 
 					$(evt.target).attr("sorted","desc");
-					itemArray = itemArray.sort(sortRowD);
+					SortRowArray(itemArray,true);
 				}
 				
 				

@@ -1,4 +1,4 @@
--Make clicking on column headers sort the file list by respective column
+
 -Add button to add new 
 -Create modular popup with form
 -Create popup to upload new file 
