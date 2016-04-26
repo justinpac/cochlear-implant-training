@@ -1,0 +1,14 @@
+-Make clicking on column headers sort the file list by respective column
+-Add button to add new 
+-Create modular popup with form
+-Create popup to upload new file 
+-Create play button to hear the file
+-Create search to filter in real time
+-Create popup to add a module
+	-Click on test sound, then click on sound in right hand list to select it
+	-Click on choices, then click on any sound to have it get added
+	-Can delete sounds already selected
+
+To think about:
+-Double click to edit?
+-Delete by clicking on trash button? Or delete by selecting a bunch and deleting? (Like email)

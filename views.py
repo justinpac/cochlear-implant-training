@@ -1,4 +1,6 @@
 from django.shortcuts import render,redirect
+from django.http import HttpResponse
+import json
 
 # We need this to generate the navbar
 from hipercore.helpers import NavigationBar
@@ -56,14 +58,21 @@ def history(request):
 ## Ajax methods ##
 ##################
 
-from django.http import HttpResponse
-
 def sessionCompleted(request):
 	userList = User_Attrib.objects.filter(username=request.user.username)
 	user = userList[0]
 	newSession = User_Session(user = user, date_completed = timezone.now())
 	newSession.save();
 	return HttpResponse("Success")
+
+def getSpeakers(request,name):
+	#Gets a list of authors whose names start with 'name'
+	speakerList = Speaker.objects.filter(name__istartswith=name)
+	purelist = []
+	for speaker in speakerList:
+		purelist.append(speaker.name)
+	data = json.dumps(purelist)
+	return HttpResponse(data, content_type='application/json')
 
 ###################
 ## Manager Pages ##
@@ -80,6 +89,24 @@ def dashboard(request):
 			print(fileObj)
 		#Get the test sound
 		print(request.FILES['test_sound']) 
+
+	context['soundFileList'] = {}
+	context['soundFileList']['headers'] = ['Filename','Speaker Name','Date Uploaded']
+	context['soundFileList']['rows'] = []
+	context['soundFileList']['id'] = 'soundfiles'
+	context['soundFileList']['colSize'] = int(12/len(context['soundFileList']['headers']))
+	for i in range(0,100):
+		row = ['File ' + str(i),'Speaker ' + str(i),'24/4/2016']
+		context['soundFileList']['rows'].append(row)
+
+	context['speakerFileList'] = {}
+	context['speakerFileList']['headers'] = ['Speaker Name','Number of attached files']
+	context['speakerFileList']['rows'] = []
+	context['speakerFileList']['id'] = 'speakerfiles'
+	context['speakerFileList']['colSize'] = int(12/len(context['speakerFileList']['headers']))
+	for i in range(0,4):
+		row = ['Speaker ' + str(i),str(i*15)]
+		context['speakerFileList']['rows'].append(row)
 
 	userAttribObj = User_Attrib.objects.get(username=request.user.username)
 	context['name'] = userAttribObj.first_name;

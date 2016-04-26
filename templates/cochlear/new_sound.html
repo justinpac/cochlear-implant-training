@@ -4,9 +4,47 @@
 
 {% load staticfiles %}
 
+
 <div class="container"><!-- This is a bootstrap class -->
-  <h1> New Sound </h1>
+  <h3> Upload New Sound File</h3>
+  <p>This page lets you create a new sound file and attach it a speaker. If the speaker does not exist it will automatically create one.</p>
+  <form method="POST" id="speaker_choice_upload" action="" enctype="multipart/form-data">
+		{% csrf_token %}
+		<div class="form-group">
+			<label for="speaker_name">Speaker Name</label>
+			<p>This could be a name if it's a human speaker, or any identifier to associate this file with. Multiple sound files can belong to the same speaker.</p>
+			<input type="text" class="form-control" name="speaker_name" id="speaker_name" placeholder=""></br>
+			<label for="sound_file">Sound File</label>
+			
+			<input class='btn btn-primary' type="submit">
+		</div>
+		
+	</form>
 </div>
+
+<script type="text/javascript">
+	////Autocomplete for speakers
+    function GetSpeakers(request,response){
+        $.ajax({
+            url: '{% url "cochlear:index" %}getSpeakers/' + request.term,
+            success: function(data) {
+                response(data);
+            },
+            failure: function(data) { 
+                response();
+            }
+        }); 
+    }
+                
+    $( "#speaker_name" ).autocomplete({
+      source: GetSpeakers,
+      messages: {
+            noResults: '',
+            results: function() {}
+        }
+    });
+    
+</script>
   
 
 {% endblock %}
