@@ -16,7 +16,7 @@ button {
   font-size: 20px;
   position: relative;
   top: 50%;
-  transform: 			translateY(30%);
+  transform: translateY(30%);
 }
 
 .red{
