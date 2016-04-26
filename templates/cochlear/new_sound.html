@@ -3,8 +3,7 @@
 {% block cochlear-content %}
 
 {% load staticfiles %}
-<!-- Include the drag/drop upload library -->
-<script src="{% static 'cochlear/js/dropzone.js' %}"></script>
+
 
 <div class="container"><!-- This is a bootstrap class -->
   <h3> Upload New Sound File</h3>
@@ -22,8 +21,6 @@
 		
 	</form>
 </div>
-
-<form action="/file-upload" class="dropzone" id="my-awesome-dropzone"></form>
 
 <script type="text/javascript">
 	////Autocomplete for speakers

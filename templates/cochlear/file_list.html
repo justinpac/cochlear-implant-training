@@ -1,0 +1,22 @@
+<table class="item-table-header table" id="{{data.id}}_header">
+    <thead>
+      <tr>
+      {% for header in data.headers %}
+      	<th class="col-md-{{ data.colSize }}">{{header}}</th>
+      {% endfor %}
+      </tr>
+    </thead>
+</table>
+<div class="item-explorer">
+	<table class="item-table-items table" id="{{data.id}}_items">
+	    <tbody>
+	     {% for row in data.rows %}
+	      <tr>
+	       {% for item in row %}
+	        <td class="col-md-{{ data.colSize }}">{{item}}</td>
+	        {% endfor %}
+	      </tr>
+	      {% endfor %}
+	    </tbody>
+	 </table>
+</div>

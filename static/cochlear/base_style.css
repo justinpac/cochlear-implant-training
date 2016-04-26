@@ -17,3 +17,21 @@
 .btn-secondary {
   color:black;
 }
+
+.item-explorer {
+	height: 300px;
+	overflow-y: scroll;
+	border-bottom: #DEDEDE dotted 4px;
+	border-left: #DEDEDE dotted 4px;
+}
+.item-table-header {
+	margin-bottom: 0px;
+	background: #ECECEC;
+}
+.item-table-header>thead>tr>th {
+	border-bottom: none;
+}
+.item-table-header>thead>tr>th:hover {
+	background-color: #F7F7F7;
+	cursor: pointer;
+}

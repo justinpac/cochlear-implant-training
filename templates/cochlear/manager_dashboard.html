@@ -10,43 +10,17 @@
 <div class="container"><!-- This is a bootstrap class -->
 	<h3> {{welcome_msg}}, {{name}}! </h3>
 	<hr>
-	<p>There are currently {{file_number}} sound files in the app, and {{modules}} training modules.</p>
-	<a class="btn btn-success" href="{% url 'cochlear:new_sound' %}" role="button"><i class="fa fa-plus" aria-hidden="true"></i> New Sound File</a>
-	<a class="btn btn-success" href="{% url 'cochlear:new_module' %}" role="button"><i class="fa fa-plus" aria-hidden="true"></i> New Training Module</a>
-	<!--<h2>Upload Speaker Identification</h2>
-	<p>Add a new speaker module by uploading the speaker choices and the test sound.</p>
-	<form method="POST" id="speaker_choice_upload" action="" enctype="multipart/form-data">
-		{% csrf_token %}
-		<b>Speaker Choices</b>
-		<input type="text" name="blah">
-		<input type="file" name="speaker_choices" multiple> </br>
-		<b>Test Sound</b>
-		<input type="file" name="test_sound"> </br>
-		<input class='btn btn-primary' type="submit">
-	</form>-->
-	<hr>
-	<p>To Do:</p>
-	<ul>
-		<li>
-			<p>Form to upload new speech file</p>
-			<ul>
-				<li>Type out speaker name with autocomplete. If does not exist, automatically create one. (Automatically set speaker difficulty based on average of their attached speech files?)</li>
-				<li>Assign difficulty level via radio button.</li>
-				<li>Add a button to pop up and see a list of all the speakers to choose from? With type to filter.</li>
-			</ul>
-		</li>
-		<li>
-			<p>Form to create a new training module</p>
-			<ul>
-				<li>Pick out a speech sound (for the test)</li>
-				<li>Pick out at least 2 speech sounds (for the answers)</li>
-				<li>Specify week and day</li>
-			</ul>
-		</li>
-		<li>
-			<p>A way to edit/view data?</p>
-		</li>
-	</ul>
+	<center><h2>Sounds & Speakers</h2></center>
+	<h3>Sound Files</h3>
+	{% include "cochlear/file_list.html" with data=soundFileList %}
+	<h3>Speakers</h3>
+	{% include "cochlear/file_list.html" with data=speakerFileList %}
+
+	<center><h2>Training Modules</h2></center>
+	
+
+	
+	
 	
 </div>
 
