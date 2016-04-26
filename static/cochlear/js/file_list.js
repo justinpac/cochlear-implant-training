@@ -30,16 +30,27 @@ $(function(){
 				var className = idName.replace("headbutton","items");//Get the class name of all of its items
 				var itemArray = $('.'+className);//Now we have a list of all the items to sort
 				var tBody = $(itemArray[0]).parent().parent();
+				//Clear all arrow icons in other headers
+				var allHeaders = $(evt.target).parent().children();
+				for(var bt = 0;bt<allHeaders.length;bt++){
+					var btID = $(allHeaders[bt]).attr("id")
+					//console.log(btID)
+					$("#"+btID+"_sortbtn").attr("class","fa fa-sort header-sort")
+				}
+
 				//Sort the itemArray
 				if($(evt.target).attr("sorted") == "desc"){
 					$(evt.target).attr("sorted","asc");
 					//Sort ascendlingly
 					SortRowArray(itemArray);
-
+					//Inject the arrow icon into this header
+					$('#'+idName+'_sortbtn').attr("class","fa fa-sort-asc header-sort")
 				} else {
 					//Sort descendingly 
 					$(evt.target).attr("sorted","desc");
 					SortRowArray(itemArray,true);
+					//Inject the arrow icon into this header
+					$('#'+idName+'_sortbtn').attr("class","fa fa-sort-desc header-sort")
 				}
 				
 				
@@ -52,6 +63,10 @@ $(function(){
 					newBodyHTML += "</tr>"
 				}
 				tBody.html(newBodyHTML);
+
+				
+
+
 			})
 		}
 		

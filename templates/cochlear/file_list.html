@@ -2,7 +2,7 @@
     <thead>
       <tr>
       {% for header in data.headers %}
-      	<th class="col-md-{{ data.colSize }}" id="{{data.id}}_headbutton_{{forloop.counter0}}">{{header}}</th>
+      	<th class="col-md-{{ data.colSize }}" id="{{data.id}}_headbutton_{{forloop.counter0}}">{{header}}<i class="fa fa-sort header-sort" id="{{data.id}}_headbutton_{{forloop.counter0}}_sortbtn" aria-hidden="true"></i></th>
       {% endfor %}
       </tr>
     </thead>

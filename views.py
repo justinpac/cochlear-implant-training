@@ -96,7 +96,7 @@ def dashboard(request):
 	context['soundFileList']['id'] = 'soundfiles'
 	context['soundFileList']['colSize'] = int(12/len(context['soundFileList']['headers']))
 	for i in range(0,100):
-		row = ['File ' + str(i),'Speaker ' + str(i),str(i)+'/4/2016']
+		row = ['File ' + str(i),'Speaker ' + str(i),str(100-i)+'/4/2016']
 		context['soundFileList']['rows'].append(row)
 
 	context['speakerFileList'] = {}
