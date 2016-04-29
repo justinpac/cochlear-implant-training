@@ -67,7 +67,6 @@ $(function(){
 		}	
 	}
 
-	//When any add button is clicked, open the right popup
-	$('.addbtn').magnificPopup({type:'inline',disableOn:function(){return true}})
 	
+
 })

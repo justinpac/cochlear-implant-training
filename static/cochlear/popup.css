@@ -8,3 +8,11 @@
     height: 400px;
 }
 
+#speakerchoice_list_div {
+	height: 200px;
+	overflow-y: scroll;
+}
+
+.hidden_page {
+	display: none;
+}

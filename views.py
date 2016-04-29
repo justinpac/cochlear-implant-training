@@ -58,6 +58,34 @@ def history(request):
 ## Ajax methods ##
 ##################
 
+def uploadSound(request):
+	if(request.method == "POST"):#If the user has submitted something, Handle the upload
+		speakerID = int(request.POST['speaker_id']);
+		rawFile = request.FILES['file'];
+		#If the speaker doesn't exist, create it
+		if(speakerID == -1):
+			#Check if it's just been created
+			speakerList = Speaker.objects.filter(name=request.POST['speaker_name']);
+			if(len(speakerList) == 0):
+				newSpeaker = Speaker();
+				newSpeaker.name=request.POST['speaker_name']
+				newSpeaker.save();
+				speakerID = newSpeaker.pk;
+			else:
+				speakerID = speakerList[0].pk;
+		print("Using speaker ID",speakerID)
+		#Create a new speech object, and attach it to the speaker 
+		speakerObj = Speaker.objects.get(pk=speakerID);
+		newSoundObj = Speech();
+		newSoundObj.speaker = speakerObj;
+		newSoundObj.speech_file = rawFile;
+		newSoundObj.save();
+
+
+		return HttpResponse("Success")
+	else:
+		return HttpResponse("No POST data received.")
+
 def sessionCompleted(request):
 	userList = User_Attrib.objects.filter(username=request.user.username)
 	user = userList[0]
@@ -70,7 +98,12 @@ def getSpeakers(request,name):
 	speakerList = Speaker.objects.filter(name__istartswith=name)
 	purelist = []
 	for speaker in speakerList:
-		purelist.append(speaker.name)
+		speakerObj = {}
+		speakerObj['name'] = speaker.name;
+		speakerObj['id'] = speaker.pk;
+		#Get number of attached sound files
+		speakerObj['file_count'] = Speech.objects.filter(speaker=speaker).count();
+		purelist.append(speakerObj)
 	data = json.dumps(purelist)
 	return HttpResponse(data, content_type='application/json')
 
@@ -83,20 +116,15 @@ def getSpeakers(request,name):
 
 def dashboard(request):
 	context = NavigationBar.generateAppContext(request,app="cochlear",title="index", navbarName='manager',activeLink="Manager Dashboard")
-	if(request.method == "POST"):#If the user has submitted something, Handle the upload
-		#Get the speaker files
-		for fileObj in request.FILES.getlist('speaker_choices'):
-			print(fileObj)
-		#Get the test sound
-		print(request.FILES['test_sound']) 
 
 	context['soundFileList'] = {}
 	context['soundFileList']['headers'] = ['Filename','Speaker Name','Date Uploaded']
 	context['soundFileList']['rows'] = []
 	context['soundFileList']['id'] = 'soundfiles'
 	context['soundFileList']['colSize'] = int(12/len(context['soundFileList']['headers']))
-	for i in range(0,100):
-		row = ['File ' + str(i),'Speaker ' + str(i),str(100-i)+'/4/2016']
+	soundFiles = Speech.objects.all();
+	for sound in soundFiles:
+		row = [sound.speech_file.name,sound.speaker.name,str(sound.uploaded_date)]
 		context['soundFileList']['rows'].append(row)
 
 	context['speakerFileList'] = {}
@@ -104,8 +132,10 @@ def dashboard(request):
 	context['speakerFileList']['rows'] = []
 	context['speakerFileList']['id'] = 'speakerfiles'
 	context['speakerFileList']['colSize'] = int(12/len(context['speakerFileList']['headers']))
-	for i in range(0,4):
-		row = ['Speaker ' + str(i),str(i*15)]
+	speakerList = Speaker.objects.all();
+	for speaker in speakerList:
+		numOfFiles = Speech.objects.filter(speaker=speaker).count();
+		row = [speaker.name,numOfFiles]
 		context['speakerFileList']['rows'].append(row)
 
 	userAttribObj = User_Attrib.objects.get(username=request.user.username)
