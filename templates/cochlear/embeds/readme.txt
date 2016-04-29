@@ -1,0 +1,1 @@
+This directory contains template files that do no represent pages on their own, but are instead modular components that can be included in other pages.

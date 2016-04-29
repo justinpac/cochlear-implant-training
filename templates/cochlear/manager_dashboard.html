@@ -7,16 +7,23 @@
 <link href="{% static 'cochlear/index.css' %}" rel="stylesheet">
 <!-- Include external alphanumeric sorting for strings -->
 <script type="text/javascript" src="{% static 'cochlear/js/alphanum.js' %}"></script>
-
+<!-- Magnific Popup core CSS file -->
+<link href="{% static 'cochlear/magnific-popup.css' %}" rel="stylesheet">
+<!-- Magnific Popup core JS file -->
+<script src="{% static 'cochlear/js/jquery.magnific-popup.min.js' %}"></script>
+<link href="{% static 'cochlear/popup.css' %}" rel="stylesheet">
 
 <div class="container"><!-- This is a bootstrap class -->
 	<h3> {{welcome_msg}}, {{name}}! </h3>
 	<hr>
 	<center><h2>Sounds & Speakers</h2></center>
 	<h3>Sound Files</h3>
-	{% include "cochlear/file_list.html" with data=soundFileList %}
+	{% include "cochlear/embeds/file_list.html" with data=soundFileList %}
+	{% include "cochlear/embeds/soundfiles_popup.html" %}
+
 	<h3>Speakers</h3>
-	{% include "cochlear/file_list.html" with data=speakerFileList %}
+	{% include "cochlear/embeds/file_list.html" with data=speakerFileList %}
+	{% include "cochlear/embeds/speakerfiles_popup.html" %}
 
 	<center><h2>Training Modules</h2></center>
 	

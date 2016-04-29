@@ -1,0 +1,34 @@
+
+<form id="soundfiles_popup" class="white-popup-block mfp-hide">
+	<div class="popup-content">
+		<center>
+			<h4>What speaker does this sound belong to?</h4>
+			<p>If the name does not exist in the database, it will be automatically created.</p>
+			<input type="text" class="form-control" name="speaker_name" id="speaker_name" placeholder=""></br>
+			<p>(This could be the name of the person, or an environment, or some identifier to attach to this sound)</p>
+		</center>
+	</div>
+</form>
+<script type="text/javascript">
+	////Autocomplete for speakers
+    function GetSpeakers(request,response){
+        $.ajax({
+            url: '{% url "cochlear:index" %}getSpeakers/' + request.term,
+            success: function(data) {
+                response(data);
+            },
+            failure: function(data) { 
+                response();
+            }
+        }); 
+    }
+                
+    $( "#speaker_name" ).autocomplete({
+      source: GetSpeakers,
+      messages: {
+            noResults: '',
+            results: function() {}
+        }
+    });
+    
+</script>
