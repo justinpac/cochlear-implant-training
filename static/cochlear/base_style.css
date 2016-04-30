@@ -35,3 +35,12 @@
 	background-color: #F7F7F7;
 	cursor: pointer;
 }
+
+.header-sort {
+	float: right;
+}
+
+.upload-new-icon{
+	color: white;
+	padding-right: 5px;
+}

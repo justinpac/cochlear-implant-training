@@ -1,9 +1,20 @@
 $(function(){
-	function sortRowD(a,b){
-		return a.innerHTML < b.innerHTML;
-	}
-	function sortRowA(a,b){
-		return a.innerHTML > b.innerHTML;
+	function SortRowArray(array,reverse){
+		//Helper function to apply alphanumeric sorting on an array of row elements
+		//First step is to extract the inner html values
+		var pureArray = []
+		var arrayDict = {}
+		for(var i=0;i<array.length;i++){
+			pureArray.push(array[i].innerHTML)
+			arrayDict[array[i].innerHTML] = array[i]
+		}
+		//Now we sort the pure function
+		pureArray.alphanumSort();
+		if(reverse) pureArray.reverse();//If we want descending
+		//Now we match the original array order with the pure one
+		for(i=0;i<array.length;i++){
+			array[i] = arrayDict[pureArray[i]]
+		}
 	}
 
 	//When any header is clicked, sort its list
@@ -19,15 +30,27 @@ $(function(){
 				var className = idName.replace("headbutton","items");//Get the class name of all of its items
 				var itemArray = $('.'+className);//Now we have a list of all the items to sort
 				var tBody = $(itemArray[0]).parent().parent();
+				//Clear all arrow icons in other headers
+				var allHeaders = $(evt.target).parent().children();
+				for(var bt = 0;bt<allHeaders.length;bt++){
+					var btID = $(allHeaders[bt]).attr("id")
+					//console.log(btID)
+					$("#"+btID+"_sortbtn").attr("class","fa fa-sort header-sort")
+				}
+
 				//Sort the itemArray
 				if($(evt.target).attr("sorted") == "desc"){
 					$(evt.target).attr("sorted","asc");
 					//Sort ascendlingly
-					itemArray = itemArray.sort(sortRowA);
+					SortRowArray(itemArray);
+					//Inject the arrow icon into this header
+					$('#'+idName+'_sortbtn').attr("class","fa fa-sort-asc header-sort")
 				} else {
 					//Sort descendingly 
 					$(evt.target).attr("sorted","desc");
-					itemArray = itemArray.sort(sortRowD);
+					SortRowArray(itemArray,true);
+					//Inject the arrow icon into this header
+					$('#'+idName+'_sortbtn').attr("class","fa fa-sort-desc header-sort")
 				}
 				
 				
@@ -41,7 +64,9 @@ $(function(){
 				}
 				tBody.html(newBodyHTML);
 			})
-		}
-		
+		}	
 	}
+
+	
+
 })

@@ -13,7 +13,8 @@ urlpatterns = patterns('cochlear',
     url(r'^analytics/$','views.analytics', name = 'analytics'),
     #ajax methods
     url(r'^sessionCompleted/$','views.sessionCompleted',name = 'sessionCompleted'),
-    url(r'^getSpeakers/(?P<name>[\w|\W]+)/','views.getSpeakers',name = 'getSpeakers')
+    url(r'^getSpeakers/(?P<name>[\w|\W]+)/','views.getSpeakers',name = 'getSpeakers'),
+    url(r'^upload_sound/','views.uploadSound',name = 'uploadSound')
 )
 
 #if settings.DEBUG is True:

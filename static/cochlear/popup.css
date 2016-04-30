@@ -1,0 +1,18 @@
+.white-popup-block {
+	background: #FFF;
+    padding: 20px 30px;
+    text-align: left;
+    max-width: 650px;
+    margin: 40px auto;
+    position: relative;
+    height: 400px;
+}
+
+#speakerchoice_list_div {
+	height: 200px;
+	overflow-y: scroll;
+}
+
+.hidden_page {
+	display: none;
+}

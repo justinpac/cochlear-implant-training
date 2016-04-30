@@ -1,0 +1,101 @@
+{% load staticfiles %}
+<script src="{% static 'cochlear/js/dropzone.js' %}"></script>
+<link href="{% static 'cochlear/dropzone.css' %}" rel="stylesheet">
+
+<div id="soundfiles_popup" class="white-popup-block mfp-hide">
+	<div class="popup-content">
+	<center>
+		<div id="sound_page1">
+			
+				<h4>What speaker does this sound belong to?</h4>
+				<p>Start typing to bring up speaker names.</p>
+				<p><i>(This could be the name of the person, or an environment, or some identifier to attach to this sound)</i></p>
+				<input type="text" class="form-control" name="speaker_name" id="speaker_name" placeholder=""></br>
+				<div id="speakerchoice_list_div">
+				</div>
+			
+		</div>
+		<div id="sound_page2" class="hidden_page">
+			<h4>Upload sound files:</h4>
+			<p>You can close this window once the files have been uploaded.</p>
+			<!-- Dropzone drag & drop upload -->
+			<form action='{% url "cochlear:index" %}upload_sound/' class="dropzone" id="soundDropzone">
+				{% csrf_token %}
+				<input type="hidden" name="speaker_id" id="speaker_id" value="-1">
+				<input type="hidden" name="speaker_name" id="speaker_name_upload" value="">
+			</form>
+			<!-- End drag and drop -->
+		</div>
+	</center>
+	</div>
+</div>
+<script type="text/javascript">
+	//Set the dropzone options 
+	Dropzone.options.soundDropzone = {
+		dictDefaultMessage: "Drag & drop files (Or click in this window) to upload!"
+	}
+	//Initialize the popup 
+	$('#soundfiles_addbtn').magnificPopup({type:'inline',disableOn:function(){return true},callbacks: {close:function(){
+		//Reset everything
+		console.log("Close")
+		$('#sound_page1').css("display","block");
+		var pages = ["page2"]
+		for(var i=0;i<pages.length;i++) $('#sound_' + pages[i]).css("display","none");
+		$('#speakerchoice_list_div').empty()
+		$('#speaker_name').val("")
+		//Empty the dropzone
+		var fileChildren = $('#soundDropzone').children();
+		//The first one is the csrf token, so we leave that untouched
+		//The second is the speaker id
+		var csrfToken = fileChildren[0];
+		var speakerField = fileChildren[1];
+		var speakerNameField = fileChildren[2];
+		$('#soundDropzone').empty();
+		$('#soundDropzone').append(csrfToken);
+		$('#soundDropzone').append(speakerField); 
+		$('#soundDropzone').append(speakerNameField); 
+		
+		}
+	}})
+	////On key press, get and display list of matched speakers. 
+	//Otherwise, say none is found and give option to create one.
+	var animationTime = 250;
+	$('#speaker_name').on('input propertychange paste',function(){
+		function success(data){
+			//Empty the list
+			$('#speakerchoice_list_div').empty()
+			//Fill it with the choices
+			for(var i=0;i<data.length;i++){
+				var speakerName = data[i].name;
+				var fileCount = data[i].file_count;
+				var speakerID = data[i].id;
+				$('#speakerchoice_list_div').append('<button class="btn btn-primary page1sound_btn" data-speakerid='+ String(speakerID)+ '>'+speakerName+' ('+String(fileCount)+' sound files)'+'</button></br></br>')
+			}
+			//If the text entered is not empty, but the data is, offer to create a new one
+			if($('#speaker_name').val() != "" && data.length == 0){
+				var buttonText = "No speaker '" + $('#speaker_name').val() + '" found. Create one.'
+				$('#speakerchoice_list_div').append('<button class="btn btn-warning page1sound_btn" data-speakerid='+ String(-1)+ ' data-speakername='+$('#speaker_name').val()+' >'+buttonText+'</button>')
+			}
+			$('.page1sound_btn').click(function(evt){
+				//Set the data speaker id 
+				var currentID = $(evt.target).data("speakerid");
+				$('#speaker_id').val(currentID)
+				if(currentID == -1) $('#speaker_name_upload').val($(evt.target).data("speakername"))
+
+				evt.preventDefault();
+				$('#sound_page1').fadeOut(animationTime,null,function(){
+					$('#sound_page2').fadeIn(animationTime)
+				})
+			})
+			
+		}
+		function fail(data){
+			console.log("Error!")
+			console.log(data)
+		}
+		$.get('{% url "cochlear:index" %}getSpeakers/'+$('#speaker_name').val(),success).fail(fail)
+	})
+
+ 
+    
+</script>

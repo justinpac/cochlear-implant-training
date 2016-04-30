@@ -33,6 +33,7 @@ class Speech(models.Model):
     speech_file = models.FileField(upload_to = 'cochlear/speech')
     speaker = models.ForeignKey(Speaker, on_delete=models.SET_NULL, blank = True, null = True)
     difficulty = models.PositiveSmallIntegerField(default = 0)
+    uploaded_date = models.DateTimeField(auto_now_add=True);
 
     def __str__(self):
         filename =  self.speech_file.name
