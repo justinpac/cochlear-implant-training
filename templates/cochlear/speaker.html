@@ -9,41 +9,40 @@
 <div class = "container">
   <br>
   <div class = "row">
-    <div  id="test" style = "text-align:center;display:none">
-      <button id = "test" type = "button" class="btn btn-info btn-lg" onclick='play_speaker("{{test_sound.speech_file.url}}")'>
-        <span class="glyphicon glyphicon-question-sign" aria-hidden="true"></span> Listen to the unknown speaker
+    <div  id="test" style="text-align:center;display:none;">
+      <button id = "test" type = "button" class="btn btn-info btn-lg" style="margin-bottom:40px" onclick='play_speaker("{{test_sound.speech_file.url}}")'>
+        <span class="glyphicon glyphicon-question-sign" aria-hidden="true" style="color:white"></span> Listen to the unknown speaker
       </button>
     </div>
   </div>
-  <br>
     <div style="height:100%;text-align:center">
       {% for speech in speaker_choices %}
 
         <div class="col-md-6" style="height:100%;margin-bottom:20px;">
           <button id = "choice_{{speech.id}}" type = "button" class="btn btn-info btn-lg" onclick='play_speaker("{{speech.speech_file.url}}")'>
-            <span class="glyphicon glyphicon-user" aria-hidden="true"></span> Listen to {{speech.speaker.name}}
+            <span class="glyphicon glyphicon-user" aria-hidden="true" style="color:white"></span> Listen to {{speech.speaker.name}}
           </button>
-            <span id="correct_{{speech.id}}"class="glyphicon glyphicon-ok vertical-centered green" aria-hidden="true" style="display:none"></span>
-            <span id="incorrect_{{speech.id}}"class="glyphicon glyphicon-remove vertical-centered red" aria-hidden="true" style="display:none"></span>
+            <span id="correct_{{speech.id}}"class="glyphicon glyphicon-ok vertical-centered" aria-hidden="true" style="display:none;color:green"></span>
+            <span id="incorrect_{{speech.id}}"class="glyphicon glyphicon-remove vertical-centered" aria-hidden="true" style="display:none;color:red"></span>
             <button id = "response_{{speech.id}}" type = "button" class="btn btn-primary btn-lg" style="display:none" onclick='checkAnswer("{{speech.id}}","{{speech.speaker.name}}","{{test_sound.speaker.name}}" )'>
-              <span class="glyphicon glyphicon-user" aria-hidden="true"></span> The unknown speaker is {{speech.speaker.name}}
+              <span class="glyphicon glyphicon-user" aria-hidden="true" style="color:white"></span> The unknown speaker is {{speech.speaker.name}}
             </button>
         </div>
       {% endfor %}
       <row>
-        <div style = "text-align:center">
-          <button id = "ready" type = "button" class="btn btn-primary btn-lg">Start testing</button>
+        <div style="text-align:center">
+          <button id = "ready" type = "button" class="btn btn-primary btn-lg" style="margin-top:20px">Start testing</button>
         </div>
       </row>
       <div id ="next" class="col-md-12" style="display:none">
         
-        <button type = "button" class="btn btn-success btn-lg">
-            Proceed to the next training module
+        <button type = "button" class="btn btn-primary btn-lg" style="margin-bottom:20px;margin-top:20px">
+            <span class="glyphicon glyphicon-circle-arrow-right" aria-hidden="true" style="color:white"></span> Proceed to the next training module
         </button> 
         </br>
         <a href = "{% url 'cochlear:speaker' %}" >
           <button type = "button" class="btn btn-secondary btn-lg" >
-              Repeat this question
+              <span class="glyphicon glyphicon-repeat" aria-hidden="true"></span> Repeat this question
           </button>
         </a>
       </div>
@@ -128,7 +127,7 @@ function play_speaker(speech_file) {
 $( document ).ready(function() {
     $("#ready").click(function(event){
     $("#ready").hide("swing").promise().done(function(){
-      $("#test").slideDown().promise().done(function(){
+      $("#test").slideDown("swing").promise().done(function(){
         for(var i = 0; i <responseIDs.length; i++){
           $("#" + responseIDs[i]).show("swing");
         }
