@@ -1,6 +1,6 @@
 from django.shortcuts import render,redirect
 from django.http import HttpResponse
-import json
+import json, datetime, logging
 
 # We need this to generate the navbar
 from hipercore.helpers import NavigationBar
@@ -26,7 +26,9 @@ def index(request):
 	context = NavigationBar.generateAppContext(request,app="cochlear",title="index", navbarName=0)
 	userList = User_Attrib.objects.filter(username=request.user.username)
 	context['name'] = userList[0].first_name
-	context['sessions'] = User_Session.objects.filter(user=userList[0].id).count()
+	currentTime = timezone.now();
+	oneWeekAgo = currentTime - datetime.timedelta(days=7);
+	context['sessions'] = User_Session.objects.filter(user=userList[0].id, date_completed__range=(oneWeekAgo,currentTime)).count()
 	context['percentComplete'] = str(context['sessions'] * 25)
 	return render(request,'cochlear/index.html',context)
 
