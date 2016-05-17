@@ -74,13 +74,13 @@
 			//If the text entered is not empty, but the data is, offer to create a new one
 			if($('#speaker_name').val() != "" && data.length == 0){
 				var buttonText = "No speaker '" + $('#speaker_name').val() + '" found. Create one.'
-				$('#speakerchoice_list_div').append('<button class="btn btn-warning page1sound_btn" data-speakerid='+ String(-1)+ ' data-speakername='+$('#speaker_name').val()+' >'+buttonText+'</button>')
+				$('#speakerchoice_list_div').append('<button class="btn btn-warning page1sound_btn" data-speakerid='+ String(-1)+ ' data-speakername='+encodeURI($('#speaker_name').val())+' >'+buttonText+'</button>')
 			}
 			$('.page1sound_btn').click(function(evt){
 				//Set the data speaker id 
 				var currentID = $(evt.target).data("speakerid");
 				$('#speaker_id').val(currentID)
-				if(currentID == -1) $('#speaker_name_upload').val($(evt.target).data("speakername"))
+				if(currentID == -1) $('#speaker_name_upload').val(decodeURI($(evt.target).data("speakername")))
 
 				evt.preventDefault();
 				$('#sound_page1').fadeOut(animationTime,null,function(){
