@@ -30,23 +30,22 @@ def index(request):
 	oneWeekAgo = currentTime - datetime.timedelta(days=7);
 	context['sessions'] = User_Session.objects.filter(user=userList[0].id, date_completed__range=(oneWeekAgo,currentTime)).count()
 	context['percentComplete'] = str(context['sessions'] * 25)
+	#Indicate if there is an active session
+	active_session = User_Session.objects.filter(date_completed=None)
+	if not active_session:
+		context['activeSessionFlag'] = False
+	context['activeSessionFlag'] = False
 	return render(request,'cochlear/index.html',context)
 
-def speaker(request):
+def speaker(request, speaker_module, repeatFlag):
 	context = NavigationBar.generateAppContext(request,app="cochlear",title="speaker", navbarName=0)
 	userObj = User_Attrib.objects.get(username=request.user.username)
-	#retrive speaker 'choices' files for this training module
-	speaker_data =  Closed_Set_Data.objects.filter(user = userObj.id)
-	if not speaker_data:
-		speaker_module = Closed_Set_Train.objects.first()
-	else:
-		speaker_modules = Closed_Set_Train.objects.filter(id != speaker_data.closed_set_train.id)
-		speaker_module = speaker_modules.first()
-
-	context['test_sound'] = speaker_module.test_sound
-	context['speaker_choices'] = speaker_module.choices.all().order_by('?')
-	context['speaker_module_id'] = speaker_module.id
+	module = Closed_Set_Train.objects.get(id=speaker_module)
+	context['test_sound'] = module.test_sound
+	context['speaker_choices'] = module.choices.all().order_by('?')
+	context['speaker_module_id'] = module.id
 	context['user_attrib_id'] = userObj.id
+	context['repeatFlag'] = repeatFlag
 
 	return render(request,'cochlear/speaker.html',context)
 
@@ -55,6 +54,34 @@ def history(request):
 
 	return render(request,'cochlear/history.html',context)
 
+def sessionEndPage(request):
+	context = NavigationBar.generateAppContext(request,app="cochlear",title="sessionEndPage", navbarName=0)
+	return render(request,'cochlear/sessionEndPage.html',context)
+
+def startNewSession(request):
+	context = NavigationBar.generateAppContext(request,app="cochlear",title="startNewSession", navbarName=0)
+	userObj = User_Attrib.objects.filter(username=request.user.username).first()
+	user_sessions = User_Session.objects.filter(user = userObj.id)
+	#If the user has not completed any sessions, then we are on week 1, day 1
+	if not user_sessions:
+		week1Day1 = Session.objects.get(week = 1, day = 1)
+		newSession = User_Session(session = week1Day1,user = userObj, date_completed = None, modules_completed = 0)
+		newSession.save()
+		return goToModule(week1Day1, 1)
+	#Get max week the user completed
+	#Get max day of that week
+	#Get the session module for the next day
+	#go to the first module
+
+def goToNextModule(request):
+	userObj = User_Attrib.objects.get(username=request.user.username)
+	user_session = User_Session.objects.get(user = userObj.id, date_completed = None)
+	if user_session.modules_completed == user_session.session.countModules():
+		user_session.date_completed = timezone.now()
+		user_session.save()
+		return redirect('cochlear:sessionEndPage')
+	nextModule = user_session.modules_completed + 1
+	return goToModule(user_session.session, nextModule)
 
 ##################
 ## Ajax methods ##
@@ -78,7 +105,7 @@ def uploadSound(request):
 			else:
 				speakerID = speakerList[0].pk;
 		print("Using speaker ID",speakerID)
-		#Create a new speech object, and attach it to the speaker 
+		#Create a new speech object, and attach it to the speaker
 		speakerObj = Speaker.objects.get(pk=speakerID);
 		newSoundObj = Speech();
 		newSoundObj.speaker = speakerObj;
@@ -90,11 +117,12 @@ def uploadSound(request):
 	else:
 		return HttpResponse("No POST data received.")
 
-def sessionCompleted(request):
+def moduleCompleted(request):
 	userList = User_Attrib.objects.filter(username=request.user.username)
 	user = userList[0]
-	newSession = User_Session(user = user, date_completed = timezone.now())
-	newSession.save();
+	user_session = User_Session.objects.get(user=user.id, date_completed=None)
+	user_session.modules_completed += 1
+	user_session.save()
 	return HttpResponse("Success")
 
 def getSpeakers(request,name):
@@ -163,3 +191,17 @@ def new_module(request):
 def analytics(request):
 	context = NavigationBar.generateAppContext(request,app="cochlear",title="index", navbarName='manager',activeLink="Analytics")
 	return render(request,'cochlear/analytics.html',context)
+
+######################
+## Helper Functions ##
+######################
+
+# Get a module in a particular session based on its order in sequence (moduleNum)
+# This is in a separate function because it will be used in multiple contexts and
+# continue to grow with the number of modules
+def goToModule(session, moduleNum):
+	module = session.closed_set_trains.get(closed_set_train_order__order = moduleNum)
+	if not module:
+		return redirect('cochlear:sessionEndPage')
+	return redirect('cochlear:speaker', speaker_module=module.id, repeatFlag = 0)
+#		module = session.open_set_trains.get(orderInSession=moduleNum)
