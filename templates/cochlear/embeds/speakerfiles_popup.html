@@ -1,3 +1,12 @@
-<form id="speakerfiles_popup" class="white-popup-block mfp-hide">
-	<h1>Hello ;)!</h1>
-</form>
+<div id="speakerfiles_popup" class="white-popup-block mfp-hide">
+	<h4>Add a new speaker</h4>
+	<p>This popup is currently under construction. For now, you can add a speaker through the "Add a Sound" popup.</p>
+</div>
+
+<script type="text/javascript">
+//Initialize the popup
+$('#speakerfiles_addbtn').magnificPopup({type:'inline',disableOn:function(){return true},callbacks: {close:function(){
+		//Reset everything
+		}
+	}})
+</script>
