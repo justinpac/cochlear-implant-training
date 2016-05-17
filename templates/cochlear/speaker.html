@@ -51,16 +51,6 @@
 
   <br>
 
-<script type="text/javascript">
-  var choiceIDs = [];
-  var responseIDs = [];
-
-{% for speech in speaker_choices %}
-  choiceIDs.push("choice_{{speech.id}}");
-  responseIDs.push("response_{{speech.id}}");
-{% endfor %}
-</script>
-
 <script src="{% static 'js/jquery.cookie.js' %}"></script>
 <script type="text/javascript">
 
@@ -78,6 +68,14 @@ $.ajaxSetup({
     }
 });
 ///End CSRF block
+
+//Create arrays of ID's on which I want to perform the same operations on
+var choiceIDs = [];
+var responseIDs = [];
+{% for speech in speaker_choices %}
+  choiceIDs.push("choice_{{speech.id}}");
+  responseIDs.push("response_{{speech.id}}");
+{% endfor %}
 
 var questionUnanswered = true;
 
