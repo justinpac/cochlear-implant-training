@@ -200,13 +200,13 @@ def loadDashboardData(context):
 
 	#Closed set questions
 	context['closedQuestions'] = {}
-	context['closedQuestions']['headers'] = ['Filename','Speaker Name','Date Uploaded']
+	context['closedQuestions']['headers'] = ['Test Sound','# of choices']
 	context['closedQuestions']['rows'] = []
 	context['closedQuestions']['id'] = 'closedquestions'
 	context['closedQuestions']['colSize'] = int(12/len(context['closedQuestions']['headers']))
-	soundFiles = Speech.objects.all();
-	for sound in soundFiles:
-		row = [sound.speech_file.name,sound.speaker.name,str(sound.uploaded_date)]
+	questions = Closed_Set_Train.objects.all();
+	for q in questions:
+		row = [q.test_sound.name,len(q.choices)]
 		context['closedQuestions']['rows'].append(row)
 
 	#Open set questions

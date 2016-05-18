@@ -27,8 +27,10 @@
 
 	<center><h2>Training Modules</h2></center>
 	
-	<h3>Closed Set Questions</h3>
+	<h3>Speaker Identification Questions</h3>
 	<p>These are the questions where the user listens to a test sound, then has to choose the correct answer from a set of sounds.</p>
+	{% include "cochlear/embeds/file_list.html" with data=closedQuestions %}
+	{% include "cochlear/embeds/closedquestions_popup.html" %}
 
 
 	<h3>Open Set Questions</h3>

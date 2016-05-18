@@ -16,3 +16,12 @@
 .hidden_page {
 	display: none;
 }
+
+#closedquestionpopup_items tr:hover td{
+    color:white;
+    cursor: pointer;
+}
+
+#closedquestionpopup_items tr:hover{
+    background-color:#0077FF;
+}

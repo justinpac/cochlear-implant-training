@@ -19,7 +19,7 @@
 }
 
 .item-explorer {
-	height: 300px;
+	max-height: 300px;
 	overflow-y: scroll;
 	border-bottom: #DEDEDE dotted 4px;
 	border-left: #DEDEDE dotted 4px;

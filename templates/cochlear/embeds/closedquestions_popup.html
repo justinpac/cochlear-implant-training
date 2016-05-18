@@ -1,0 +1,79 @@
+<div id="closedquestions_popup" class="white-popup-block mfp-hide">
+	<div id="closedquestions_page1">
+		<center><h4>Click to choose a test sound:</h4></center>
+	</div>
+	<div id="closedquestions_page2">
+	<center>
+		<h4>Select answer choices</h4>
+		<p>The correct answer is the one with the same speaker.</br>(Todo: Ensure only one is the same speaker as the test sound)</p>
+	</center>
+	</div>
+		<table class="item-table-header table" id="closedquestionpopup_header">
+		    <thead>
+		      <tr>
+		      	<th class="col-md-4" id="closedquestionpopup_headbutton_0">Filename<i class="fa fa-sort header-sort" id="closedquestionpopup_headbutton_0_sortbtn" aria-hidden="true"></i></th>
+		      	<th class="col-md-4" id="closedquestionpopup_headbutton_1">Speaker Name<i class="fa fa-sort header-sort" id="closedquestionpopup_headbutton_1_sortbtn" aria-hidden="true"></i></th>
+		      	<th class="col-md-4" id="closedquestionpopup_headbutton_2">Date Uploaded<i class="fa fa-sort header-sort" id="closedquestionpopup_headbutton_2_sortbtn" aria-hidden="true"></i></th>
+		      </tr>
+		    </thead>
+		</table>
+		<div class="item-explorer">
+			<table class="item-table-items table" id="closedquestionpopup_items">
+			    <tbody>
+			     
+			    </tbody>
+			 </table>
+		</div>
+	
+	
+</div>
+
+<script type="text/javascript">
+//Initialize the popup
+$('#closedquestions_addbtn').magnificPopup({type:'inline',disableOn:function(){return true},callbacks: {close:function(){
+		//Reset everything
+		}
+	}})
+//Hide other pages
+$('#closedquestions_page2').css("display","none")
+//Fill the list with speakers
+var speakerListHTML = $('#soundfiles_items').find("tbody").html()
+while(speakerListHTML.indexOf("soundfiles_items") >= 0){
+	speakerListHTML = speakerListHTML.replace("soundfiles_items","closedquestionpopup_items")
+}
+$('#closedquestionpopup_items').html(speakerListHTML)
+//Click to select
+var rows = $('#closedquestionpopup_items').find('tr')
+var page = 1
+var test_sound = ''
+
+rows.on("click",function(evt){//If any of these are clicked
+	if(page == 1){
+		page = 2
+		test_sound = evt.target.innerHTML
+		$("#closedquestionpopup_items").fadeOut()
+		$("#closedquestionpopup_header").fadeOut()
+		$('#closedquestions_page1').fadeOut(animationTime,null,function(){
+			$('#closedquestions_page2').fadeIn(animationTime,null,function(){
+				$('#closedquestionpopup_items').fadeIn()
+				$("#closedquestionpopup_header").fadeIn()
+				$('#closedquestions_popup').append("<button")
+			})
+		})
+	}
+	else if(page == 2){
+		if($(evt.target).parent().data("clicked") == true){
+			$(evt.target).parent().data("clicked",false)
+			$(evt.target).parent().css("background-color","white")
+			$(evt.target).parent().children().css("color","black")
+		} else {
+			$(evt.target).parent().data("clicked",true)
+			$(evt.target).parent().css("background-color","#0077FF")
+			$(evt.target).parent().children().css("color","white")
+		}
+		
+	}
+	
+})
+
+</script>
