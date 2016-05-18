@@ -37,6 +37,22 @@ def index(request):
 	context['activeSessionFlag'] = False
 	return render(request,'cochlear/index.html',context)
 
+def history(request):
+	context = NavigationBar.generateAppContext(request,app="cochlear",title="history", navbarName=0)
+
+	return render(request,'cochlear/history.html',context)
+def sessionEndPage(request):
+	context = NavigationBar.generateAppContext(request,app="cochlear",title="sessionEndPage", navbarName=0)
+	return render(request,'cochlear/sessionEndPage.html',context)
+
+def trainingEndPage(request):
+	context = NavigationBar.generateAppContext(request,app="cochlear",title="trainingEndPage", navbarName=0)
+	return render(request,'cochlear/trainingEndPage.html',context)
+
+######################
+## Training Modules ##
+######################
+
 def speaker(request, speaker_module, repeatFlag):
 	context = NavigationBar.generateAppContext(request,app="cochlear",title="speaker", navbarName=0)
 	userObj = User_Attrib.objects.get(username=request.user.username)
@@ -49,20 +65,21 @@ def speaker(request, speaker_module, repeatFlag):
 
 	return render(request,'cochlear/speaker.html',context)
 
+def openSet(request, open_set_module, repeatFlag):
+	context = NavigationBar.generateAppContext(request,app="cochlear",title="openSet", navbarName=0)
+	user_attrib = User_Attrib.objects.get(username=request.user.username)
+	module = Open_Set_Train.objects.get(id=open_set_module)
+	context['test_sound'] = module.test_sound
+	context['correctAnswer'] = module.answer
+	if (module.type_train == 2):
+		context['typeOfSpeech'] = "word"
+	else:
+		context['typeOfSpeech'] = "sentence"
+	return render(request,'cochlear/openSet.html',context)
 
-
-def history(request):
-	context = NavigationBar.generateAppContext(request,app="cochlear",title="history", navbarName=0)
-
-	return render(request,'cochlear/history.html',context)
-
-def sessionEndPage(request):
-	context = NavigationBar.generateAppContext(request,app="cochlear",title="sessionEndPage", navbarName=0)
-	return render(request,'cochlear/sessionEndPage.html',context)
-
-def trainingEndPage(request):
-	context = NavigationBar.generateAppContext(request,app="cochlear",title="trainingEndPage", navbarName=0)
-	return render(request,'cochlear/trainingEndPage.html',context)
+#############################
+## Views Without Templates ##
+#############################
 
 def startNewSession(request):
 	context = NavigationBar.generateAppContext(request,app="cochlear",title="startNewSession", navbarName=0)
@@ -223,8 +240,9 @@ def analytics(request):
 # This is in a separate function because it will be used in multiple contexts and
 # continue to grow with the number of modules
 def goToModule(session, moduleNum):
-	module = session.closed_set_trains.get(closed_set_train_order__order = moduleNum)
+	module = session.closed_set_trains.filter(closed_set_train_order__order = moduleNum)
 	if not module:
-		return redirect('cochlear:sessionEndPage')
-	return redirect('cochlear:speaker', speaker_module=module.id, repeatFlag = 0)
+		module = session.open_set_trains.filter(open_set_train_order__order = moduleNum)
+		return redirect('cochlear:openSet', open_set_module=module.first().id, repeatFlag = 0)
+	return redirect('cochlear:speaker', speaker_module=module.first().id, repeatFlag = 0)
 #		module = session.open_set_trains.get(orderInSession=moduleNum)

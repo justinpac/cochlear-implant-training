@@ -48,7 +48,7 @@ class Open_Set_Train_Order(models.Model):
     order = models.PositiveSmallIntegerField()
 
     def __str__(self):
-        return self.Session + self.open_set_train
+        return "session_" + str(self.session) + "_openSetTrain_"+ str(self.open_set_train)
 
 # Speaker associated with potentiallly many speech files
 class Speaker(models.Model):
@@ -67,7 +67,7 @@ class Speech(models.Model):
 
     def __str__(self):
         filename =  self.speech_file.name
-        return filename.strip('cochlear/speech/')
+        return self.speaker.name + "_" + filename.strip('cochlear/speech/')
 
 # Associate each question with an answer, and indicate if that answer is right
 class Closed_Set_Question_Answer(models.Model):
@@ -83,11 +83,10 @@ class Closed_Set_Train(models.Model):
     choices = models.ManyToManyField(Speech, through ='Closed_Set_Question_Answer', related_name = 'Closed_Set_Trains')
     test_sound = models.ForeignKey(Speech)
 
-
     def __str__(self):
         return str(self.pk) + "_TestSound_" + str(self.test_sound)
 
-# Data tracking for speaker identification trainin
+# Data tracking for speaker identification training
 class Closed_Set_Data(models.Model):
     user = models.ForeignKey(User_Attrib,on_delete=models.CASCADE)
     closed_set_train = models.ForeignKey(Closed_Set_Train,on_delete = models.CASCADE)
@@ -97,6 +96,7 @@ class Closed_Set_Data(models.Model):
     def __str__(self):
         return "(" + self.user.username + ")completed_" + self.date_completed
 
+# A training module for open-set responses, such as meaningful sentence training
 class Open_Set_Train(models.Model):
     test_sound = models.ForeignKey(Speech)
     answer = models.TextField()

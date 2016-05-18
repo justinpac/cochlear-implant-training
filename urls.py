@@ -4,10 +4,11 @@ from django.conf.urls.static import static
 
 urlpatterns = patterns('cochlear',
     url(r'^$', 'views.index', name='index' ),
-    url(r'^speaker/(?P<speaker_module>[\d])/(?P<repeatFlag>[\d])/$', 'views.speaker', name='speaker' ),
     url(r'^history/$','views.history', name = 'history'),
     url(r'^sessionEndPage/$','views.sessionEndPage', name = 'sessionEndPage'),
     url(r'^trainingEndPage/$','views.trainingEndPage', name = 'trainingEndPage'),
+    url(r'^speaker/(?P<speaker_module>[\d])/(?P<repeatFlag>[\d])/$', 'views.speaker', name='speaker' ),
+    url(r'^openSet/(?P<open_set_module>[\d])/(?P<repeatFlag>[\d])/$','views.openSet', name = 'openSet'),
     url(r'^startNewSession/$','views.startNewSession', name = 'startNewSession'),
     url(r'^goToNextModule/$','views.goToNextModule', name = 'goToNextModule'),
     #Manager pages
