@@ -122,8 +122,6 @@ def uploadSound(request):
 			speakerList = Speaker.objects.filter(name=request.POST['speaker_name']);
 			if(len(speakerList) == 0):
 				newSpeaker = Speaker();
-				print("New Speaker")
-				print(request.POST['speaker_name'])
 				newSpeaker.name=request.POST['speaker_name']
 				newSpeaker.save();
 				speakerID = newSpeaker.pk;
