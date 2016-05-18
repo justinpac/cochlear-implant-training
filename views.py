@@ -207,7 +207,7 @@ def loadDashboardData(context):
 	context['soundFileList']['colSize'] = int(12/len(context['soundFileList']['headers']))
 	soundFiles = Speech.objects.all();
 	for sound in soundFiles:
-		row = [sound.speech_file.name,sound.speaker.name,str(sound.uploaded_date)]
+		row = [sound.speech_file.name.strip('cochlear/speech/'),sound.speaker.name,str(sound.uploaded_date)]
 		context['soundFileList']['rows'].append(row)
 
 	#Speaker objects
@@ -230,7 +230,7 @@ def loadDashboardData(context):
 	context['closedQuestions']['colSize'] = int(12/len(context['closedQuestions']['headers']))
 	questions = Closed_Set_Train.objects.all();
 	for q in questions:
-		row = [q.test_sound.name,len(q.choices)]
+		row = [q.speech_file.name.strip('cochlear/speech/'),len(q.choices)]
 		context['closedQuestions']['rows'].append(row)
 
 	#Open set questions
