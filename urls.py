@@ -7,6 +7,7 @@ urlpatterns = patterns('cochlear',
     url(r'^speaker/(?P<speaker_module>[\d])/(?P<repeatFlag>[\d])/$', 'views.speaker', name='speaker' ),
     url(r'^history/$','views.history', name = 'history'),
     url(r'^sessionEndPage/$','views.sessionEndPage', name = 'sessionEndPage'),
+    url(r'^trainingEndPage/$','views.trainingEndPage', name = 'trainingEndPage'),
     url(r'^startNewSession/$','views.startNewSession', name = 'startNewSession'),
     url(r'^goToNextModule/$','views.goToNextModule', name = 'goToNextModule'),
     #Manager pages
