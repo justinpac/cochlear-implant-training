@@ -34,7 +34,8 @@ def index(request):
 	active_session = User_Session.objects.filter(date_completed=None)
 	if not active_session:
 		context['activeSessionFlag'] = False
-	context['activeSessionFlag'] = False
+	else:
+		context['activeSessionFlag'] = True
 	return render(request,'cochlear/index.html',context)
 
 def history(request):
@@ -69,8 +70,11 @@ def openSet(request, open_set_module, repeatFlag):
 	context = NavigationBar.generateAppContext(request,app="cochlear",title="openSet", navbarName=0)
 	user_attrib = User_Attrib.objects.get(username=request.user.username)
 	module = Open_Set_Train.objects.get(id=open_set_module)
-	context['test_sound'] = module.test_sound
+	context['test_sound'] = module.test_sound.speech_file.url
 	context['correctAnswer'] = module.answer
+	context['repeatFlag'] = repeatFlag
+	context['open_set_module_id'] = open_set_module
+	context['user_attrib_id'] = user_attrib.id
 	if (module.type_train == 2):
 		context['typeOfSpeech'] = "word"
 	else:
@@ -105,7 +109,7 @@ def startNewSession(request):
 			maxWeekComplete = week
 
 	# Get the next session the user needs to complete
-	nextSession = Session.objects.filter(week = (maxWeekComplete), day = (maxWeekComplete + 1))
+	nextSession = Session.objects.filter(week = (maxWeekComplete), day = (maxDayComplete + 1))
 	if not nextSession: 
 		# Either the next session is on a new week or there are no sessions left for the user to complete
 		nextSession = Session.objects.filter(week = (maxWeekComplete + 1), day = 1)
@@ -113,6 +117,9 @@ def startNewSession(request):
 			return redirect('cochlear:trainingEndPage')
 	
 	# Go to the first module of the next session
+	nextSession = nextSession.first()
+	newSession = User_Session(session = nextSession, user = userObj, date_completed = None, modules_completed = 0)
+	newSession.save()
 	return goToModule(nextSession, 1)
 
 def goToNextModule(request):

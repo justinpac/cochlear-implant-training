@@ -23,8 +23,8 @@ class User_Session(models.Model):
 
 #Tracking Data for a particular user session (a set of training modules copleted on a given day)
 class Session(models.Model):
-    closed_set_trains = models.ManyToManyField('Closed_Set_Train', related_name='Sessions', through='Closed_Set_Train_Order')
-    open_set_trains = models.ManyToManyField('Open_Set_Train', related_name='Sessions', through='Open_Set_Train_Order')
+    closed_set_trains = models.ManyToManyField('Closed_Set_Train', through='Closed_Set_Train_Order')
+    open_set_trains = models.ManyToManyField('Open_Set_Train', through='Open_Set_Train_Order')
     week = models.PositiveIntegerField()
     day = models.PositiveSmallIntegerField()
 

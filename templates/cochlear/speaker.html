@@ -35,12 +35,12 @@
         </div>
       </row>
       <div id ="next" class="col-md-12" style="display:none">
-      <a href = "{% url 'cochlear:goToNextModule' %}"
+      <a href = "{% url 'cochlear:goToNextModule' %}">
         <button type = "button" class="btn btn-primary btn-lg" style="margin-bottom:20px;margin-top:20px">
             <span class="glyphicon glyphicon-circle-arrow-right" aria-hidden="true" style="color:white"></span> Proceed to the next training module
         </button>
         </br>
-        <a href = "{% url 'cochlear:speaker' speaker_module=speaker_module_id repeatFlag=repeatFlag %}" >
+        <a href = "{% url 'cochlear:speaker' speaker_module=speaker_module_id repeatFlag=1 %}" >
           <button type = "button" class="btn btn-secondary btn-lg" >
               <span class="glyphicon glyphicon-repeat" aria-hidden="true"></span> Repeat this question
           </button>

@@ -35,14 +35,43 @@
 	      <div id ="incorrectBody" class="panel-body">Panel Content</div>
 	    </div>
     </div>
+
+    <div id ="next" class="col-md-12">
+      <a href = "{% url 'cochlear:goToNextModule' %}">
+        <button type = "button" class="btn btn-primary btn-lg" style="margin-bottom:20px">
+            <span class="glyphicon glyphicon-circle-arrow-right" aria-hidden="true" style="color:white"></span> Proceed to the next training module
+        </button>
+        </br>
+        <a href = "{% url 'cochlear:openSet' open_set_module=open_set_module_id repeatFlag=1 %}" >
+          <button type = "button" class="btn btn-secondary btn-lg" style="margin-bottom:20px">
+              <span class="glyphicon glyphicon-repeat" aria-hidden="true"></span> Repeat this question
+          </button>
+        </a>
+    </div>
 </div>
 
 <script src="{% static 'js/jquery.cookie.js' %}"></script>
 <script type="text/javascript">
 
+//Need this CSRF block for ajax calls to work
+  var csrftoken = $.cookie('csrftoken');
+  function csrfSafeMethod(method) {
+    // these HTTP methods do not require CSRF protection
+    return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+}
+$.ajaxSetup({
+    beforeSend: function(xhr, settings) {
+        if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+            xhr.setRequestHeader("X-CSRFToken", csrftoken);
+        }
+    }
+});
+///End CSRF block
+
 var questionUnanswered = true;
 
-function matchesAlmost(String str1, String str2) {
+// Returns true if two strings are off by at most two characters
+function matchesAlmost(str1, str2) {
     if (str1.length != str2.length) {
         return false;
     }
@@ -51,7 +80,12 @@ function matchesAlmost(String str1, String str2) {
         if (str1.charAt(i) == str2.charAt(i))
             same++;
     }
-    return same == (str1.length - 2);
+    return same >= (str1.length - 2);
+}
+
+// Display database error on console output
+function addFail(failMessage) {
+  console.log(failMessage.responseText);
 }
 
 $( document ).ready(function() {
@@ -62,12 +96,19 @@ $( document ).ready(function() {
 			var correctAnswer = "{{correctAnswer}}";
 			if (matchesAlmost(correctAnswer.toLowerCase(), answer.toLowerCase())) {
 				$("#correctBody").html("Correct! The answer was " + correctAnswer);
-				$("#correct").slideDown("swing");
+				$("#correct").slideDown("swing").promise().done(function(){
+					$('#next').slideDown("swing");
+				});
 			} else {
 				$("#incorrectBody").html("<p>Incorrect. Your answer was: " + answer + "</p><p>The correct answer was: " + correctAnswer + "</p>");
-				$("#incorrect").slideDown("swing");
+				$("#incorrect").slideDown("swing").promise().done(function(){
+					$('#next').slideDown("swing");
+				});
 			}
 			questionUnanswered = false;
+		    if(!(Boolean({{repeatFlag}}))) { // If this is not a repeat, indicate that a module was completed
+		      $.post("{% url 'cochlear:moduleCompleted' %}",{'user_attrib_id':{{user_attrib_id}}}).fail(addFail);
+		    }
 		}
 	});
 
