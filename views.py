@@ -144,15 +144,12 @@ def uploadSound(request):
 				speakerID = newSpeaker.pk;
 			else:
 				speakerID = speakerList[0].pk;
-		print("Using speaker ID",speakerID)
 		#Create a new speech object, and attach it to the speaker
 		speakerObj = Speaker.objects.get(pk=speakerID);
 		newSoundObj = Speech();
 		newSoundObj.speaker = speakerObj;
 		newSoundObj.speech_file = rawFile;
 		newSoundObj.save();
-
-
 		return HttpResponse("Success")
 	else:
 		return HttpResponse("No POST data received.")
@@ -186,9 +183,16 @@ def getSpeakers(request,name):
 #NOTE: Make sure to add the names of all the pages that should only be accessible
 #by managers in middleware.py
 
-def dashboard(request):
-	context = NavigationBar.generateAppContext(request,app="cochlear",title="index", navbarName='manager',activeLink="Manager Dashboard")
+def getDashboardData(request):
+	#Wrap dashboard data in json 
+	ctx =  {}
+	loadDashboardData(ctx)
+	data = json.dumps(ctx)
+	return HttpResponse(data, content_type='application/json')
 
+def loadDashboardData(context):
+	#Putting all the loading of the data in a seperate function so it can be done asynchronously 
+	#Sound files
 	context['soundFileList'] = {}
 	context['soundFileList']['headers'] = ['Filename','Speaker Name','Date Uploaded']
 	context['soundFileList']['rows'] = []
@@ -199,6 +203,7 @@ def dashboard(request):
 		row = [sound.speech_file.name,sound.speaker.name,str(sound.uploaded_date)]
 		context['soundFileList']['rows'].append(row)
 
+	#Speaker objects
 	context['speakerFileList'] = {}
 	context['speakerFileList']['headers'] = ['Speaker Name','Number of attached files']
 	context['speakerFileList']['rows'] = []
@@ -209,6 +214,26 @@ def dashboard(request):
 		numOfFiles = Speech.objects.filter(speaker=speaker).count();
 		row = [speaker.name,numOfFiles]
 		context['speakerFileList']['rows'].append(row)
+
+	#Closed set questions
+	context['closedQuestions'] = {}
+	context['closedQuestions']['headers'] = ['Filename','Speaker Name','Date Uploaded']
+	context['closedQuestions']['rows'] = []
+	context['closedQuestions']['id'] = 'closedquestions'
+	context['closedQuestions']['colSize'] = int(12/len(context['closedQuestions']['headers']))
+	soundFiles = Speech.objects.all();
+	for sound in soundFiles:
+		row = [sound.speech_file.name,sound.speaker.name,str(sound.uploaded_date)]
+		context['closedQuestions']['rows'].append(row)
+
+	#Open set questions
+
+	#Session objects
+
+def dashboard(request):
+	context = NavigationBar.generateAppContext(request,app="cochlear",title="index", navbarName='manager',activeLink="Manager Dashboard")
+
+	loadDashboardData(context)
 
 	userAttribObj = User_Attrib.objects.get(username=request.user.username)
 	context['name'] = userAttribObj.first_name;
