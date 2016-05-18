@@ -100,8 +100,7 @@ class Closed_Set_Data(models.Model):
 class Open_Set_Train(models.Model):
     test_sound = models.ForeignKey(Speech)
     answer = models.TextField()
-    # type_train indicates the type of training this is. 0 = meaningful sentence trainging,
-    # 1 = anomalous sentence training, 2 = word training
+    # type_train indicates the type of training this is. 0 = meaningful sentence training, 1 = anomalous sentence training, 2 = word training
     type_train = models.PositiveSmallIntegerField()
 
     def __str__(self):

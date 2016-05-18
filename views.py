@@ -49,6 +49,8 @@ def speaker(request, speaker_module, repeatFlag):
 
 	return render(request,'cochlear/speaker.html',context)
 
+
+
 def history(request):
 	context = NavigationBar.generateAppContext(request,app="cochlear",title="history", navbarName=0)
 
@@ -58,20 +60,43 @@ def sessionEndPage(request):
 	context = NavigationBar.generateAppContext(request,app="cochlear",title="sessionEndPage", navbarName=0)
 	return render(request,'cochlear/sessionEndPage.html',context)
 
+def trainingEndPage(request):
+	context = NavigationBar.generateAppContext(request,app="cochlear",title="trainingEndPage", navbarName=0)
+	return render(request,'cochlear/trainingEndPage.html',context)
+
 def startNewSession(request):
 	context = NavigationBar.generateAppContext(request,app="cochlear",title="startNewSession", navbarName=0)
 	userObj = User_Attrib.objects.filter(username=request.user.username).first()
 	user_sessions = User_Session.objects.filter(user = userObj.id)
-	#If the user has not completed any sessions, then we are on week 1, day 1
+
+	#If the user has not completed any sessions, then they are on the session for week 1, day 1
 	if not user_sessions:
 		week1Day1 = Session.objects.get(week = 1, day = 1)
 		newSession = User_Session(session = week1Day1,user = userObj, date_completed = None, modules_completed = 0)
 		newSession.save()
 		return goToModule(week1Day1, 1)
-	#Get max week the user completed
-	#Get max day of that week
-	#Get the session module for the next day
-	#go to the first module
+
+	#Get the max session day and week that the user has completed
+	maxWeekComplete = 0;
+	maxDayComplete = 0;
+	for user_session in user_sessions:
+		day = user_session.session.day
+		week = user_session.session.week
+		if (day > maxDayComplete):
+			maxDayComplete = day
+		if (week > maxWeekComplete):
+			maxWeekComplete = week
+
+	# Get the next session the user needs to complete
+	nextSession = Session.objects.filter(week = (maxWeekComplete), day = (maxWeekComplete + 1))
+	if not nextSession: 
+		# Either the next session is on a new week or there are no sessions left for the user to complete
+		nextSession = Session.objects.filter(week = (maxWeekComplete + 1), day = 1)
+		if not nextSession:
+			return redirect('cochlear:trainingEndPage')
+	
+	# Go to the first module of the next session
+	return goToModule(nextSession, 1)
 
 def goToNextModule(request):
 	userObj = User_Attrib.objects.get(username=request.user.username)

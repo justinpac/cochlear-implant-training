@@ -1,0 +1,20 @@
+{% extends "cochlear_base.html" %}
+
+{% block cochlear-content %}
+
+{% load staticfiles %}
+
+<div class = "container">
+  <div style="text-align:center">
+    <h2>It appears that there are no more sessions for you to complete.</h2>
+   	<h2>Please check back again another day!</h2>
+    <br/>
+    <a href = "{% url 'cochlear:index' %}" >
+      <button type = "button" class="btn btn-primary btn-lg" style="margin-bottom:20px;">
+        return to dashboard
+      </button>
+    </a>
+  </div>
+</div>
+
+{% endblock %}
