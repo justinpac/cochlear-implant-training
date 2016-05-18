@@ -53,6 +53,8 @@ rows.on("click",function(evt){//If any of these are clicked
 		test_sound = evt.target.innerHTML
 		$("#closedquestionpopup_items").fadeOut()
 		$("#closedquestionpopup_header").fadeOut()
+		//Resize the table
+		$('#closedquestionpopup_items').parent().css("height","250px")
 		$('#closedquestions_page1').fadeOut(animationTime,null,function(){
 			$('#closedquestions_page2').fadeIn(animationTime,null,function(){
 				$('#closedquestionpopup_items').fadeIn()

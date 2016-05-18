@@ -230,7 +230,7 @@ def loadDashboardData(context):
 	context['closedQuestions']['colSize'] = int(12/len(context['closedQuestions']['headers']))
 	questions = Closed_Set_Train.objects.all();
 	for q in questions:
-		row = [q.test_sound.speech_file.name.strip('cochlear/speech/'),len(q.choices)]
+		row = [q.test_sound.speech_file.name.strip('cochlear/speech/'),q.choices.count()]
 		context['closedQuestions']['rows'].append(row)
 
 	#Open set questions
