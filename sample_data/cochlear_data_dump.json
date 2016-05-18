@@ -12,20 +12,30 @@
 	"model": "cochlear.user_attrib",
 	"fields": {
 		"status": 1,
-		"last_name": "Smith",
-		"username": "manager",
-		"first_name": "John",
-		"email": "jo@stolaf.edu"
+		"last_name": "Loebach",
+		"username": "loebach",
+		"first_name": "Jeremy",
+		"email": "loebach@stolaf.edu"
 	},
 	"pk": 2
 }, {
 	"model": "cochlear.user_attrib",
 	"fields": {
+		"status": 1,
+		"last_name": "Shehata",
+		"username": "shehat1",
+		"first_name": "Omar",
+		"email": "shehat1@stolaf.edu"
+	},
+	"pk": 3
+}, {
+	"model": "cochlear.user_attrib",
+	"fields": {
 		"status": 0,
-		"last_name": "Smith",
-		"username": "guest",
-		"first_name": "Thomas",
-		"email": "Smith@stolaf.edu"
+		"last_name": "Test",
+		"username": "student_test",
+		"first_name": "Student",
+		"email": "student_test@stolaf.edu"
 	},
 	"pk": 3
 }, {
@@ -196,7 +206,7 @@
 	"model": "cochlear.speech",
 	"fields": {
 		"speaker": 1,
-		"speech_file": "cochlear/speech/mi0D0_bwQRVoM.wav",
+		"speech_file": "cochlear/speech/mi0D0.wav",
 		"uploaded_date": "2016-05-08T03:13:34.760Z",
 		"difficulty": 0
 	},
@@ -205,7 +215,7 @@
 	"model": "cochlear.speech",
 	"fields": {
 		"speaker": 1,
-		"speech_file": "cochlear/speech/mi0D1_UvWtVsl.wav",
+		"speech_file": "cochlear/speech/mi0D1.wav",
 		"uploaded_date": "2016-05-08T03:13:47.958Z",
 		"difficulty": 0
 	},
@@ -214,7 +224,7 @@
 	"model": "cochlear.speech",
 	"fields": {
 		"speaker": 2,
-		"speech_file": "cochlear/speech/mi1D0_s2VCtVN.wav",
+		"speech_file": "cochlear/speech/mi1D0.wav",
 		"uploaded_date": "2016-05-08T03:13:57.409Z",
 		"difficulty": 0
 	},
@@ -223,7 +233,7 @@
 	"model": "cochlear.speech",
 	"fields": {
 		"speaker": 3,
-		"speech_file": "cochlear/speech/mi3D0_8KOiSu1.wav",
+		"speech_file": "cochlear/speech/mi3D0.wav",
 		"uploaded_date": "2016-05-08T03:14:16.199Z",
 		"difficulty": 0
 	},
@@ -232,7 +242,7 @@
 	"model": "cochlear.speech",
 	"fields": {
 		"speaker": 4,
-		"speech_file": "cochlear/speech/mi6D0_KjkO5g6.wav",
+		"speech_file": "cochlear/speech/mi6D0.wav",
 		"uploaded_date": "2016-05-08T03:14:37.030Z",
 		"difficulty": 0
 	},
