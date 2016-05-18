@@ -18,7 +18,8 @@ urlpatterns = patterns('cochlear',
     #ajax methods
     url(r'^moduleCompleted/$','views.moduleCompleted', name = 'moduleCompleted'),
     url(r'^getSpeakers/(?P<name>[\w|\W]+)/','views.getSpeakers',name = 'getSpeakers'),
-    url(r'^upload_sound/','views.uploadSound',name = 'uploadSound')
+    url(r'^upload_sound/','views.uploadSound',name = 'uploadSound'),
+    url(r'^getDashboardData/','views.getDashboardData',name = 'getDashboardData'),
 )
 
 #if settings.DEBUG is True:

@@ -28,11 +28,50 @@
 	<center><h2>Training Modules</h2></center>
 	
 	<h3>Closed Set Questions</h3>
-	<p>These are the questions where the user listens to a test sound, </p>
+	<p>These are the questions where the user listens to a test sound, then has to choose the correct answer from a set of sounds.</p>
+
+
+	<h3>Open Set Questions</h3>
+	<p>These are questions where the user listens to a test sound, then has to type in the correct answer in a text box.</p>
+
+	<h3>Sessions</h3>
+	<p>Create sessions out of open and closed set questions.</p>
 
 	
 	
 	<script type="text/javascript" src="{% static 'cochlear/js/file_list.js' %}"></script>
+	<script type="text/javascript">
+	function RefreshData(){
+		//Refreshes the data. Called by each popup after it closes
+		function success(data){
+			//Put the data in for the sound files
+			function refreshList(name,id){
+				var soundFiles = data[name]['rows']
+				itemList = $("#"+id+"_items")
+				itemList.empty()//clear it
+				//Add the new items 
+				var child = "<tbody>"
+				for(var i=0;i<soundFiles.length;i++){
+					var row = soundFiles[i]
+					child += "<tr>"
+					for(var j=0;j<soundFiles[i].length;j++){
+						child += '<td class="col-md-'+data[name]['colSize']+ ' '+id+'_items_'+String(j)+'">'+String(soundFiles[i][j])+'</td>'
+					}
+					child += "</tr>"
+				}
+				child += "</tbody>"
+				itemList.append(child)
+			}
+			refreshList('soundFileList','soundfiles')
+			refreshList('speakerFileList','speakerfiles')
+
+		}
+		function fail(msg){
+			console.log("Failed to refresh!",msg)
+		}
+		$.get('{% url "cochlear:getDashboardData" %}',success).fail(fail)
+	}
+	</script>
 </div>
 
 {% endblock %}

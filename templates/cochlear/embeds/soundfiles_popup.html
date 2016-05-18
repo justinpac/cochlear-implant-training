@@ -38,6 +38,7 @@
 	$('#soundfiles_addbtn').magnificPopup({type:'inline',disableOn:function(){return true},callbacks: {close:function(){
 		//Reset everything
 		console.log("Close")
+		RefreshData()
 		$('#sound_page1').css("display","block");
 		var pages = ["page2"]
 		for(var i=0;i<pages.length;i++) $('#sound_' + pages[i]).css("display","none");
@@ -62,6 +63,7 @@
 	var animationTime = 250;
 	$('#speaker_name').on('input propertychange paste',function(){
 		function success(data){
+
 			//Empty the list
 			$('#speakerchoice_list_div').empty()
 			//Fill it with the choices

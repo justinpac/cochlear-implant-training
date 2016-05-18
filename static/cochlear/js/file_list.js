@@ -3,11 +3,12 @@ $(function(){
 		//Helper function to apply alphanumeric sorting on an array of row elements
 		//First step is to extract the inner html values
 		var pureArray = []
-		var arrayDict = {}
+		var arrayDict = {}//TODO: This causes the rows to be duplicated when the column values are the same
 		for(var i=0;i<array.length;i++){
 			pureArray.push(array[i].innerHTML)
 			arrayDict[array[i].innerHTML] = array[i]
 		}
+
 		//Now we sort the pure function
 		pureArray.alphanumSort();
 		if(reverse) pureArray.reverse();//If we want descending
