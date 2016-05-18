@@ -1,3 +1,27 @@
-.button {
-	margin-bottom: 20px;
+#listen {
+	text-align:center;
+	margin:20px;
 }
+
+#incorrect {
+	display:none;
+}
+
+#correct {
+	display:none;
+}
+
+#submitButton {
+	margin-top:22px;
+}
+
+#next{
+	display:none;
+	text-align:center;
+}
+/*.vertical-centered {
+  position: absolute;
+  top: 50%;
+  height: 100px;
+  margin-top: -50px;
+}*/
