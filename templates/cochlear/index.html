@@ -8,28 +8,65 @@
 
 
 <div class="container"><!-- This is a bootstrap class -->
-		<h1> Welcome, {{name}}! </h1>
-		<div class="progress">
-			<div id ="progressBar" class="progress-bar progress-bar-striped active" role="progressbar"
-		  aria-valuenow="{{percentComplete}}" aria-valuemin="0" aria-valuemax="100" style="width:{{percentComplete}}%;">
-			<span>{{sessions}} out of 4 sessions completed this week</span>
-			</div>
+	<h1> Welcome, {{name}}! </h1>
+	<div class="progress">
+		<div id ="progressBar" class="progress-bar progress-bar-striped active" role="progressbar"
+	  aria-valuenow="{{percentComplete}}" aria-valuemin="0" aria-valuemax="100" style="width:{{percentComplete}}%;">
+		<span>{{sessions}} out of 4 sessions completed this week</span>
 		</div>
-		<div class="row">
-		{% if activeSessionFlag %}
-	   	<a href = "{% url 'cochlear:goToNextModule' %}">
-				<button id = "startTraining" type="button" class="btn btn-success btn-lg">Continue your current session</button>
-	    </a>
-	    {% else %}
-	    <a href = "{% url 'cochlear:startNewSession' %}">
-				<button id = "startTraining" type="button" class="btn btn-primary btn-lg">Start a new training session</button>
-	    </a>
-	    {% endif %}
-	    <a href = "{% url 'cochlear:history' %}" >
-	      <button id = "history" type="button" class="btn btn-secondary btn-lg">View training history</button>
-	    </a>
-		</div>
+	</div>
+	<div class="row">
+	{% if activeSessionFlag %}
+   	<a href = "{% url 'cochlear:goToNextModule' %}">
+			<button id = "continueSession" type="button" class="btn btn-success btn-lg">Continue your current session</button>
+    </a>
+    {% else %}
+<!--     <a href = "{% url 'cochlear:startNewSession' %}"> -->
+			<button id = "startSession" type="button" class="btn btn-primary btn-lg">Start a new training session</button>
+<!--     </a> -->
+    {% endif %}
+    <a href = "{% url 'cochlear:history' %}" >
+      <button id = "history" type="button" class="btn btn-secondary btn-lg">View training history</button>
+    </a>
+	</div>
+
+	<!-- Modal -->
+	<div id="24HourWarning" class="modal fade" role="dialog">
+	  <div class="modal-dialog">
+
+	    <!-- Modal content-->
+	    <div class="modal-content">
+	      <div class="modal-header">
+	        <button type="button" class="close" data-dismiss="modal">&times;</button>
+	        <h4 class="modal-title">Are you sure you want to start a new session?</h4>
+	      </div>
+	      <div class="modal-body">
+	        <p>It looks like less than 24 hours have passed since you completed your last session. We recommend that you get some sleep between sessions. Click "Yes, Start Session" to affirm that you have slept and would like to start a new session.</p>
+	      </div>
+	      <div class="modal-footer">
+	        <button id="confirmSession" type="button" class="btn btn-primary" data-dismiss="modal">Yes, Start Session</button>
+	        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+	      </div>
+	    </div>
+
+	  </div>
+	</div>
+
 </div>
 <br>
+
+<script type="text/javascript">
+	$("#startSession").click(function(event) {
+		if({{recentSessionFlag}}) {
+			$("#24HourWarning").modal({'show': true});
+		} else {
+			window.location.replace("{% url 'cochlear:startNewSession' %}");
+		}
+	});
+
+	$("#confirmSession").click(function(event){
+		window.location.replace("{% url 'cochlear:startNewSession' %}");
+	});
+</script>
 
 {% endblock %}

@@ -22,6 +22,7 @@ def index(request):
 	permission = cochlear.util.GetUserPermission(request.user.username);
 	if(permission > 0):
 		return redirect('cochlear:dashboard')
+
 	#Render a basic page
 	context = NavigationBar.generateAppContext(request,app="cochlear",title="index", navbarName=0)
 	userList = User_Attrib.objects.filter(username=request.user.username)
@@ -30,6 +31,15 @@ def index(request):
 	oneWeekAgo = currentTime - datetime.timedelta(days=7);
 	context['sessions'] = User_Session.objects.filter(user=userList[0].id, date_completed__range=(oneWeekAgo,currentTime)).count()
 	context['percentComplete'] = str(context['sessions'] * 25)
+
+	#Indicate if less than 24 hours have passed since the last session
+	oneDayAgo = currentTime - datetime.timedelta(days=1)
+	recentSession = User_Session.objects.filter(user=userList[0].id, date_completed__range=(oneDayAgo,currentTime))
+	if not recentSession:
+		context['recentSessionFlag'] = 0
+	else:
+		context['recentSessionFlag'] = 1
+
 	#Indicate if there is an active session
 	active_session = User_Session.objects.filter(date_completed=None)
 	if not active_session:
