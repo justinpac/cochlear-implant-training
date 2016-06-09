@@ -42,7 +42,7 @@
             <span class="glyphicon glyphicon-circle-arrow-right" aria-hidden="true" style="color:white"></span> Proceed to the next training module
         </button>
         </br>
-        <a href = "{% url 'cochlear:openSet' open_set_module=open_set_module_id repeatFlag=1 %}" >
+        <a href = "{% url 'cochlear:openSet' open_set_module=open_set_module_id repeatFlag=1 order_id=order_id %}" >
           <button type = "button" class="btn btn-secondary btn-lg" style="margin-bottom:20px">
               <span class="glyphicon glyphicon-repeat" aria-hidden="true"></span> Repeat this question
           </button>
@@ -50,52 +50,85 @@
     </div>
 </div>
 
+{% include "cochlear/embeds/backbuttondialogue.html" %}
+<script src="{% static 'js/backbuttondialogue.js' %}"></script>
 <script src="{% static 'js/jquery.cookie.js' %}"></script>
+<script src="{% static 'js/CSRF.js' %}"></script>
 <script type="text/javascript">
 
-//Need this CSRF block for ajax calls to work
-  var csrftoken = $.cookie('csrftoken');
-  function csrfSafeMethod(method) {
-    // these HTTP methods do not require CSRF protection
-    return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
-}
-$.ajaxSetup({
-    beforeSend: function(xhr, settings) {
-        if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
-            xhr.setRequestHeader("X-CSRFToken", csrftoken);
-        }
-    }
-});
-///End CSRF block
-
 var questionUnanswered = true;
-
-// Returns true if two strings are off by at most two characters
-function matchesAlmost(str1, str2) {
-    if (str1.length != str2.length) {
-        return false;
-    }
-    var same = 0;
-    for (i = 0; i < str1.length; i++) {
-        if (str1.charAt(i) == str2.charAt(i))
-            same++;
-    }
-    return same >= (str1.length - 2);
-}
 
 // Display database error on console output
 function addFail(failMessage) {
   console.log(failMessage.responseText);
 }
 
+// Measures the number of insertion, substitiution, deletion, and transposition operations necessary to match the given strings
+// Taken from this post: http://stackoverflow.com/a/11958496
+// This is an implementation of the Damerau–Levenshtein distance algorithm: https://en.wikipedia.org/wiki/Damerau%E2%80%93Levenshtein_distance
+var levDist = function(s, t) {
+    var d = []; //2d matrix
+
+    // Step 1
+    var n = s.length;
+    var m = t.length;
+
+    if (n == 0) return m;
+    if (m == 0) return n;
+
+    //Create an array of arrays in javascript (a descending loop is quicker)
+    for (var i = n; i >= 0; i--) d[i] = [];
+
+    // Step 2
+    for (var i = n; i >= 0; i--) d[i][0] = i;
+    for (var j = m; j >= 0; j--) d[0][j] = j;
+
+    // Step 3
+    for (var i = 1; i <= n; i++) {
+        var s_i = s.charAt(i - 1);
+
+        // Step 4
+        for (var j = 1; j <= m; j++) {
+
+            //Check the jagged ld total so far
+            if (i == j && d[i][j] > 4) return n;
+
+            var t_j = t.charAt(j - 1);
+            var cost = (s_i == t_j) ? 0 : 1; // Step 5
+
+            //Calculate the minimum
+            var mi = d[i - 1][j] + 1;
+            var b = d[i][j - 1] + 1;
+            var c = d[i - 1][j - 1] + cost;
+
+            if (b < mi) mi = b;
+            if (c < mi) mi = c;
+
+            d[i][j] = mi; // Step 6
+
+            //Damerau transposition
+            if (i > 1 && j > 1 && s_i == t.charAt(j - 2) && s.charAt(i - 2) == t_j) {
+                d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + cost);
+            }
+        }
+    }
+
+    // Step 7
+    return d[n][m];
+}
+
 $( document ).ready(function() {
+
+  $("#dashboardRedirect").click(function(event){
+    window.location.replace("{% url 'cochlear:index' %}");
+  });
 
 	$("#submit").click(function(event){
 		if(questionUnanswered) {
 			var answer = $('#answer').val();
 			var correctAnswer = "{{correctAnswer}}";
-			if (matchesAlmost(correctAnswer.toLowerCase(), answer.toLowerCase())) {
-				$("#correctBody").html("Correct! The answer was " + correctAnswer);
+			if (levDist(correctAnswer.toLowerCase(), answer.toLowerCase()) <= 2) {
+				$("#correctBody").html("Correct! The answer was: " + correctAnswer);
 				$("#correct").slideDown("swing").promise().done(function(){
 					$('#next').slideDown("swing");
 				});
@@ -107,13 +140,13 @@ $( document ).ready(function() {
 			}
 			questionUnanswered = false;
 		    if(!(Boolean({{repeatFlag}}))) { // If this is not a repeat, indicate that a module was completed
-		      $.post("{% url 'cochlear:moduleCompleted' %}",{'user_attrib_id':{{user_attrib_id}}}).fail(addFail);
+		      $.post("{% url 'cochlear:moduleCompleted' %}",{'order_id':{{order_id}},'module_type':'open_set_train'}).fail(addFail);
 		    }
 		}
 	});
-
+  
+  var audio = new Audio("{{test_sound}}");
 	$("#testSound").click(function(event){
-		var audio = new Audio("{{test_sound}}");
 		audio.play();
 	});
 

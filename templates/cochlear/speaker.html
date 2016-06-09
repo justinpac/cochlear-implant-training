@@ -10,7 +10,7 @@
   <br>
   <div class = "row">
     <div  id="test" style="text-align:center;display:none;">
-      <button id = "test" type = "button" class="btn btn-info btn-lg" style="margin-bottom:40px" onclick='play_speaker("{{test_sound.speech_file.url}}")'>
+      <button id = "test" type = "button" class="btn btn-info btn-lg" style="margin-bottom:40px" onclick='play_speaker(0)'>
         <span class="glyphicon glyphicon-question-sign" aria-hidden="true" style="color:white"></span> Listen to the unknown speaker
       </button>
     </div>
@@ -19,11 +19,11 @@
       {% for speech in speaker_choices %}
 
         <div class="col-md-6" style="height:100%;margin-bottom:20px;">
-          <button id = "choice_{{speech.id}}" type = "button" class="btn btn-info btn-lg" onclick='play_speaker("{{speech.speech_file.url}}")'>
+          <button id = "choice_{{speech.id}}" type = "button" class="btn btn-info btn-lg" onclick='play_speaker({{forloop.counter}})'>
             <span class="glyphicon glyphicon-user" aria-hidden="true" style="color:white"></span> Listen to {{speech.speaker.name}}
           </button>
-            <span id="correct_{{speech.id}}"class="glyphicon glyphicon-ok vertical-centered" aria-hidden="true" style="display:none;color:green"></span>
-            <span id="incorrect_{{speech.id}}"class="glyphicon glyphicon-remove vertical-centered" aria-hidden="true" style="display:none;color:red"></span>
+            <span id="correct_{{speech.id}}" class="glyphicon glyphicon-ok vertical-centered" aria-hidden="true" style="display:none;color:green"></span>
+            <span id="incorrect_{{speech.id}}" class="glyphicon glyphicon-remove vertical-centered" aria-hidden="true" style="display:none;color:red"></span>
             <button id = "response_{{speech.id}}" type = "button" class="btn btn-primary btn-lg" style="display:none" onclick='checkAnswer("{{speech.id}}","{{speech.speaker.name}}","{{test_sound.speaker.name}}" )'>
               <span class="glyphicon glyphicon-user" aria-hidden="true" style="color:white"></span> The unknown speaker is {{speech.speaker.name}}
             </button>
@@ -40,7 +40,7 @@
             <span class="glyphicon glyphicon-circle-arrow-right" aria-hidden="true" style="color:white"></span> Proceed to the next training module
         </button>
         </br>
-        <a href = "{% url 'cochlear:speaker' speaker_module=speaker_module_id repeatFlag=1 %}" >
+        <a href = "{% url 'cochlear:speaker' speaker_module=speaker_module_id repeatFlag=1 order_id=order_id %}" >
           <button type = "button" class="btn btn-secondary btn-lg" >
               <span class="glyphicon glyphicon-repeat" aria-hidden="true"></span> Repeat this question
           </button>
@@ -50,31 +50,21 @@
   </div>
 
   <br>
-
+{% include "cochlear/embeds/backbuttondialogue.html" %}
+<script src="{% static 'js/backbuttondialogue.js' %}"></script>
 <script src="{% static 'js/jquery.cookie.js' %}"></script>
+<script src="{% static 'js/CSRF.js' %}"></script>
 <script type="text/javascript">
-
-//Need this CSRF block for ajax calls to work
-  var csrftoken = $.cookie('csrftoken');
-  function csrfSafeMethod(method) {
-    // these HTTP methods do not require CSRF protection
-    return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
-}
-$.ajaxSetup({
-    beforeSend: function(xhr, settings) {
-        if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
-            xhr.setRequestHeader("X-CSRFToken", csrftoken);
-        }
-    }
-});
-///End CSRF block
-
-//Create arrays of ID's on which I want to perform the same operations on
+// Create arrays of ID's on which I want to perform the same operations on
 var choiceIDs = [];
 var responseIDs = [];
+var speechAudio = [];
+speechAudio.push(new Audio("{{test_sound.speech_file.url}}"))
+// Populate these arrays and preload the audio
 {% for speech in speaker_choices %}
   choiceIDs.push("choice_{{speech.id}}");
   responseIDs.push("response_{{speech.id}}");
+  speechAudio.push(new Audio("{{speech.speech_file.url}}"));
 {% endfor %}
 
 var questionUnanswered = true;
@@ -109,7 +99,7 @@ function checkAnswer(choice_id, answer, correctAnswer) {
     $('#next').slideDown();
 
     if(!(Boolean({{repeatFlag}}))) { // if this is not a repeat, indicate that a module was completed
-      $.post("{% url 'cochlear:moduleCompleted' %}",{'user_attrib_id':{{user_attrib_id}}}).fail(addFail);
+      $.post("{% url 'cochlear:moduleCompleted' %}",{'module_type':'closed_set_train','order_id':{{order_id}}}).fail(addFail);
     }
   }
 }
@@ -120,9 +110,8 @@ function addFail(failMessage) {
 }
 
 //Play audio for a speaker
-function play_speaker(speech_file) {
-  var audio = new Audio(speech_file);
-  audio.play();
+function play_speaker(index) {
+  speechAudio[index].play();
 }
 
 // Display unknown speaker and possible answer choices

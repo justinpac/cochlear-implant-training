@@ -21,7 +21,7 @@ class User_Session(models.Model):
     def __str__(self):
         return self.user.username + "_" + str(self.date_completed)
 
-#Tracking Data for a particular user session (a set of training modules copleted on a given day)
+# Tracking Data for a particular user session (a set of training modules copleted on a given day)
 class Session(models.Model):
     closed_set_trains = models.ManyToManyField('Closed_Set_Train', through='Closed_Set_Train_Order')
     open_set_trains = models.ManyToManyField('Open_Set_Train', through='Open_Set_Train_Order')
@@ -34,6 +34,7 @@ class Session(models.Model):
     def countModules(self):
         return self.closed_set_trains.all().count() + self.open_set_trains.count()
 
+# Defines the order of a closed set training module in a session
 class Closed_Set_Train_Order(models.Model):
     session = models.ForeignKey(Session, on_delete=models.CASCADE)
     closed_set_train = models.ForeignKey('Closed_Set_Train', on_delete=models.CASCADE)
@@ -42,6 +43,18 @@ class Closed_Set_Train_Order(models.Model):
     def __str__(self):
         return "session_" + str(self.session) + "_closedSetTrain_"+ str(self.closed_set_train)
 
+# This is necessary to determine if a user has completed a certain training module in a given session.
+# This is feels like a heavy-handed approach, so perhaps there are better ways to handle this, but this
+# table may prove useful in the future for something like data mining.
+class User_Closed_Set_Train_Order(models.Model):
+    user_attrib = models.ForeignKey('User_Attrib', on_delete=models.CASCADE)
+    closed_set_train_order = models.ForeignKey('Closed_Set_Train_Order', on_delete=models.CASCADE)
+    completed = models.BooleanField(default=False)
+
+    def __str__(self):
+        return str(self.user_attrib) + "_" + str(self.closed_set_train_order)
+
+# Defines the order of an open set training module in a session
 class Open_Set_Train_Order(models.Model):
     session = models.ForeignKey(Session, on_delete=models.CASCADE)
     open_set_train = models.ForeignKey('Open_Set_Train', on_delete=models.CASCADE)
@@ -49,6 +62,15 @@ class Open_Set_Train_Order(models.Model):
 
     def __str__(self):
         return "session_" + str(self.session) + "_openSetTrain_"+ str(self.open_set_train)
+ 
+# Necessary to determine if a user has completed a certain training module in a given session.
+class User_Open_Set_Train_Order(models.Model):
+    user_attrib = models.ForeignKey('User_Attrib', on_delete=models.CASCADE)
+    open_set_train_order = models.ForeignKey('Open_Set_Train_Order', on_delete=models.CASCADE)
+    completed = models.BooleanField(default=False)
+
+    def __str__(self):
+        return str(self.user_attrib) + "_" + str(self.open_set_train_order)
 
 # Speaker associated with potentiallly many speech files
 class Speaker(models.Model):

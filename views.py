@@ -64,7 +64,8 @@ def trainingEndPage(request):
 ## Training Modules ##
 ######################
 
-def speaker(request, speaker_module, repeatFlag):
+# Render the speaker identification page
+def speaker(request, speaker_module, repeatFlag, order_id):
 	context = NavigationBar.generateAppContext(request,app="cochlear",title="speaker", navbarName=0)
 	userObj = User_Attrib.objects.get(username=request.user.username)
 	module = Closed_Set_Train.objects.get(id=speaker_module)
@@ -73,16 +74,19 @@ def speaker(request, speaker_module, repeatFlag):
 	context['speaker_module_id'] = module.id
 	context['user_attrib_id'] = userObj.id
 	context['repeatFlag'] = repeatFlag
+	context['order_id'] = order_id
 
 	return render(request,'cochlear/speaker.html',context)
 
-def openSet(request, open_set_module, repeatFlag):
+#Render a generic page for a closed-set module
+def openSet(request, open_set_module, repeatFlag, order_id):
 	context = NavigationBar.generateAppContext(request,app="cochlear",title="openSet", navbarName=0)
 	user_attrib = User_Attrib.objects.get(username=request.user.username)
 	module = Open_Set_Train.objects.get(id=open_set_module)
 	context['test_sound'] = module.test_sound.speech_file.url
 	context['correctAnswer'] = module.answer
 	context['repeatFlag'] = repeatFlag
+	context['order_id'] = order_id
 	context['open_set_module_id'] = open_set_module
 	context['user_attrib_id'] = user_attrib.id
 	if (module.type_train == 2):
@@ -103,8 +107,7 @@ def startNewSession(request):
 	#If the user has not completed any sessions, then they are on the session for week 1, day 1
 	if not user_sessions:
 		week1Day1 = Session.objects.get(week = 1, day = 1)
-		newSession = User_Session(session = week1Day1,user = userObj, date_completed = None, modules_completed = 0)
-		newSession.save()
+		createUserSessionData(week1Day1, userObj)
 		return goToModule(week1Day1, 1)
 
 	#Get the max session day and week that the user has completed
@@ -128,8 +131,10 @@ def startNewSession(request):
 	
 	# Go to the first module of the next session
 	nextSession = nextSession.first()
-	newSession = User_Session(session = nextSession, user = userObj, date_completed = None, modules_completed = 0)
-	newSession.save()
+	
+	#Create user-specific objects for this session
+	createUserSessionData(nextSession, userObj)
+
 	return goToModule(nextSession, 1)
 
 def goToNextModule(request):
@@ -175,8 +180,16 @@ def moduleCompleted(request):
 	userList = User_Attrib.objects.filter(username=request.user.username)
 	user = userList[0]
 	user_session = User_Session.objects.get(user=user.id, date_completed=None)
-	user_session.modules_completed += 1
-	user_session.save()
+	if (request.POST['module_type'] == 'open_set_train'):
+		orderObj = User_Open_Set_Train_Order.objects.all().filter(open_set_train_order = request.POST['order_id'], user_attrib = user)
+	else:
+		orderObj = User_Closed_Set_Train_Order.objects.all().filter(closed_set_train_order = request.POST['order_id'], user_attrib = user)
+	orderObj = orderObj.first()
+	if (not(orderObj.completed)):
+		user_session.modules_completed += 1
+		user_session.save()
+		orderObj.completed = True
+		orderObj.save()
 	return HttpResponse("Success")
 
 def getSpeakers(request,name):
@@ -285,6 +298,20 @@ def goToModule(session, moduleNum):
 	module = session.closed_set_trains.filter(closed_set_train_order__order = moduleNum)
 	if not module:
 		module = session.open_set_trains.filter(open_set_train_order__order = moduleNum)
-		return redirect('cochlear:openSet', open_set_module=module.first().id, repeatFlag = 0)
-	return redirect('cochlear:speaker', speaker_module=module.first().id, repeatFlag = 0)
-#		module = session.open_set_trains.get(orderInSession=moduleNum)
+		order_id = Open_Set_Train_Order.objects.all().get(session = session, order = moduleNum).id
+		return redirect('cochlear:openSet', open_set_module=module.first().id, repeatFlag = 0, order_id = order_id)
+	order_id = Closed_Set_Train_Order.objects.all().get(session = session, order = moduleNum).id
+	return redirect('cochlear:speaker', speaker_module=module.first().id, repeatFlag = 0, order_id = order_id)
+
+# Create user-specific objects for a given session
+def createUserSessionData(sessionObj, userObj):
+	newSession = User_Session(session = sessionObj, user = userObj, date_completed = None, modules_completed = 0)
+	newSession.save()
+	closed_set_train_orders = Closed_Set_Train_Order.objects.filter(session = sessionObj)
+	for closed_set_train_order in closed_set_train_orders:
+		temp = User_Closed_Set_Train_Order(user_attrib = userObj, closed_set_train_order = closed_set_train_order, completed = False)
+		temp.save()
+	open_set_train_orders = Open_Set_Train_Order.objects.filter(session = sessionObj)
+	for open_set_train_order in open_set_train_orders:
+		temp = User_Open_Set_Train_Order(user_attrib = userObj, open_set_train_order = open_set_train_order, completed = False)
+		temp.save()

@@ -12,6 +12,8 @@ admin.site.register(Speech)
 admin.site.register(Closed_Set_Question_Answer)
 admin.site.register(Closed_Set_Data)
 admin.site.register(Closed_Set_Train_Order)
+admin.site.register(User_Closed_Set_Train_Order)
 admin.site.register(Open_Set_Train)
 admin.site.register(Open_Set_Train_Order)
+admin.site.register(User_Open_Set_Train_Order)
 #Session, Closed_Set_Train inline registered
