@@ -7,7 +7,7 @@ class User_Attrib(models.Model):
     first_name = models.CharField(max_length = 50)
     last_name = models.CharField(max_length = 50)
     email = models.EmailField()
-    status = models.PositiveSmallIntegerField(default = 0) # 0 = standard user, 1 = manager, 2 = admin
+    status = models.PositiveSmallIntegerField(default = 0, help_text="0 = standard user, 1 = manager, 2 = admin") # 0 = standard user, 1 = manager, 2 = admin
 
     def __str__(self):
         return self.username
@@ -75,7 +75,9 @@ class User_Open_Set_Train_Order(models.Model):
 # Speaker associated with potentiallly many speech files
 class Speaker(models.Model):
     name = models.CharField(max_length = 50)
+    display_name = models.CharField(max_length = 50, help_text="This is the name that will be displayed in training modules")
     difficulty = models.PositiveSmallIntegerField(default = 0)
+    gender = models.CharField(max_length=20, help_text="type 'male' for male or 'female' for female") 
 
     def __str__(self):
         return self.name
@@ -123,7 +125,7 @@ class Open_Set_Train(models.Model):
     test_sound = models.ForeignKey(Speech)
     answer = models.TextField()
     # type_train indicates the type of training this is. 0 = meaningful sentence training, 1 = anomalous sentence training, 2 = word training
-    type_train = models.PositiveSmallIntegerField()
+    type_train = models.PositiveSmallIntegerField(help_text="Indicates the type of training this is. 0 = meaningful sentence training, 1 = anomalous sentence training, 2 = word training")
 
     def __str__(self):
         return self.answer

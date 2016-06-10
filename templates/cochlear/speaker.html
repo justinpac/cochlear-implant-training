@@ -20,12 +20,12 @@
 
         <div class="col-md-6" style="height:100%;margin-bottom:20px;">
           <button id = "choice_{{speech.id}}" type = "button" class="btn btn-info btn-lg" onclick='play_speaker({{forloop.counter}})'>
-            <span class="glyphicon glyphicon-user" aria-hidden="true" style="color:white"></span> Listen to {{speech.speaker.name}}
+            <span class="glyphicon glyphicon-user" aria-hidden="true" style="color:white"></span> Listen to {{speech.speaker.display_name}}
           </button>
             <span id="correct_{{speech.id}}" class="glyphicon glyphicon-ok vertical-centered" aria-hidden="true" style="display:none;color:green"></span>
             <span id="incorrect_{{speech.id}}" class="glyphicon glyphicon-remove vertical-centered" aria-hidden="true" style="display:none;color:red"></span>
-            <button id = "response_{{speech.id}}" type = "button" class="btn btn-primary btn-lg" style="display:none" onclick='checkAnswer("{{speech.id}}","{{speech.speaker.name}}","{{test_sound.speaker.name}}" )'>
-              <span class="glyphicon glyphicon-user" aria-hidden="true" style="color:white"></span> The unknown speaker is {{speech.speaker.name}}
+            <button id = "response_{{speech.id}}" type = "button" class="btn btn-primary btn-lg" style="display:none" onclick='checkAnswer("{{speech.id}}","{{speech.name}}","{{test_sound.speaker.name}}" )'>
+              <span class="glyphicon glyphicon-user" aria-hidden="true" style="color:white"></span> The unknown speaker is {{speech.speaker.display_name}}
             </button>
         </div>
       {% endfor %}
