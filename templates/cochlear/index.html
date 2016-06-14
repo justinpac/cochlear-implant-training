@@ -10,9 +10,16 @@
 <div class="container"><!-- This is a bootstrap class -->
 	<h1> Welcome, {{name}}! </h1>
 	<div class="progress">
+		
+		{% if percentComplete == 100 %}
+		<div id ="progressBar" class="progress-bar progress-bar-striped active" role="progressbar"
+	  aria-valuenow="{{percentComplete}}" aria-valuemin="0" aria-valuemax="100" style="width:{{percentComplete}}%;background-color:#5cb85c;">
+		<span>Congratulations, all four sessions are completed this week!</span>
+		{% else %}
 		<div id ="progressBar" class="progress-bar progress-bar-striped active" role="progressbar"
 	  aria-valuenow="{{percentComplete}}" aria-valuemin="0" aria-valuemax="100" style="width:{{percentComplete}}%;">
-		<span>{{sessions}} out of 4 sessions completed this week</span>
+	  	<span>{{sessions}} out of 4 sessions completed this week</span>
+	  	{% endif %}
 		</div>
 	</div>
 	<div class="row">

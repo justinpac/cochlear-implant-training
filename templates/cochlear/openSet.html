@@ -139,9 +139,7 @@ $( document ).ready(function() {
 				});
 			}
 			questionUnanswered = false;
-		    if(!(Boolean({{repeatFlag}}))) { // If this is not a repeat, indicate that a module was completed
-		      $.post("{% url 'cochlear:moduleCompleted' %}",{'order_id':{{order_id}},'module_type':'open_set_train'}).fail(addFail);
-		    }
+            $.post("{% url 'cochlear:openSetCompleted' %}",{'order_id':{{order_id}},'isRepeat':{{repeatFlag}},'user_response':answer}).fail(addFail);
 		}
 	});
   

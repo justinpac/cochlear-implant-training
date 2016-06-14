@@ -44,12 +44,14 @@ class Closed_Set_Train_Order(models.Model):
         return "session_" + str(self.session) + "_closedSetTrain_"+ str(self.closed_set_train)
 
 # This is necessary to determine if a user has completed a certain training module in a given session.
-# This is feels like a heavy-handed approach, so perhaps there are better ways to handle this, but this
-# table may prove useful in the future for something like data mining.
-class User_Closed_Set_Train_Order(models.Model):
+# Also used to track data about a training module
+class User_Closed_Set_Train(models.Model):
     user_attrib = models.ForeignKey('User_Attrib', on_delete=models.CASCADE)
     closed_set_train_order = models.ForeignKey('Closed_Set_Train_Order', on_delete=models.CASCADE)
-    completed = models.BooleanField(default=False)
+    repeat = models.BooleanField() # Indicates if this instance was generateed while the user was repeating the training module
+    date_completed = models.DateTimeField(blank = True, null = True)
+    user_response = models.ForeignKey('Speech', on_delete = models.PROTECT, blank = True, null = True)
+    correct = models.NullBooleanField(blank = True, null = True)
 
     def __str__(self):
         return str(self.user_attrib) + "_" + str(self.closed_set_train_order)
@@ -64,10 +66,13 @@ class Open_Set_Train_Order(models.Model):
         return "session_" + str(self.session) + "_openSetTrain_"+ str(self.open_set_train)
  
 # Necessary to determine if a user has completed a certain training module in a given session.
-class User_Open_Set_Train_Order(models.Model):
+class User_Open_Set_Train(models.Model):
     user_attrib = models.ForeignKey('User_Attrib', on_delete=models.CASCADE)
     open_set_train_order = models.ForeignKey('Open_Set_Train_Order', on_delete=models.CASCADE)
-    completed = models.BooleanField(default=False)
+    repeat = models.BooleanField() # Indicates if this instance was generateed while the user was repeating the training module
+    date_completed = models.DateTimeField(blank = True, null = True)
+    user_response = models.TextField(blank = True, null = True)
+    percent_correct = models.PositiveSmallIntegerField(blank = True, null = True)
 
     def __str__(self):
         return str(self.user_attrib) + "_" + str(self.open_set_train_order)

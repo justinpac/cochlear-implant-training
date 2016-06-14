@@ -30,7 +30,7 @@ def index(request):
 	currentTime = timezone.now();
 	oneWeekAgo = currentTime - datetime.timedelta(days=7);
 	context['sessions'] = User_Session.objects.filter(user=userList[0].id, date_completed__range=(oneWeekAgo,currentTime)).count()
-	context['percentComplete'] = str(context['sessions'] * 25)
+	context['percentComplete'] = context['sessions'] * 25
 
 	#Indicate if less than 24 hours have passed since the last session
 	oneDayAgo = currentTime - datetime.timedelta(days=1)
@@ -176,21 +176,60 @@ def uploadSound(request):
 	else:
 		return HttpResponse("No POST data received.")
 
-def moduleCompleted(request):
+def openSetCompleted(request):
 	userList = User_Attrib.objects.filter(username=request.user.username)
 	user = userList[0]
-	user_session = User_Session.objects.get(user=user.id, date_completed=None)
-	if (request.POST['module_type'] == 'open_set_train'):
-		orderObj = User_Open_Set_Train_Order.objects.all().filter(open_set_train_order = request.POST['order_id'], user_attrib = user)
+	#Get some information passed in from the template
+	isRepeat = bool(int(request.POST['isRepeat']))
+	user_response = request.POST['user_response']
+	open_set_train_order = Open_Set_Train_Order.objects.get(id = int(request.POST['order_id']))
+
+	if(not isRepeat):
+		# If this module is not being repeated, then we want to edit the existing User_Open Set_Train record
+		moduleHist = User_Open_Set_Train.objects.get(open_set_train_order = open_set_train_order, user_attrib = user, repeat = False)
+		if (moduleHist.date_completed == None):
+			# Indicate the user has completed another module within the session. Tracked in User_Session and User_Open_Set_Train
+			user_session = User_Session.objects.get(user=user.id, date_completed=None)
+			user_session.modules_completed += 1
+			user_session.save()
+			moduleHist.date_completed = timezone.now()
+			moduleHist.user_response = user_response
 	else:
-		orderObj = User_Closed_Set_Train_Order.objects.all().filter(closed_set_train_order = request.POST['order_id'], user_attrib = user)
-	orderObj = orderObj.first()
-	if (not(orderObj.completed)):
-		user_session.modules_completed += 1
-		user_session.save()
-		orderObj.completed = True
-		orderObj.save()
+		# if this module IS being repeated, then create a new User_Open_Set_Train
+		moduleHist = User_Open_Set_Train(open_set_train_order = open_set_train_order, user_attrib = user, repeat = True, 
+			date_completed = timezone.now(), user_response = user_response)
+
+	moduleHist.save()
 	return HttpResponse("Success")
+
+def speakerCompleted(request):
+	userList = User_Attrib.objects.filter(username=request.user.username)
+	user = userList[0]
+	#Get some information passed in from the template
+	isRepeat = bool(int(request.POST['isRepeat']))
+	user_response = Speech.objects.get(id = int(request.POST['user_response']))
+	answered_correctly = bool(int(request.POST['answered_correctly']))
+	closed_set_train_order = Closed_Set_Train_Order.objects.get(id = int(request.POST['order_id']))
+
+	if(not isRepeat):
+		# If this module is not being repeated, then we want to edit the existing User_Closed Set_Train record
+		moduleHist = User_Closed_Set_Train.objects.get(closed_set_train_order = closed_set_train_order, user_attrib = user, repeat = False)
+		if(moduleHist.date_completed == None):
+			# Indicate the user has completed another module within the session. Tracked in User_Session and User_Closed_Set_Train
+			user_session = User_Session.objects.get(user=user.id, date_completed=None)
+			user_session.modules_completed += 1
+			user_session.save()
+			moduleHist.date_completed = timezone.now()
+			moduleHist.user_response = user_response
+			moduleHist.correct = answered_correctly
+	else:
+		# if this module IS being repeated, then create a new User_Closed_Set_Train
+		moduleHist = User_Closed_Set_Train(closed_set_train_order = closed_set_train_order, user_attrib = user, repeat = True, date_completed = timezone.now(), 
+			user_response = user_response, correct = answered_correctly)
+
+	moduleHist.save()
+	return HttpResponse("Success")
+
 
 def getSpeakers(request,name):
 	#Gets a list of authors whose names start with 'name'
@@ -309,9 +348,9 @@ def createUserSessionData(sessionObj, userObj):
 	newSession.save()
 	closed_set_train_orders = Closed_Set_Train_Order.objects.filter(session = sessionObj)
 	for closed_set_train_order in closed_set_train_orders:
-		temp = User_Closed_Set_Train_Order(user_attrib = userObj, closed_set_train_order = closed_set_train_order, completed = False)
+		temp = User_Closed_Set_Train(user_attrib = userObj, closed_set_train_order = closed_set_train_order, repeat = False)
 		temp.save()
 	open_set_train_orders = Open_Set_Train_Order.objects.filter(session = sessionObj)
 	for open_set_train_order in open_set_train_orders:
-		temp = User_Open_Set_Train_Order(user_attrib = userObj, open_set_train_order = open_set_train_order, completed = False)
+		temp = User_Open_Set_Train(user_attrib = userObj, open_set_train_order = open_set_train_order, repeat = False)
 		temp.save()

@@ -24,7 +24,7 @@
           </button>
             <span id="correct_{{speech.id}}" class="glyphicon glyphicon-ok vertical-centered" aria-hidden="true" style="display:none;color:green"></span>
             <span id="incorrect_{{speech.id}}" class="glyphicon glyphicon-remove vertical-centered" aria-hidden="true" style="display:none;color:red"></span>
-            <button id = "response_{{speech.id}}" type = "button" class="btn btn-primary btn-lg" style="display:none" onclick='checkAnswer("{{speech.id}}","{{speech.name}}","{{test_sound.speaker.name}}" )'>
+            <button id = "response_{{speech.id}}" type = "button" class="btn btn-primary btn-lg" style="display:none" onclick='checkAnswer("{{speech.id}}","{{speech.speaker.name}}","{{test_sound.speaker.name}}" )'>
               <span class="glyphicon glyphicon-user" aria-hidden="true" style="color:white"></span> The unknown speaker is {{speech.speaker.display_name}}
             </button>
         </div>
@@ -55,6 +55,12 @@
 <script src="{% static 'js/jquery.cookie.js' %}"></script>
 <script src="{% static 'js/CSRF.js' %}"></script>
 <script type="text/javascript">
+
+// an integer (0 or 1) indicating if the training module was answered correctly
+var answered_correctly;
+//Switches to false once question is answered in order to disable button functionality
+var questionUnanswered = true;
+
 // Create arrays of ID's on which I want to perform the same operations on
 var choiceIDs = [];
 var responseIDs = [];
@@ -66,8 +72,6 @@ speechAudio.push(new Audio("{{test_sound.speech_file.url}}"))
   responseIDs.push("response_{{speech.id}}");
   speechAudio.push(new Audio("{{speech.speech_file.url}}"));
 {% endfor %}
-
-var questionUnanswered = true;
 
 /* Pass in an array of html hidden (display:none) elements and their prefix (such as "#" for an ID)
 and i=0. This function will be recursively called to display these elements according to
@@ -87,8 +91,11 @@ function slideIn(i, speed, trans, IDs, prefix) {
 next to the user's answer. show buttons for proceeding to the next training
 module and retrying the current module */
 function checkAnswer(choice_id, answer, correctAnswer) {
-  if(questionUnanswered){
-    if(answer == correctAnswer){
+  if(questionUnanswered) {
+    // The speech id of the user's answer to this training module
+    user_response = choice_id
+    answered_correctly = ((answer == correctAnswer) ? 1 : 0);
+    if(answered_correctly){
       $("#correct_" + choice_id).show("fast","linear");
     } else {
       $("#incorrect_" + choice_id).show("fast","linear");
@@ -97,10 +104,7 @@ function checkAnswer(choice_id, answer, correctAnswer) {
     questionUnanswered = false;
     var b = ["repeat","next"];
     $('#next').slideDown();
-
-    if(!(Boolean({{repeatFlag}}))) { // if this is not a repeat, indicate that a module was completed
-      $.post("{% url 'cochlear:moduleCompleted' %}",{'module_type':'closed_set_train','order_id':{{order_id}}}).fail(addFail);
-    }
+    $.post("{% url 'cochlear:speakerCompleted' %}",{'order_id':{{order_id}},'answered_correctly':answered_correctly,'user_response':user_response,'isRepeat':{{repeatFlag}}}).fail(addFail);
   }
 }
 
