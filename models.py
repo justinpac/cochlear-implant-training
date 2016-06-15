@@ -103,7 +103,7 @@ class Speech(models.Model):
 
     def __str__(self):
         filename =  self.speech_file.name
-        return self.speaker.name + "_" + filename.strip('cochlear/speech/')
+        return filename.strip('cochlear/speech/')
 
 # Associate each question with an answer, and indicate if that answer is right
 class Closed_Set_Question_Answer(models.Model):

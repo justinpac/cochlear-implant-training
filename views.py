@@ -275,7 +275,11 @@ def loadDashboardData(context):
 	context['soundFileList']['colSize'] = int(12/len(context['soundFileList']['headers']))
 	soundFiles = Speech.objects.all();
 	for sound in soundFiles:
-		row = [sound.speech_file.name.strip('cochlear/speech/'),sound.speaker.name,str(sound.uploaded_date)]
+		if(sound.speaker == None):
+			speaker_name = "No Speaker"
+		else:
+			speaker_name = sound.speaker.name
+		row = [sound.speech_file.name.strip('cochlear/speech/'), speaker_name,str(sound.uploaded_date)]
 		context['soundFileList']['rows'].append(row)
 
 	#Speaker objects
