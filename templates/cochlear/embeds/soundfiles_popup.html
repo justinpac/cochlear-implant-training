@@ -95,8 +95,8 @@
 			console.log("Error!")
 			console.log(data)
 		}
-		$.get('{% url "cochlear:index" %}getSpeakers/'+$('#speaker_name').val(),success).fail(fail)
-	})
+		$.get('{% url "cochlear:index" %}getSpeakers/'+$('#speaker_name').val()+'/',success).fail(fail)
+	})/
 
  
     
