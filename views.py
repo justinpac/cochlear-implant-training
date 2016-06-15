@@ -474,5 +474,6 @@ def getAllUserDataCSV(request):
 	pseudo_buffer = Echo()
 	writer = csv.writer(pseudo_buffer)
 	response = StreamingHttpResponse((writer.writerow(row) for row in rows), content_type="text/csv")
-	response['Content-Disposition'] = 'attachment; filename="somefilename.csv"'
+	filename = "CI_Training_All_User_Data_" + str(timezone.now()).split(' ')[0].replace('-','') + ".csv"
+	response['Content-Disposition'] = 'attachment; filename="' + filename + '"'
 	return response
