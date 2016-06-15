@@ -477,3 +477,73 @@ def getAllUserDataCSV(request):
 	filename = "CI_Training_All_User_Data_" + str(timezone.now()).split(' ')[0].replace('-','') + ".csv"
 	response['Content-Disposition'] = 'attachment; filename="' + filename + '"'
 	return response
+
+def talkerIDCSV(request):
+    # A view that streams a large CSV file.
+    # Generate a sequence of rows. The range is based on the maximum number of
+    # rows that can be handled by a single sheet in most spreadsheet
+    # applications.
+    # Documentation: https://docs.djangoproject.com/en/1.8/howto/outputting-csv/
+	rows = []
+	appendTalkerID(rows)
+
+	pseudo_buffer = Echo()
+	writer = csv.writer(pseudo_buffer)
+	response = StreamingHttpResponse((writer.writerow(row) for row in rows), content_type="text/csv")
+	filename = "CI_Training_Talker_ID_Data_" + str(timezone.now()).split(' ')[0].replace('-','') + ".csv"
+	response['Content-Disposition'] = 'attachment; filename="' + filename + '"'
+	return response
+
+def meaningfulCSV(request):
+    # A view that streams a large CSV file.
+    # Generate a sequence of rows. The range is based on the maximum number of
+    # rows that can be handled by a single sheet in most spreadsheet
+    # applications.
+    # Documentation: https://docs.djangoproject.com/en/1.8/howto/outputting-csv/
+	rows = []
+	rows.append(['Meaningful'])
+	openSets = User_Open_Set_Train.objects.filter(open_set_train_order__open_set_train__type_train = 0)
+	appendOpenSets(rows, openSets)
+
+	pseudo_buffer = Echo()
+	writer = csv.writer(pseudo_buffer)
+	response = StreamingHttpResponse((writer.writerow(row) for row in rows), content_type="text/csv")
+	filename = "CI_Training_Meaningful_Sentence_Data_" + str(timezone.now()).split(' ')[0].replace('-','') + ".csv"
+	response['Content-Disposition'] = 'attachment; filename="' + filename + '"'
+	return response
+
+def anomalousCSV(request):
+    # A view that streams a large CSV file.
+    # Generate a sequence of rows. The range is based on the maximum number of
+    # rows that can be handled by a single sheet in most spreadsheet
+    # applications.
+    # Documentation: https://docs.djangoproject.com/en/1.8/howto/outputting-csv/
+	rows = []
+	rows.append(['Anomalous'])
+	openSets = User_Open_Set_Train.objects.filter(open_set_train_order__open_set_train__type_train = 1)
+	appendOpenSets(rows, openSets)
+
+	pseudo_buffer = Echo()
+	writer = csv.writer(pseudo_buffer)
+	response = StreamingHttpResponse((writer.writerow(row) for row in rows), content_type="text/csv")
+	filename = "CI_Training_Anomalous_Sentence_Data_" + str(timezone.now()).split(' ')[0].replace('-','') + ".csv"
+	response['Content-Disposition'] = 'attachment; filename="' + filename + '"'
+	return response
+
+def wordCSV(request):
+    # A view that streams a large CSV file.
+    # Generate a sequence of rows. The range is based on the maximum number of
+    # rows that can be handled by a single sheet in most spreadsheet
+    # applications.
+    # Documentation: https://docs.djangoproject.com/en/1.8/howto/outputting-csv/
+	rows = []
+	rows.append(['Word'])
+	openSets = User_Open_Set_Train.objects.filter(open_set_train_order__open_set_train__type_train = 2)
+	appendOpenSets(rows, openSets)
+
+	pseudo_buffer = Echo()
+	writer = csv.writer(pseudo_buffer)
+	response = StreamingHttpResponse((writer.writerow(row) for row in rows), content_type="text/csv")
+	filename = "CI_Training_Word_Data_" + str(timezone.now()).split(' ')[0].replace('-','') + ".csv"
+	response['Content-Disposition'] = 'attachment; filename="' + filename + '"'
+	return response

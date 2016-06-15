@@ -4,7 +4,7 @@
 
 {% load staticfiles %}
 <!-- Load our stylesheet -->
-<link href="{% static 'cochlear/index.css' %}" rel="stylesheet">
+<link href="{% static 'cochlear/manager-dashboard.css' %}" rel="stylesheet">
 <!-- Include external alphanumeric sorting for strings -->
 <script type="text/javascript" src="{% static 'cochlear/js/alphanum.js' %}"></script>
 <!-- Magnific Popup core CSS file -->
@@ -21,6 +21,21 @@
 	<h3>Download as a CSV</h3>
 	<a href="{% url 'cochlear:getAllUserDataCSV' %}">	
 		<button type="button" class="btn btn-primary"> Get All User Data </button> 
+	</a>
+
+	<a href="{% url 'cochlear:talkerIDCSV' %}">	
+		<button type="button" class="btn btn-primary"> Talker ID </button> 
+	</a>
+
+	<a href="{% url 'cochlear:meaningfulCSV' %}">	
+		<button type="button" class="btn btn-primary"> Meaningful Sentence </button> 
+	</a>
+
+	<a href="{% url 'cochlear:anomalousCSV' %}">	
+		<button type="button" class="btn btn-primary"> Anomalous Sentence </button> 
+	</a>
+	<a href="{% url 'cochlear:wordCSV' %}">	
+		<button type="button" class="btn btn-primary"> Word </button> 
 	</a>
 
 	<center><h2>Sounds & Speakers</h2></center>

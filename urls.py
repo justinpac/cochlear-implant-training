@@ -23,7 +23,11 @@ urlpatterns = patterns('cochlear',
     url(r'^upload_sound/','views.uploadSound',name = 'uploadSound'),
     url(r'^getDashboardData/','views.getDashboardData',name = 'getDashboardData'),
     #CSV downloads
-    url(r'^getAllUserDataCSV/$','views.getAllUserDataCSV', name = 'getAllUserDataCSV')
+    url(r'^getAllUserDataCSV/$','views.getAllUserDataCSV', name = 'getAllUserDataCSV'),
+    url(r'^talkerIDCSV/$','views.talkerIDCSV', name = 'talkerIDCSV'),
+    url(r'^meaningfulCSV/$','views.meaningfulCSV', name = 'meaningfulCSV'),
+    url(r'^anomalousCSV/$','views.anomalousCSV', name = 'anomalousCSV'),
+    url(r'^wordCSV/$','views.wordCSV', name = 'wordCSV')
 )
 
 #if settings.DEBUG is True:

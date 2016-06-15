@@ -17,7 +17,6 @@
   </div>
     <div style="height:100%;text-align:center">
       {% for speech in speaker_choices %}
-
         <div class="col-md-6" style="height:100%;margin-bottom:20px;">
           <button id = "choice_{{speech.id}}" type = "button" class="btn btn-info btn-lg" onclick='play_speaker({{forloop.counter}})'>
             <span class="glyphicon glyphicon-user" aria-hidden="true" style="color:white"></span> Listen to {{speech.speaker.display_name}}
