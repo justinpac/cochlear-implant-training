@@ -16,6 +16,13 @@
 <div class="container"><!-- This is a bootstrap class -->
 	<h3> {{welcome_msg}}, {{name}}! </h3>
 	<hr>
+
+	<center><h2>Get Data</h2></center>
+	<h3>Download as a CSV</h3>
+	<a href="{% url 'cochlear:getAllUserDataCSV' %}">	
+		<button type="button" class="btn btn-primary"> Get All User Data </button> 
+	</a>
+
 	<center><h2>Sounds & Speakers</h2></center>
 	<h3>Sound Files</h3>
 	{% include "cochlear/embeds/file_list.html" with data=soundFileList %}

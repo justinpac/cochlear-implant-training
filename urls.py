@@ -22,6 +22,8 @@ urlpatterns = patterns('cochlear',
     url(r'^getSpeakers/(?P<name>[\w|\W]+)/','views.getSpeakers',name = 'getSpeakers'),
     url(r'^upload_sound/','views.uploadSound',name = 'uploadSound'),
     url(r'^getDashboardData/','views.getDashboardData',name = 'getDashboardData'),
+    #CSV downloads
+    url(r'^getAllUserDataCSV/$','views.getAllUserDataCSV', name = 'getAllUserDataCSV')
 )
 
 #if settings.DEBUG is True:

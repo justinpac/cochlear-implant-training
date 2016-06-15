@@ -56,6 +56,10 @@ class User_Closed_Set_Train(models.Model):
     def __str__(self):
         return str(self.user_attrib) + "_" + str(self.closed_set_train_order)
 
+    class Meta:
+        ordering = ('user_attrib__username','closed_set_train_order__session__week','closed_set_train_order__session__day','repeat','closed_set_train_order__closed_set_train__id')
+
+
 # Defines the order of an open set training module in a session
 class Open_Set_Train_Order(models.Model):
     session = models.ForeignKey(Session, on_delete=models.CASCADE)
@@ -76,6 +80,9 @@ class User_Open_Set_Train(models.Model):
 
     def __str__(self):
         return str(self.user_attrib) + "_" + str(self.open_set_train_order)
+
+    class Meta:
+        ordering = ('user_attrib__username','open_set_train_order__session__week','open_set_train_order__session__day','repeat','open_set_train_order__open_set_train__id')
 
 # Speaker associated with potentiallly many speech files
 class Speaker(models.Model):
@@ -129,7 +136,6 @@ class Closed_Set_Data(models.Model):
 class Open_Set_Train(models.Model):
     test_sound = models.ForeignKey(Speech)
     answer = models.TextField()
-    # type_train indicates the type of training this is. 0 = meaningful sentence training, 1 = anomalous sentence training, 2 = word training
     type_train = models.PositiveSmallIntegerField(help_text="Indicates the type of training this is. 0 = meaningful sentence training, 1 = anomalous sentence training, 2 = word training")
 
     def __str__(self):

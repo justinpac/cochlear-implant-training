@@ -15,6 +15,12 @@ import cochlear.util
 from django.utils import timezone
 import random #To generate random numbers
 
+#For genereating csv files
+import csv
+from django.utils.six.moves import range
+from django.http import StreamingHttpResponse
+
+
 SESSION_CAP = 4
 
 def index(request):
@@ -354,3 +360,115 @@ def createUserSessionData(sessionObj, userObj):
 	for open_set_train_order in open_set_train_orders:
 		temp = User_Open_Set_Train(user_attrib = userObj, open_set_train_order = open_set_train_order, repeat = False)
 		temp.save()
+
+###################
+## CSV downloads ##
+###################
+
+def appendTalkerID(rows):
+	# Add Rows for the Talker Identification training module 
+    rows.append(['Talker Identification'])
+    talkerIDHeaders = ['User','Session Week','Session Day', 'Repeat', 'Session Completed (Date)','Session Completed (Time)', 
+    	'Module Completed (Date)','Module Completed (Time)', 'Talker Identification ID', 'Test Sound Speaker', 'Test Sound File', 
+    	'Choices Speakers','Choices Files', 'User Response (Speaker)','User Response (File)', 'Correct']
+    rows.append(talkerIDHeaders)
+    talkerIDs = User_Closed_Set_Train.objects.all()
+    for talkerID in talkerIDs:
+    	talkerIDRow = []
+    	talkerIDRow.append(talkerID.user_attrib.username)
+    	talkerIDRow.append(talkerID.closed_set_train_order.session.week)
+    	talkerIDRow.append(talkerID.closed_set_train_order.session.day)
+    	talkerIDRow.append(("yes" if talkerID.repeat else "no"))
+    	session = talkerID.closed_set_train_order.session
+    	user = talkerID.user_attrib
+    	sessionDate = str(User_Session.objects.get(user = user, session = session).date_completed).split(' ')[0]
+    	sessionTime = str(User_Session.objects.get(user = user, session = session).date_completed).split(' ')[1].split('.')[0]
+    	talkerIDRow.append(sessionDate)
+    	talkerIDRow.append(sessionTime)
+    	moduleDate = str(talkerID.date_completed).split(' ')[0]
+    	moduleTime = str(talkerID.date_completed).split(' ')[1].split('.')[0]
+    	talkerIDRow.append(moduleDate)
+    	talkerIDRow.append(moduleTime)
+    	module = talkerID.closed_set_train_order.closed_set_train
+    	talkerIDRow.append(module.id)
+    	talkerIDRow.append(module.test_sound.speaker.name)
+    	talkerIDRow.append(module.test_sound.speech_file.name.strip('cochlear/speech/'))
+    	choicesSpeakers = ''
+    	choicesFiles = ''
+    	first = True
+    	for choice in module.choices.all():
+    		if first:
+    			first = False
+    			choicesSpeakers += choice.speaker.name
+    			choicesFiles += choice.speech_file.name.strip('cochlear/speech/')
+    		else:
+    			choicesSpeakers += ", " + choice.speaker.name
+    			choicesFiles += ", " + choice.speech_file.name.strip('cochlear/speech/')
+    	talkerIDRow.append(choicesSpeakers)
+    	talkerIDRow.append(choicesFiles)
+    	talkerIDRow.append(talkerID.user_response.speaker.name)
+    	talkerIDRow.append(talkerID.user_response.speech_file.name.strip('cochlear/speech/'))
+    	talkerIDRow.append('correct' if talkerID.correct else 'incorrect')
+    	rows.append(talkerIDRow)
+
+def appendOpenSets(rows, openSets):
+	openSetHeaders = ['User','Session Week','Session Day', 'Repeat', 'Session Completed (Date)','Session Completed (Time)', 
+	'Module Completed (Date)','Module Completed (Time)','Sound File', 'Correct Answer','User Response']
+	rows.append(openSetHeaders)
+	for openSet in openSets:
+		openSetRow = []
+		openSetRow.append(openSet.user_attrib.username)
+		openSetRow.append(openSet.open_set_train_order.session.week)
+		openSetRow.append(openSet.open_set_train_order.session.day)
+		openSetRow.append(("yes" if openSet.repeat else "no"))
+		session = openSet.open_set_train_order.session
+		user = openSet.user_attrib
+		sessionDate = str(User_Session.objects.get(user = user, session = session).date_completed).split(' ')[0]
+		sessionTime = str(User_Session.objects.get(user = user, session = session).date_completed).split(' ')[1].split('.')[0]
+		openSetRow.append(sessionDate)
+		openSetRow.append(sessionTime)
+		moduleDate = str(openSet.date_completed).split(' ')[0]
+		moduleTime = str(openSet.date_completed).split(' ')[1].split('.')[0]
+		openSetRow.append(moduleDate)
+		openSetRow.append(moduleTime)
+		module = openSet.open_set_train_order.open_set_train
+		openSetRow.append(module.test_sound.speaker.name.strip('cochlear/speech/'))
+		openSetRow.append(module.answer)
+		openSetRow.append(openSet.user_response)
+		rows.append(openSetRow)
+
+class Echo(object):
+	# An object that implements just the write method of the file-like interface.
+	def write(self, value):
+	   	# Write the value by returning it, instead of storing in a buffer.
+	    return value
+
+def getAllUserDataCSV(request):
+    # A view that streams a large CSV file.
+    # Generate a sequence of rows. The range is based on the maximum number of
+    # rows that can be handled by a single sheet in most spreadsheet
+    # applications.
+    # Documentation: https://docs.djangoproject.com/en/1.8/howto/outputting-csv/
+	rows = []
+	appendTalkerID(rows)
+	rows.append([]) #skip a line in the csv file
+
+	rows.append(['Meaningful'])
+	openSets = User_Open_Set_Train.objects.filter(open_set_train_order__open_set_train__type_train = 0)
+	appendOpenSets(rows, openSets)
+	rows.append([])
+	
+	rows.append(['Anomalous'])
+	openSets = User_Open_Set_Train.objects.filter(open_set_train_order__open_set_train__type_train = 1)
+	appendOpenSets(rows, openSets)
+	rows.append([])
+
+	rows.append(['Word'])
+	openSets = User_Open_Set_Train.objects.filter(open_set_train_order__open_set_train__type_train = 2)
+	appendOpenSets(rows, openSets)
+
+	pseudo_buffer = Echo()
+	writer = csv.writer(pseudo_buffer)
+	response = StreamingHttpResponse((writer.writerow(row) for row in rows), content_type="text/csv")
+	response['Content-Disposition'] = 'attachment; filename="somefilename.csv"'
+	return response
