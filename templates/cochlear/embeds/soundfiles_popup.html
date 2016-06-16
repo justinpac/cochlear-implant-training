@@ -23,8 +23,6 @@
 				{% csrf_token %}
 				<input type="hidden" name="speaker_id" id="speaker_id" value="-1">
 				<input type="hidden" name="speaker_name" id="speaker_name_upload" value="">
-				<input type="hidden" name="speaker_display_name" id="speaker_diplay_name_upload" value="">
-				<input type="hidden" name="speaker_gender" id="speaker_gender_upload" value="">
 			</form>
 			<!-- End drag and drop -->
 		</div>
@@ -68,14 +66,10 @@
 		var csrfToken = fileChildren[0];
 		var speakerField = fileChildren[1];
 		var speakerNameField = fileChildren[2];
-		var speakerDisplayNameField = fileChildren[3]
-		var speakerGenderField = fileChildren[4]
 		$('#soundDropzone').empty();
 		$('#soundDropzone').append(csrfToken);
 		$('#soundDropzone').append(speakerField); 
 		$('#soundDropzone').append(speakerNameField); 
-		$('#soundDropzone').append(speakerDisplayNameField);
-		$('#soundDropzone').append(speakerGenderField);
 
 		}
 	}})
@@ -89,10 +83,10 @@
 			$('#speakerchoice_list_div').empty()
 			//Fill it with the choices
 			for(var i=0;i<data.length;i++){
-				speakerName = data[i].name;
+				var speakerName = data[i].name;
 				var fileCount = data[i].file_count;
 				var speakerID = data[i].id;
-				$('#speakerchoice_list_div').append('<button class="btn btn-primary page1sound_btn" data-speakerid='+ String(speakerID)+ '>'+speakerName+' ('+String(fileCount)+' sound files)'+'</button></br></br>')
+				$('#speakerchoice_list_div').append('<button class="btn btn-primary page1sound_btn" data-speakerid='+ String(speakerID)+ ' data-speakername="'+String(speakerName)+'" >'+speakerName+' ('+String(fileCount)+' sound files)'+'</button></br></br>')
 			}
 			//If the text entered is not empty, but the data is, offer to create a new one
 			if($('#speaker_name').val() != "" && data.length == 0){
@@ -102,6 +96,7 @@
 			$('.page1sound_btn').click(function(evt){
 				//Set the data speaker id 
 				var currentID = $(evt.target).data("speakerid");
+				var speakerName = $(evt.target).data("speakername");
 				$('#speaker_id').val(currentID)
 				if(currentID == -1) {
 					// if the speaker id is -1, then that means we need to provide information for creating a new speaker
@@ -114,18 +109,19 @@
 					$('#page3_submit_btn').click(function(event){
 						// Submit information for creating a new speaker
 						$('#speaker_name_upload').val($('#new_speaker_name').val())
-						$('#speaker_diplay_name_upload').val($('#new_speaker_display_name').val())
-						$('#speaker_gender_upload').val($('#new_speaker_gender').val())
+/*						$('#speaker_diplay_name_upload').val($('#new_speaker_display_name').val())
+						$('#speaker_gender_upload').val($('#new_speaker_gender').val())*/
+						$.post("{% url 'cochlear:createSpeaker' %}",{csrfmiddlewaretoken: "{{ csrf_token }}",'speaker_name':$('#new_speaker_name').val(),'speaker_display_name':$('#new_speaker_display_name').val(),'speaker_gender':$('#new_speaker_gender').val()}).fail(fail);
 						// Bring up the dropzone page
 						$('#sound_page3').fadeOut(animationTime,null,function(){
-							$('#upload_header').val("Upload sound files for speaker " + $('#new_speaker_name').val() + ":")
+							$('#upload_header').html("Upload sound files for speaker " + $('#new_speaker_name').val() + ":")
 							$('#sound_page2').fadeIn(animationTime)
 						})
 					})
 				} else{
 					// If the speaker ID is not -1, no need to provide any info other than the id
 					// This occurs because the user searched for a speaker that did exist and chose that speaker
-					$('#upload_header').val("Upload sound files for speaker " + speakerName + ":")
+					$('#upload_header').html("Upload sound files for speaker " + speakerName + ":")
 					$('#sound_page1').fadeOut(animationTime,null,function(){
 						$('#sound_page2').fadeIn(animationTime)
 					})
@@ -137,7 +133,8 @@
 			console.log("Error!")
 			console.log(data)
 		}
-		$.get('{% url "cochlear:index" %}getSpeakers/'+$('#speaker_name').val()+'/',success).fail(fail)
+		searchQ = $('#speaker_name').val()
+		$.get("{% url 'cochlear:getSpeakers' %}",{'name':searchQ},success).fail(fail)
 	})
 
  

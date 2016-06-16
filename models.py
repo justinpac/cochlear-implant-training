@@ -86,7 +86,7 @@ class User_Open_Set_Train(models.Model):
 
 # Speaker associated with potentiallly many speech files
 class Speaker(models.Model):
-    name = models.CharField(max_length = 50)
+    name = models.CharField(max_length = 50, unique=True)
     display_name = models.CharField(max_length = 50, help_text="This is the name that will be displayed in training modules")
     difficulty = models.PositiveSmallIntegerField(default = 0)
     gender = models.CharField(max_length=20, help_text="type 'male' for male or 'female' for female") 

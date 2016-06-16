@@ -163,17 +163,9 @@ def uploadSound(request):
 		rawFile = request.FILES['file'];
 		#If the speaker doesn't exist, create it
 		if(speakerID == -1):
-			#Check if it's just been created
-			speakerList = Speaker.objects.filter(name=request.POST['speaker_name']);
-			if(len(speakerList) == 0):
-				newSpeaker = Speaker();
-				newSpeaker.name = request.POST['speaker_name']
-				newSpeaker.display_name = request.POST['speaker_display_name']
-				newSpeaker.gender = request.POST['speaker_gender']
-				newSpeaker.save();
-				speakerID = newSpeaker.pk;
-			else:
-				speakerID = speakerList[0].pk;
+			speaker_name = str(request.POST['speaker_name'])
+			speakerList = Speaker.objects.filter(name=speaker_name);
+			speakerID = speakerList[0].pk;
 		#Create a new speech object, and attach it to the speaker
 		speakerObj = Speaker.objects.get(pk=speakerID);
 		newSoundObj = Speech();
@@ -238,10 +230,16 @@ def speakerCompleted(request):
 	moduleHist.save()
 	return HttpResponse("Success")
 
+def getDashboardData(request):
+	#Wrap dashboard data in json 
+	ctx =  {}
+	loadDashboardData(ctx)
+	data = json.dumps(ctx)
+	return HttpResponse(data, content_type='application/json')
 
-def getSpeakers(request,name):
+def getSpeakers(request):
 	#Gets a list of authors whose names start with 'name'
-	speakerList = Speaker.objects.filter(name__istartswith=name)
+	speakerList = Speaker.objects.filter(name__istartswith=request.GET['name'])
 	purelist = []
 	for speaker in speakerList:
 		speakerObj = {}
@@ -253,19 +251,20 @@ def getSpeakers(request,name):
 	data = json.dumps(purelist)
 	return HttpResponse(data, content_type='application/json')
 
+def createSpeaker(request):
+	newSpeaker = Speaker();
+	newSpeaker.name = request.POST['speaker_name']
+	newSpeaker.display_name = request.POST['speaker_display_name']
+	newSpeaker.gender = request.POST['speaker_gender']
+	newSpeaker.save();
+	return HttpResponse("Success")
+
 ###################
 ## Manager Pages ##
 ###################
 
 #NOTE: Make sure to add the names of all the pages that should only be accessible
 #by managers in middleware.py
-
-def getDashboardData(request):
-	#Wrap dashboard data in json 
-	ctx =  {}
-	loadDashboardData(ctx)
-	data = json.dumps(ctx)
-	return HttpResponse(data, content_type='application/json')
 
 def loadDashboardData(context):
 	#Putting all the loading of the data in a seperate function so it can be done asynchronously 
