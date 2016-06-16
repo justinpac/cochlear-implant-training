@@ -16,15 +16,27 @@
 			
 		</div>
 		<div id="sound_page2" class="hidden_page">
-			<h4>Upload sound files:</h4>
+			<h4 id ="upload_header">Upload sound files:</h4>
 			<p>You can close this window once the files have been uploaded.</p>
 			<!-- Dropzone drag & drop upload -->
 			<form action='{% url "cochlear:index" %}upload_sound/' class="dropzone" id="soundDropzone">
 				{% csrf_token %}
 				<input type="hidden" name="speaker_id" id="speaker_id" value="-1">
 				<input type="hidden" name="speaker_name" id="speaker_name_upload" value="">
+				<input type="hidden" name="speaker_display_name" id="speaker_diplay_name_upload" value="">
+				<input type="hidden" name="speaker_gender" id="speaker_gender_upload" value="">
 			</form>
 			<!-- End drag and drop -->
+		</div>
+		<div id="sound_page3" class="hidden_page">
+			<h4>Enter New Speaker Info:</h4>
+			<p>Name</p>
+			<input type="text" class="form-control" name="new_speaker_name" id="new_speaker_name" placeholder=""></br>
+			<p>Display Name</p>
+			<input type="text" class="form-control" name="new_speaker_diplay_name" id="new_speaker_display_name" placeholder=""></br>
+			<p>Gender</p>
+			<input type="text" class="form-control" name="new_speaker_gender" id="new_speaker_gender" placeholder=""></br>
+			<button class="btn btn-primary" id ="page3_submit_btn">Submit</button>
 		</div>
 	</center>
 	</div>
@@ -40,10 +52,15 @@
 		console.log("Close")
 		RefreshData()
 		$('#sound_page1').css("display","block");
-		var pages = ["page2"]
+		var pages = ["page2","page3"]
 		for(var i=0;i<pages.length;i++) $('#sound_' + pages[i]).css("display","none");
+		// Clear info for sound_page1
 		$('#speakerchoice_list_div').empty()
 		$('#speaker_name').val("")
+		// Clear info for sound_page3
+		$('#new_speaker_name').val("")
+		$('#new_speaker_display_name').val("")
+		$('#new_speaker_gender').val("")
 		//Empty the dropzone
 		var fileChildren = $('#soundDropzone').children();
 		//The first one is the csrf token, so we leave that untouched
@@ -51,11 +68,15 @@
 		var csrfToken = fileChildren[0];
 		var speakerField = fileChildren[1];
 		var speakerNameField = fileChildren[2];
+		var speakerDisplayNameField = fileChildren[3]
+		var speakerGenderField = fileChildren[4]
 		$('#soundDropzone').empty();
 		$('#soundDropzone').append(csrfToken);
 		$('#soundDropzone').append(speakerField); 
 		$('#soundDropzone').append(speakerNameField); 
-		
+		$('#soundDropzone').append(speakerDisplayNameField);
+		$('#soundDropzone').append(speakerGenderField);
+
 		}
 	}})
 	////On key press, get and display list of matched speakers. 
@@ -68,7 +89,7 @@
 			$('#speakerchoice_list_div').empty()
 			//Fill it with the choices
 			for(var i=0;i<data.length;i++){
-				var speakerName = data[i].name;
+				speakerName = data[i].name;
 				var fileCount = data[i].file_count;
 				var speakerID = data[i].id;
 				$('#speakerchoice_list_div').append('<button class="btn btn-primary page1sound_btn" data-speakerid='+ String(speakerID)+ '>'+speakerName+' ('+String(fileCount)+' sound files)'+'</button></br></br>')
@@ -82,12 +103,33 @@
 				//Set the data speaker id 
 				var currentID = $(evt.target).data("speakerid");
 				$('#speaker_id').val(currentID)
-				if(currentID == -1) $('#speaker_name_upload').val(decodeURI($(evt.target).data("speakername")))
-
-				evt.preventDefault();
-				$('#sound_page1').fadeOut(animationTime,null,function(){
-					$('#sound_page2').fadeIn(animationTime)
-				})
+				if(currentID == -1) {
+					// if the speaker id is -1, then that means we need to provide information for creating a new speaker
+					// This occurs if the user searched for a speaker that did not exist and chose to create a new speaker 
+					// Display the page for submitting a new speaker
+					$('#new_speaker_name').val(decodeURI($(evt.target).data("speakername")))
+					$('#sound_page1').fadeOut(animationTime,null,function(){
+						$('#sound_page3').fadeIn(animationTime)
+					})
+					$('#page3_submit_btn').click(function(event){
+						// Submit information for creating a new speaker
+						$('#speaker_name_upload').val($('#new_speaker_name').val())
+						$('#speaker_diplay_name_upload').val($('#new_speaker_display_name').val())
+						$('#speaker_gender_upload').val($('#new_speaker_gender').val())
+						// Bring up the dropzone page
+						$('#sound_page3').fadeOut(animationTime,null,function(){
+							$('#upload_header').val("Upload sound files for speaker " + $('#new_speaker_name').val() + ":")
+							$('#sound_page2').fadeIn(animationTime)
+						})
+					})
+				} else{
+					// If the speaker ID is not -1, no need to provide any info other than the id
+					// This occurs because the user searched for a speaker that did exist and chose that speaker
+					$('#upload_header').val("Upload sound files for speaker " + speakerName + ":")
+					$('#sound_page1').fadeOut(animationTime,null,function(){
+						$('#sound_page2').fadeIn(animationTime)
+					})
+				}
 			})
 			
 		}
