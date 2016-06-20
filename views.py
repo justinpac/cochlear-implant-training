@@ -38,19 +38,19 @@ def index(request):
 	context['name'] = userList[0].first_name
 	currentTime = timezone.now();
 	oneWeekAgo = currentTime - datetime.timedelta(days=7);
-	context['sessions'] = User_Session.objects.filter(user=userList[0].id, date_completed__range=(oneWeekAgo,currentTime)).count()
+	context['sessions'] = User_Session.objects.filter(user=userList[0], date_completed__range=(oneWeekAgo,currentTime)).count()
 	context['percentComplete'] = context['sessions'] * 25
 
 	#Indicate if less than 24 hours have passed since the last session
 	oneDayAgo = currentTime - datetime.timedelta(days=1)
-	recentSession = User_Session.objects.filter(user=userList[0].id, date_completed__range=(oneDayAgo,currentTime))
+	recentSession = User_Session.objects.filter(user=userList[0], date_completed__range=(oneDayAgo,currentTime))
 	if not recentSession:
 		context['recentSessionFlag'] = 0
 	else:
 		context['recentSessionFlag'] = 1
 
 	#Indicate if there is an active session
-	active_session = User_Session.objects.filter(date_completed=None)
+	active_session = User_Session.objects.filter(user=userList[0], date_completed=None)
 	if not active_session:
 		context['activeSessionFlag'] = False
 	else:
@@ -111,8 +111,8 @@ def openSet(request, open_set_module, repeatFlag, order_id):
 
 def startNewSession(request):
 	context = NavigationBar.generateAppContext(request,app="cochlear",title="startNewSession", navbarName=0)
-	userObj = User_Attrib.objects.filter(username=request.user.username).first()
-	user_sessions = User_Session.objects.filter(user = userObj.id)
+	userObj = User_Attrib.objects.get(username=request.user.username)
+	user_sessions = User_Session.objects.filter(user = userObj)
 
 	#If the user has not completed any sessions, then they are on the session for week 1, day 1
 	if not user_sessions:
