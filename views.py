@@ -116,12 +116,10 @@ def startNewSession(request):
 	context = NavigationBar.generateAppContext(request,app="cochlear",title="startNewSession", navbarName=0)
 	userObj = User_Attrib.objects.get(username=request.user.username)
 	user_sessions = User_Session.objects.filter(user = userObj)
-	if (userObj.current_week_start_date == None) or (timezone.now() - userObj.current_week_start_date) > datetime.timedelta(days=7):
-		userObj.current_week_start_date = timezone.now()
-		userObj.save()
 
 	#If the user has not completed any sessions, then they are on the session for week 1, day 1
 	if not user_sessions:
+		checkWeekProg(userObj)
 		week1Day1 = Session.objects.get(week = 1, day = 1)
 		createUserSessionData(week1Day1, userObj)
 		return goToModule(week1Day1, 1)
@@ -143,6 +141,10 @@ def startNewSession(request):
 		# Either the next session is on a new week or there are no sessions left for the user to complete
 		nextSession = Session.objects.filter(week = (maxWeekComplete + 1), day = 1)
 		if not nextSession:
+			# We want this date to change the next time there is actually another session to complete
+			if (timezone.now() - userObj.current_week_start_date) > datetime.timedelta(days=7):
+				userObj.current_week_start_date = None
+				userObj.save()
 			return redirect('cochlear:trainingEndPage')
 	
 	# Go to the first module of the next session
@@ -150,6 +152,8 @@ def startNewSession(request):
 	
 	#Create user-specific objects for this session
 	createUserSessionData(nextSession, userObj)
+
+	checkWeekProg(userObj)
 
 	return goToModule(nextSession, 1)
 
@@ -352,6 +356,13 @@ def analytics(request):
 ######################
 ## Helper Functions ##
 ######################
+
+# If the user started their first session of the week more than one week ago, set the current time
+# as the beginning of their training week
+def checkWeekProg(userObj):
+	if (userObj.current_week_start_date == None) or (timezone.now() - userObj.current_week_start_date) > datetime.timedelta(days=7):
+			userObj.current_week_start_date = timezone.now()
+			userObj.save()
 
 # Get a module in a particular session based on its order in sequence (moduleNum)
 # This is in a separate function because it will be used in multiple contexts and

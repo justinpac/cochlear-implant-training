@@ -33,7 +33,7 @@ class User_Session(models.Model):
     modules_completed = models.PositiveSmallIntegerField(default=0)
 
     def __str__(self):
-        return self.user.username + "_" + str(self.date_completed)
+        return "User: " + self.user.username + ", Session: " + str(self.session)+ ", DateCompleted: " + str(self.date_completed)
 
 # Speaker associated with potentiallly many speech files
 class Speaker(models.Model):
@@ -62,7 +62,7 @@ class Closed_Set_Train(models.Model):
     test_sound = models.ForeignKey('Speech')
 
     def __str__(self):
-        return str(self.pk) + "_TestSound_" + str(self.test_sound)
+        return "TestSound: " + str(self.test_sound) + ", Choices: " + str(self.choices.all().count())
 
 # Associate each question with an answer, and indicate if that answer is right
 class Closed_Set_Question_Answer(models.Model):
@@ -71,7 +71,7 @@ class Closed_Set_Question_Answer(models.Model):
     iscorrect = models.BooleanField()
 
     def __str__(self):
-        return str(self.question) + "_" + str(self.answer)
+        return "ClosedSetTrain: [" + str(self.question) + "], Answer: " + str(self.answer)
 
 # Defines the order of a closed set training module in a session
 class Closed_Set_Train_Order(models.Model):
@@ -80,7 +80,7 @@ class Closed_Set_Train_Order(models.Model):
     order = models.PositiveSmallIntegerField()
 
     def __str__(self):
-        return "session_" + str(self.session) + "_closedSetTrain_"+ str(self.closed_set_train)
+        return "Session: " + str(self.session) + ", ClosedSetTrain: ["+ str(self.closed_set_train) + "]"
 
 # This is necessary to determine if a user has completed a certain training module in a given session.
 # Also used to track data about a training module
@@ -93,7 +93,7 @@ class User_Closed_Set_Train(models.Model):
     correct = models.NullBooleanField(blank = True, null = True)
 
     def __str__(self):
-        return str(self.user_attrib) + "_" + str(self.closed_set_train_order)
+        return "User: " + str(self.user_attrib) + ", " + str(self.closed_set_train_order)
 
     class Meta:
         ordering = ('user_attrib__username','closed_set_train_order__session__week','closed_set_train_order__session__day','repeat','closed_set_train_order__closed_set_train__id')
@@ -116,7 +116,7 @@ class Open_Set_Train_Order(models.Model):
     order = models.PositiveSmallIntegerField()
 
     def __str__(self):
-        return "session_" + str(self.session) + "_openSetTrain_"+ str(self.open_set_train)
+        return "Session: " + str(self.session) + ", OpenSetTrain: "+ str(self.open_set_train)
  
 # Necessary to determine if a user has completed a certain training module in a given session.
 class User_Open_Set_Train(models.Model):
@@ -128,7 +128,7 @@ class User_Open_Set_Train(models.Model):
     percent_correct = models.PositiveSmallIntegerField(blank = True, null = True)
 
     def __str__(self):
-        return str(self.user_attrib) + "_" + str(self.open_set_train_order)
+        return "User: " + str(self.user_attrib) + ", " + str(self.open_set_train_order)
 
     class Meta:
         ordering = ('user_attrib__username','open_set_train_order__session__week','open_set_train_order__session__day','repeat','open_set_train_order__open_set_train__id')
