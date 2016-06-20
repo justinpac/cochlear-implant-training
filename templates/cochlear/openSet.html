@@ -25,14 +25,14 @@
 
    	<div id="correct" class="container col-md-12">
 	    <div class="panel panel-success">
-	      <div class="panel-heading">Correct</div>
+	      <div id="correctHeader" class="panel-heading">Correct</div>
 	      <div id="correctBody" class="panel-body">Panel Content</div>
 	    </div>
     </div>
     <div id="incorrect" class="container col-md-12">
-	    <div class="panel panel-danger">
-	      <div class="panel-heading">Incorrect</div>
-	      <div id ="incorrectBody" class="panel-body">Panel Content</div>
+	    <div class="panel panel-warning">
+	      <div id = "incorrectHeader" class="panel-heading">Incorrect</div>
+	      <div id = "incorrectBody" class="panel-body">Panel Content</div>
 	    </div>
     </div>
 
@@ -55,6 +55,8 @@
 <script src="{% static 'js/jquery.cookie.js' %}"></script>
 <script src="{% static 'js/CSRF.js' %}"></script>
 <script type="text/javascript">
+
+var MIN_CORRECT_ACCURACY = 70;
 
 var questionUnanswered = true;
 
@@ -117,6 +119,38 @@ var levDist = function(s, t) {
     return d[n][m];
 }
 
+// Calculate how many of the user's words match the key words provided in an open set training module
+// maxLevDistCorrect is the maximum Levenshtein distance between a user's entered word and a key word for the word to be counted as correct
+var calcAccuracy = function(answer, keyWords,correctAnswer) {
+    var maxLevDistCorrect = 1;
+    var keyWordsArr = keyWords.split(" ");
+    var totalKeyWords = keyWordsArr.length;
+    var userWords = answer.split(" ");
+    var numCorrect = 0;
+    for (k in keyWordsArr) {
+        //Check if a given key word or any of its alternates are maxLevDistCorrect away from the user's entered words
+        var altWords = keyWordsArr[k].split("/");
+        var altWordFound = false;
+        for (i in altWords) {
+            for (j in userWords) {
+                if (levDist(altWords[i].toLowerCase(),userWords[j].toLowerCase()) <= maxLevDistCorrect) {
+                    altWordFound = true;
+                    // Color code the correct answer based on user accuracy. 
+                    // Replace incorrect key words with red in HTML and replace correct key words with green text in html
+                    var correctAnswer = correctAnswer.replace(altWords[i], '<span style="color:green;font-weight:bold">' + altWords[i] + '</span>');
+                } else if (!(altWordFound)){
+                    var correctAnswer = correctAnswer.replace(altWords[i], '<span style="color:red;font-weight:bold">' + altWords[i] + '</span>');
+                }
+            }
+        }
+        numCorrect += altWordFound ? 1 : 0
+    }
+
+    var perCorrect = Math.round( (numCorrect/totalKeyWords) * 100);
+    return {percentCorrect:perCorrect, gradedAnswer:correctAnswer};
+}
+
+
 $( document ).ready(function() {
 
   $("#dashboardRedirect").click(function(event){
@@ -125,22 +159,28 @@ $( document ).ready(function() {
 
 	$("#submit").click(function(event){
 		if(questionUnanswered) {
-			var answer = $('#answer').val();
+            questionUnanswered = false;
+            var answer = $('#answer').val();
 			var correctAnswer = "{{correctAnswer}}";
-			if (levDist(correctAnswer.toLowerCase(), answer.toLowerCase()) <= 2) {
-				$("#correctBody").html("Correct! The answer was: " + correctAnswer);
-				$("#correct").slideDown("swing").promise().done(function(){
-					$('#next').slideDown("swing");
-				});
+            var keyWords = "{{keyWords}}";
+            var accuracy = calcAccuracy(answer,keyWords, correctAnswer);
+
+			if (accuracy.percentCorrect < MIN_CORRECT_ACCURACY) {
+                $("#incorrectHeader").html("<p>Your response contained " + accuracy.percentCorrect + "% of the keywords for this question</p>");
+                $("#incorrectBody").html("<p><span style='font-weight:bold'>Your answer was:</span> " + answer + "</p><p><span style='font-weight:bold'>The correct answer was:</span> " + accuracy.gradedAnswer + "</p>");
+                $("#incorrect").slideDown("swing").promise().done(function(){
+                    $('#next').slideDown("swing");
+                });
 			} else {
-				$("#incorrectBody").html("<p>Incorrect. Your answer was: " + answer + "</p><p>The correct answer was: " + correctAnswer + "</p>");
-				$("#incorrect").slideDown("swing").promise().done(function(){
-					$('#next').slideDown("swing");
-				});
+                $("#correctHeader").html("<p>Great job! Your response contained " + accuracy.percentCorrect + "% of the keywords for this question</p>");
+                $("#correctBody").html("<p><span style='font-weight:bold'>Your answer was:</span> " + answer + "</p><p><span style='font-weight:bold'>The correct answer was:</span> " + accuracy.gradedAnswer + "</p>");
+                $("#correct").slideDown("swing").promise().done(function(){
+                    $('#next').slideDown("swing");
+                });
 			}
-			questionUnanswered = false;
-            $.post("{% url 'cochlear:openSetCompleted' %}",{'order_id':{{order_id}},'isRepeat':{{repeatFlag}},'user_response':answer}).fail(addFail);
-		}
+
+            $.post("{% url 'cochlear:openSetCompleted' %}",{'order_id':{{order_id}},'isRepeat':{{repeatFlag}},'user_response':answer,'percentCorrect':accuracy.percentCorrect}).fail(addFail);
+        }
 	});
   
   var audio = new Audio("{{test_sound}}");
