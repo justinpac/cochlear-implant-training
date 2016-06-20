@@ -102,7 +102,7 @@ class Open_Set_Train(models.Model):
     test_sound = models.ForeignKey(Speech)
     answer = models.TextField()
     type_train = models.PositiveSmallIntegerField(help_text="Indicates the type of training this is. 0 = meaningful sentence training, 1 = anomalous sentence training, 2 = word training")
-    key_words = models.TextField(help_text='''The key words of this answer (used to determine accuracy). Enter each word separated by spaces. Group together alternate words and separate them by forward slashes. 
+    key_words = models.TextField(blank=True, help_text='''The key words of this answer (used to determine accuracy). Enter each word separated by spaces. Group together alternate words and separate them by forward slashes. 
         For example, "birch canoe slid/hid/bid down smooth planks"''')
 
     def __str__(self):

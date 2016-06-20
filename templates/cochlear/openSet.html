@@ -122,11 +122,18 @@ var levDist = function(s, t) {
 // Calculate how many of the user's words match the key words provided in an open set training module
 // maxLevDistCorrect is the maximum Levenshtein distance between a user's entered word and a key word for the word to be counted as correct
 var calcAccuracy = function(answer, keyWords,correctAnswer) {
-    var maxLevDistCorrect = 1;
+    var maxLevDistCorrect = 1; 
     var keyWordsArr = keyWords.split(" ");
     var totalKeyWords = keyWordsArr.length;
     var userWords = answer.split(" ");
     var numCorrect = 0;
+    if(keyWords == '') {
+        if(levDist(answer.toLowerCase(),correctAnswer.toLowerCase()) <= 3) {
+            return {percentCorrect:100, gradedAnswer:correctAnswer};
+        } else {
+            return {percentCorrect:0, gradedAnswer:correctAnswer};
+        }
+    }
     for (k in keyWordsArr) {
         //Check if a given key word or any of its alternates are maxLevDistCorrect away from the user's entered words
         var altWords = keyWordsArr[k].split("/");
@@ -166,13 +173,21 @@ $( document ).ready(function() {
             var accuracy = calcAccuracy(answer,keyWords, correctAnswer);
 
 			if (accuracy.percentCorrect < MIN_CORRECT_ACCURACY) {
-                $("#incorrectHeader").html("<p>Your response contained " + accuracy.percentCorrect + "% of the keywords for this question</p>");
+                if (keyWords == ''){
+                    $("#incorrectHeader").html("<p>Incorrect</p>")
+                } else {
+                    $("#incorrectHeader").html("<p>Your response contained " + accuracy.percentCorrect + "% of the keywords for this question</p>");
+                }
                 $("#incorrectBody").html("<p><span style='font-weight:bold'>Your answer was:</span> " + answer + "</p><p><span style='font-weight:bold'>The correct answer was:</span> " + accuracy.gradedAnswer + "</p>");
                 $("#incorrect").slideDown("swing").promise().done(function(){
                     $('#next').slideDown("swing");
                 });
 			} else {
-                $("#correctHeader").html("<p>Great job! Your response contained " + accuracy.percentCorrect + "% of the keywords for this question</p>");
+                if(keyWords == '') {
+                    $("#correctHeader").html("<p>Correct!</p>")
+                } else {
+                    $("#correctHeader").html("<p>Great job! Your response contained " + accuracy.percentCorrect + "% of the keywords for this question</p>");
+                }
                 $("#correctBody").html("<p><span style='font-weight:bold'>Your answer was:</span> " + answer + "</p><p><span style='font-weight:bold'>The correct answer was:</span> " + accuracy.gradedAnswer + "</p>");
                 $("#correct").slideDown("swing").promise().done(function(){
                     $('#next').slideDown("swing");
