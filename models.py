@@ -8,6 +8,7 @@ class User_Attrib(models.Model):
     last_name = models.CharField(max_length = 50)
     email = models.EmailField()
     status = models.PositiveSmallIntegerField(default = 0, help_text="0 = standard user, 1 = manager, 2 = admin") # 0 = standard user, 1 = manager, 2 = admin
+    current_week_start_date = models.DateTimeField(blank = True, null=True)
 
     def __str__(self):
         return self.username

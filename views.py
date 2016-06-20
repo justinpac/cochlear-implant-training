@@ -20,9 +20,6 @@ import csv
 from django.utils.six.moves import range
 from django.http import StreamingHttpResponse
 
-# LEVENSHTEIN DISTANCE - MUST RUN "pip install python-Levenshtein" FOR THIS TO WORK!!!
-from Levenshtein import distance
-
 
 SESSION_CAP = 4
 
@@ -36,9 +33,15 @@ def index(request):
 	context = NavigationBar.generateAppContext(request,app="cochlear",title="index", navbarName=0)
 	userList = User_Attrib.objects.filter(username=request.user.username)
 	context['name'] = userList[0].first_name
-	currentTime = timezone.now();
-	oneWeekAgo = currentTime - datetime.timedelta(days=7);
-	context['sessions'] = User_Session.objects.filter(user=userList[0], date_completed__range=(oneWeekAgo,currentTime)).count()
+
+	# Once a user starts their first session on a given week, we give them one week to complete all their sessions
+	# If it's been over a week since the user started their first session of a week, We want the progress bar to show 
+	# they they have completed 0 sessions that week
+	currentTime = timezone.now()
+	if (userList[0].current_week_start_date == None) or (currentTime - userList[0].current_week_start_date) > datetime.timedelta(days=7):
+		context['sessions'] = 0
+	else:
+		context['sessions'] = User_Session.objects.filter(user=userList[0], date_completed__range=(userList[0].current_week_start_date,currentTime)).count()
 	context['percentComplete'] = context['sessions'] * 25
 
 	#Indicate if less than 24 hours have passed since the last session
@@ -113,6 +116,9 @@ def startNewSession(request):
 	context = NavigationBar.generateAppContext(request,app="cochlear",title="startNewSession", navbarName=0)
 	userObj = User_Attrib.objects.get(username=request.user.username)
 	user_sessions = User_Session.objects.filter(user = userObj)
+	if (userObj.current_week_start_date == None) or (timezone.now() - userObj.current_week_start_date) > datetime.timedelta(days=7):
+		userObj.current_week_start_date = timezone.now()
+		userObj.save()
 
 	#If the user has not completed any sessions, then they are on the session for week 1, day 1
 	if not user_sessions:
