@@ -216,6 +216,15 @@ def openSetCompleted(request):
 	moduleHist.save()
 	return HttpResponse("Success")
 
+def isCorrect(request):
+	closedSetTrain = Closed_Set_Train.objects.get(id = int(request.GET['module_id']))
+	speech = Speech.objects.get(id = int(request.GET['speech_id']))
+	iscorrect = Closed_Set_Question_Answer.objects.get(question = closedSetTrain, answer = speech).iscorrect
+	purelist = [{'iscorrect':iscorrect}]
+	data = json.dumps(purelist)
+	return HttpResponse(data, content_type='application/json')
+
+
 def speakerCompleted(request):
 	userList = User_Attrib.objects.filter(username=request.user.username)
 	user = userList[0]

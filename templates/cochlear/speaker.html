@@ -6,22 +6,22 @@
 <!-- Load our stylesheet -->
 <link href="{% static 'cochlear/speaker.css' %}" rel="stylesheet">
 
+<span id="helpButton" class="glyphicon glyphicon-question-sign"></span>
 <div class = "container">
-  <br>
     <div class="col-md-12" id="test" style="text-align:center;display:none;">
-      <button id = "test" type = "button" class="btn btn-info btn-lg" style="margin-bottom:20px" onclick='play_speaker(0)'>
+      <button id = "test" type = "button" class="btn btn-info btn-lg" onclick='play_speaker(0)'>
         <span class="glyphicon glyphicon-question-sign" aria-hidden="true" style="color:white"></span> Listen To The Unknown Speaker
       </button>
     </div>
     <div style="height:100%;text-align:center">
       {% for speech in speaker_choices %}
-        <div class="col-md-6" style="height:100%;margin-bottom:20px;">
+        <div class="col-md-6" style="height:100%;">
           <button id = "choice_{{speech.id}}" type = "button" class="btn btn-info btn-lg" onclick='play_speaker({{forloop.counter}})'>
             <span class="glyphicon glyphicon-user" aria-hidden="true" style="color:white"></span> Listen to {{speech.speaker.display_name}}
           </button>
             <span id="correct_{{speech.id}}" class="glyphicon glyphicon-ok vertical-centered" aria-hidden="true" style="display:none;color:green"></span>
             <span id="incorrect_{{speech.id}}" class="glyphicon glyphicon-remove vertical-centered" aria-hidden="true" style="display:none;color:red"></span>
-            <button id = "response_{{speech.id}}" type = "button" class="btn btn-primary btn-lg" style="display:none" onclick='checkAnswer("{{speech.id}}","{{speech.speaker.name}}","{{test_sound.speaker.name}}" )'>
+            <button id = "response_{{speech.id}}" type = "button" class="btn btn-primary btn-lg" style="display:none" onclick='checkAnswer("{{speech.id}}")'>
               <span class="glyphicon glyphicon-user" aria-hidden="true" style="color:white"></span> The unknown speaker is {{speech.speaker.display_name}}
             </button>
         </div>
@@ -31,9 +31,9 @@
           <button id = "ready" type = "button" class="btn btn-primary btn-lg">Start Testing</button>
         </div>
       </row>
-      <div id ="next" class="col-md-12" style="display:none">
+      <div id ="next" class="col-md-12" style="display:none;"">
       <a href = "{% url 'cochlear:goToNextModule' %}">
-        <button type = "button" class="btn btn-primary btn-lg" style="margin-bottom:20px">
+        <button type = "button" class="btn btn-primary btn-lg">
             <span class="glyphicon glyphicon-circle-arrow-right" aria-hidden="true" style="color:white"></span> Proceed To The Next Training Module
         </button>
         </br>
@@ -70,6 +70,11 @@ speechAudio.push(new Audio("{{test_sound.speech_file.url}}"))
   speechAudio.push(new Audio("{{speech.speech_file.url}}"));
 {% endfor %}
 
+//display database error on console output
+function addFail(failMessage) {
+  console.log(failMessage.responseText);
+}
+
 /* Pass in an array of html hidden (display:none) elements and their prefix (such as "#" for an ID)
 and i=0. This function will be recursively called to display these elements according to
 the speed and transition (for jquery animation "show") specified in speed and trans */
@@ -87,27 +92,25 @@ function slideIn(i, speed, trans, IDs, prefix) {
 /* Display an X (if answer was incorrect) or check mark (if answer was incorrect)
 next to the user's answer. show buttons for proceeding to the next training
 module and retrying the current module */
-function checkAnswer(choice_id, answer, correctAnswer) {
+function checkAnswer(choice_id) {
   if(questionUnanswered) {
-    // The speech id of the user's answer to this training module
-    user_response = choice_id
-    answered_correctly = ((answer == correctAnswer) ? 1 : 0);
-    if(answered_correctly){
-      $("#correct_" + choice_id).show("fast","linear");
-    } else {
-      $("#incorrect_" + choice_id).show("fast","linear");
+    function success(data){
+      iscorrect = data[0].iscorrect;
+      // The speech id of the user's answer to this training module
+      answered_correctly =  (String(iscorrect) == 'true') ? 1 : 0;
+      if(answered_correctly){
+        $("#correct_" + choice_id).show("fast","linear");
+      } else {
+        $("#incorrect_" + choice_id).show("fast","linear");
+      }
+
+      questionUnanswered = false;
+      var b = ["repeat","next"];
+      $('#next').slideDown();
+      $.post("{% url 'cochlear:speakerCompleted' %}",{'order_id':{{order_id}},'answered_correctly':answered_correctly,'user_response':choice_id,'isRepeat':{{repeatFlag}}}).fail(addFail);
     }
-
-    questionUnanswered = false;
-    var b = ["repeat","next"];
-    $('#next').slideDown();
-    $.post("{% url 'cochlear:speakerCompleted' %}",{'order_id':{{order_id}},'answered_correctly':answered_correctly,'user_response':user_response,'isRepeat':{{repeatFlag}}}).fail(addFail);
+    $.get("{% url 'cochlear:isCorrect' %}",{'module_id':{{speaker_module_id}},'speech_id':choice_id},success).fail(addFail)
   }
-}
-
-//display database error on console output
-function addFail(failMessage) {
-  console.log(failMessage.responseText);
 }
 
 //Play audio for a speaker
@@ -117,8 +120,7 @@ function play_speaker(index) {
 
 // Display unknown speaker and possible answer choices
 $( document ).ready(function() {
-    // display the help button and enable the bootstrap popover
-    $('#helpButton').show();
+    // enable the bootstrap popover
     var dashboardHelp = 'This is a talker identification training module. Listen to the speakers by clicking on their respective buttons. Try your best to memorize each speaker\'s voice, then click "Start Testing." Listen to the unknown speaker, then select who you think the unknown speaker is. When you are finished, you may proceed to the next training module, or you may repeat this one. Click ? to close this message.'
     $('body').popover({title:"Help: Talker Identification", content:dashboardHelp, selector:"#helpButton", placement:"left", trigger: "click"});
 

@@ -3,8 +3,9 @@
 }
 
 button {
-  margin-left: 10px
-  margin-right:10px
+  margin-left: 10px;
+  margin-right:10px;
+  margin-top: 20px;
 }
 
 .col-centered {
@@ -13,8 +14,8 @@ button {
 }
 
 .vertical-centered {
-  font-size: 20px;
+  font-size: 25px;
   position: relative;
   top: 50%;
-  transform: translateY(30%);
+  transform: translateY(75%);
 }

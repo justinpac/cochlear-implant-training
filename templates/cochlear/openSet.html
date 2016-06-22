@@ -6,6 +6,7 @@
 <!-- Load our stylesheet -->
 <link href="{% static 'cochlear/openSet.css' %}" rel="stylesheet">
 
+<span id="helpButton" class="glyphicon glyphicon-question-sign"></span>
 <div class = "container">
     <div class="col-md-12" id="listen">
       <button id = "testSound" type = "button" class="btn btn-info btn-lg">
@@ -132,7 +133,7 @@ var calcAccuracy = function(answer, keyWords,correctAnswer) {
     var userWords = answer.split(" ");
     var numCorrect = 0;
     if(keyWords == '') {
-        if(levDist(answer.toLowerCase(),correctAnswer.toLowerCase()) <= 3) {
+        if(levDist(answer.toLowerCase(),correctAnswer.toLowerCase()) <= 2) {
             return {percentCorrect:100, gradedAnswer:correctAnswer};
         } else {
             return {percentCorrect:0, gradedAnswer:correctAnswer};
@@ -163,7 +164,7 @@ var calcAccuracy = function(answer, keyWords,correctAnswer) {
 
 
 $( document ).ready(function() {
-    // display the help button and enable the bootstrap popover
+    // enable the bootstrap popover
     $('#helpButton').show()
     {% if typeTrain == 0 %}
     var dashboardHelp = 'This is a meaningful sentence training module. Listen to the sentence, then type what you hear. Do not use punctuation or capitalization. When you are ready for your response to be evaluated, click "Submit." Once you are finished, you may proceed to the next training module, or you may repeat this one. Click ? to close this message.'

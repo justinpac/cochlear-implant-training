@@ -6,7 +6,7 @@
 <!-- Load our stylesheet -->
 <link href="{% static 'cochlear/index.css' %}" rel="stylesheet">
 
-
+<span id="helpButton" class="glyphicon glyphicon-question-sign"></span>
 <div class="container"><!-- This is a bootstrap class -->
 	<h1> Welcome, {{cochlearUser.first_name}}! </h1>
 	<div class="progress">
@@ -65,8 +65,7 @@
 
 <script type="text/javascript">
 	$(document).ready(function(){
-		// display the help button and enable the bootstrap popover
-		$('#helpButton').show();
+		// enable the bootstrap popover
 		var dashboardHelp = 'Welcome to your dashboard page! From here you can see how many sessions you have completed this week. You can also start/contiue a session or navigate to the training history page. We recommend that you complete four sessions a week. A week starts as soon as you begin your first of four training sessions. A week ends exactly seven days later. Click ? to close message.'
 	    $('body').popover({title:"Help: Dashboard", content:dashboardHelp, selector:"#helpButton", placement:"left", trigger: "click"});
 	    // If this is the user's first time here, display the help message
