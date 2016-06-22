@@ -9,7 +9,11 @@
 <div class = "container">
     <div class="col-md-12" id="listen">
       <button id = "testSound" type = "button" class="btn btn-info btn-lg">
-        	<span class="glyphicon glyphicon-question-sign" aria-hidden="true" style="color:white"></span> Listen to the {{typeOfSpeech}}
+        {% if typeTrain == 2 %}
+        <span class="glyphicon glyphicon-question-sign" aria-hidden="true" style="color:white"></span> Listen to the word
+        {% else %}
+        <span class="glyphicon glyphicon-question-sign" aria-hidden="true" style="color:white"></span> Listen to the sentence
+        {% endif %}
       </button>
     </div>
 
@@ -39,12 +43,12 @@
     <div id ="next" class="col-md-12">
       <a href = "{% url 'cochlear:goToNextModule' %}">
         <button type = "button" class="btn btn-primary btn-lg" style="margin-bottom:20px">
-            <span class="glyphicon glyphicon-circle-arrow-right" aria-hidden="true" style="color:white"></span> Proceed to the next training module
+            <span class="glyphicon glyphicon-circle-arrow-right" aria-hidden="true" style="color:white"></span> Proceed To The Next Training Module
         </button>
         </br>
         <a href = "{% url 'cochlear:openSet' open_set_module=open_set_module_id repeatFlag=1 order_id=order_id %}" >
           <button type = "button" class="btn btn-secondary btn-lg" style="margin-bottom:20px">
-              <span class="glyphicon glyphicon-repeat" aria-hidden="true"></span> Repeat this question
+              <span class="glyphicon glyphicon-repeat" aria-hidden="true"></span> Repeat This Question
           </button>
         </a>
     </div>
@@ -159,6 +163,18 @@ var calcAccuracy = function(answer, keyWords,correctAnswer) {
 
 
 $( document ).ready(function() {
+    // display the help button and enable the bootstrap popover
+    $('#helpButton').show()
+    {% if typeTrain == 0 %}
+    var dashboardHelp = 'This is a meaningful sentence training module. Listen to the sentence, then type what you hear. Do not use punctuation or capitalization. When you are ready for your response to be evaluated, click "Submit." Once you are finished, you may proceed to the next training module, or you may repeat this one. Click ? to close this message.'
+    $('body').popover({title:"Help: Meaningful Sentence Training", content:dashboardHelp, selector:"#helpButton", placement:"left", trigger: "click"});
+    {% elif typeTrain == 1 %}
+    var dashboardHelp = 'This is an anomalous sentence training module. Listen to the sentence, then type what you hear. Do not use punctuation or capitalization. When you are ready for your response to be evaluated, click "Submit." Once you are finished, you may proceed to the next training module, or you may repeat this one. Click ? to close this message.'
+    $('body').popover({title:"Help: Anomalous Sentence Training", content:dashboardHelp, selector:"#helpButton", placement:"left", trigger: "click"});
+    {% elif typeTrain == 2 %}
+    var dashboardHelp = 'This is a word training module. Listen to the word, then type what you hear. Do not use punctuation or capitalization. When you are ready for your response to be evaluated, click "Submit." Once you are finished, you may proceed to the next training module, or you may repeat this one. Click ? to close this message.'
+    $('body').popover({title:"Help: Word Training", content:dashboardHelp, selector:"#helpButton", placement:"left", trigger: "click"});
+    {% endif %}
 
   $("#dashboardRedirect").click(function(event){
     window.location.replace("{% url 'cochlear:index' %}");

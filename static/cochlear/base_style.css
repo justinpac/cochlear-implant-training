@@ -44,3 +44,13 @@
 	color: white;
 	padding-right: 5px;
 }
+
+#helpButton {
+	cursor: pointer;
+	display: none;
+	float: right;
+	margin-right:20px;
+	margin-top: 10px;
+ 	font-size:25px;
+  	color: #CD9B37;
+}

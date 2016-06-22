@@ -32,7 +32,7 @@ def index(request):
 	#Render a basic page
 	context = NavigationBar.generateAppContext(request,app="cochlear",title="index", navbarName=0)
 	userList = User_Attrib.objects.filter(username=request.user.username)
-	context['name'] = userList[0].first_name
+	context['cochlearUser'] = userList[0]
 
 	# Once a user starts their first session on a given week, we give them one week to complete all their sessions
 	# If it's been over a week since the user started their first session of a week, We want the progress bar to show 
@@ -98,14 +98,12 @@ def openSet(request, open_set_module, repeatFlag, order_id):
 	context['test_sound'] = module.test_sound.speech_file.url
 	context['correctAnswer'] = module.answer
 	context['keyWords'] = module.key_words
+	context['typeTrain'] = module.type_train
 	context['repeatFlag'] = repeatFlag
 	context['order_id'] = order_id
 	context['open_set_module_id'] = open_set_module
 	context['user_attrib_id'] = user_attrib.id
-	if (module.type_train == 2):
-		context['typeOfSpeech'] = "word"
-	else:
-		context['typeOfSpeech'] = "sentence"
+
 	return render(request,'cochlear/openSet.html',context)
 
 #############################
@@ -141,10 +139,7 @@ def startNewSession(request):
 		# Either the next session is on a new week or there are no sessions left for the user to complete
 		nextSession = Session.objects.filter(week = (maxWeekComplete + 1), day = 1)
 		if not nextSession:
-			# We want this date to change the next time there is actually another session to complete
-			if (timezone.now() - userObj.current_week_start_date) > datetime.timedelta(days=7):
-				userObj.current_week_start_date = None
-				userObj.save()
+			# We want this date to change the next time there is actually another session to complete, so no call to checkWeekProg
 			return redirect('cochlear:trainingEndPage')
 	
 	# Go to the first module of the next session
@@ -159,7 +154,10 @@ def startNewSession(request):
 
 def goToNextModule(request):
 	userObj = User_Attrib.objects.get(username=request.user.username)
-	user_session = User_Session.objects.get(user = userObj.id, date_completed = None)
+	user_session = User_Session.objects.filter(user = userObj.id, date_completed = None)
+	if not user_session:
+		return redirect('cochlear:sessionEndPage')
+	user_session = user_session.first()
 	if user_session.modules_completed == user_session.session.countModules():
 		user_session.date_completed = timezone.now()
 		user_session.save()

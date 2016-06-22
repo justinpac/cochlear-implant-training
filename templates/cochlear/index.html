@@ -8,16 +8,17 @@
 
 
 <div class="container"><!-- This is a bootstrap class -->
-	<h1> Welcome, {{name}}! </h1>
+	<h1> Welcome, {{cochlearUser.first_name}}! </h1>
 	<div class="progress">
 		
 		{% if percentComplete == 100 %}
-		<div id ="progressBar" class="progress-bar progress-bar-striped active" role="progressbar"
-	  aria-valuenow="{{percentComplete}}" aria-valuemin="0" aria-valuemax="100" style="width:{{percentComplete}}%;background-color:#5cb85c;">
+		<div id ="progressBar" class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="{{percentComplete}}" aria-valuemin="0" aria-valuemax="100" style="width:{{percentComplete}}%;background-color:#5cb85c;">
 		<span>Great job, all four sessions are completed this week!</span>
+		{% elif sessions > 4 %}
+		<div id ="progressBar" class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="{{percentComplete}}" aria-valuemin="0" aria-valuemax="100" style="width:{{percentComplete}}%;background-color:#5cb85c;">
+	  	<span>{{sessions}} out of 4 sessions completed this week</span>
 		{% else %}
-		<div id ="progressBar" class="progress-bar progress-bar-striped active" role="progressbar"
-	  aria-valuenow="{{percentComplete}}" aria-valuemin="0" aria-valuemax="100" style="width:{{percentComplete}}%;">
+		<div id ="progressBar" class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="{{percentComplete}}" aria-valuemin="0" aria-valuemax="100" style="width:{{percentComplete}}%;">
 	  	<span>{{sessions}} out of 4 sessions completed this week</span>
 	  	{% endif %}
 		</div>
@@ -63,16 +64,29 @@
 <br>
 
 <script type="text/javascript">
-	$("#startSession").click(function(event) {
-		if({{recentSessionFlag}}) {
-			$("#24HourWarning").modal({'show': true});
-		} else {
-			window.location.replace("{% url 'cochlear:startNewSession' %}");
-		}
-	});
+	$(document).ready(function(){
+		// display the help button and enable the bootstrap popover
+		$('#helpButton').show();
+		var dashboardHelp = 'Welcome to your dashboard page! From here you can see how many sessions you have completed this week. You can also start/contiue a session or navigate to the training history page. We recommend that you complete four sessions a week. A week starts as soon as you begin your first of four training sessions. A week ends exactly seven days later. Click ? to close message.'
+	    $('body').popover({title:"Help: Dashboard", content:dashboardHelp, selector:"#helpButton", placement:"left", trigger: "click"});
+	    // If this is the user's first time here, display the help message
+	    {% if cochlearUser.current_week_start_date == null %}
+		setTimeout(function(){
+			$('#helpButton').click();
+		}, 500);
+		{% endif %}
 
-	$("#confirmSession").click(function(event){
-		window.location.replace("{% url 'cochlear:startNewSession' %}");
+		$("#startSession").click(function(event) {
+			if({{recentSessionFlag}}) {
+				$("#24HourWarning").modal({'show': true});
+			} else {
+				window.location.replace("{% url 'cochlear:startNewSession' %}");
+			}
+		});
+
+		$("#confirmSession").click(function(event){
+			window.location.replace("{% url 'cochlear:startNewSession' %}");
+		});
 	});
 </script>
 
