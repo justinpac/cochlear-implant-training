@@ -19,3 +19,9 @@ button {
   top: 50%;
   transform: translateY(75%);
 }
+
+.glyphicon-volume-up {
+  color:white;
+  font-size:20px;
+  vertical-align:-3px;
+}

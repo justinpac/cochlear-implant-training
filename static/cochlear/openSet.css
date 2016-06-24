@@ -19,9 +19,9 @@
 	display:none;
 	text-align:center;
 }
-/*.vertical-centered {
-  position: absolute;
-  top: 50%;
-  height: 100px;
-  margin-top: -50px;
-}*/
+
+.glyphicon-volume-up {
+  color:white;
+  font-size:20px;
+  vertical-align:-3px;
+}
