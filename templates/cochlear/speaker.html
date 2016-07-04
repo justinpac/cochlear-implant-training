@@ -9,8 +9,8 @@
 <span id="helpButton" class="glyphicon glyphicon-question-sign"></span>
 <div class = "container">
     <div class="col-md-12" id="test" style="text-align:center;display:none;">
-      <button id = "test" type = "button" class="btn btn-info btn-lg" onclick='play_speaker(0)'>
-        <span class="glyphicon glyphicon-volume-up" aria-hidden="true"></span> Listen To The Unknown Speaker
+      <button id = "test" type = "button" class="btn btn-primary btn-lg" onclick='play_speaker(0)'>
+        <span class="glyphicon glyphicon-user" aria-hidden="true" style="color:white"></span> Listen To The Unknown Speaker
       </button>
     </div>
     <div style="height:100%;text-align:center">
@@ -19,18 +19,16 @@
           <button id = "choice_{{speech.id}}" type = "button" class="btn btn-info btn-lg" onclick='play_speaker({{forloop.counter}})'>
             <span class="glyphicon glyphicon-user" aria-hidden="true" style="color:white;"></span> Listen to {{speech.speaker.display_name}}
           </button>
-            <span id="correct_{{speech.id}}" class="glyphicon glyphicon-ok vertical-centered" aria-hidden="true" style="display:none;color:green"></span>
-            <span id="incorrect_{{speech.id}}" class="glyphicon glyphicon-remove vertical-centered" aria-hidden="true" style="display:none;color:red"></span>
-            <button id = "response_{{speech.id}}" type = "button" class="btn btn-primary btn-lg" style="display:none" onclick='checkAnswer("{{speech.id}}")'>
+            <span id="correct_{{speech.id}}" class="glyphicon glyphicon-ok correct-symbol vertical-centered" aria-hidden="true"></span>
+            <span id="incorrect_{{speech.id}}" class="glyphicon glyphicon-remove incorrect-symbol vertical-centered" aria-hidden="true"></span>
+            <button id = "response_{{speech.id}}" type = "button" class="btn btn-info btn-lg" style="display:none" onclick='checkAnswer("{{speech.id}}")'>
               <span class="glyphicon glyphicon-user" aria-hidden="true" style="color:white"></span> The unknown speaker is {{speech.speaker.display_name}}
             </button>
         </div>
       {% endfor %}
-      <row>
-        <div style="text-align:center">
-          <button id = "ready" type = "button" class="btn btn-primary btn-lg">Start Testing</button>
-        </div>
-      </row>
+      <div class="col-md-12" style="text-align:center">
+        <button id = "ready" type = "button" class="btn btn-primary btn-lg">Proceed to question</button>
+      </div>
       <div id ="next" class="col-md-12" style="display:none;"">
       <a href = "{% url 'cochlear:goToNextModule' %}">
         <button type = "button" class="btn btn-primary btn-lg">
@@ -62,7 +60,7 @@ var questionUnanswered = true;
 var choiceIDs = [];
 var responseIDs = [];
 var speechAudio = [];
-speechAudio.push(new Audio("{{test_sound.speech_file.url}}"))
+speechAudio.push(new Audio("{{unknown_speech.speech_file.url}}"))
 // Populate these arrays and preload the audio
 {% for speech in speaker_choices %}
   choiceIDs.push("choice_{{speech.id}}");
@@ -99,9 +97,9 @@ function checkAnswer(choice_id) {
       // The speech id of the user's answer to this training module
       answered_correctly =  (String(iscorrect) == 'true') ? 1 : 0;
       if(answered_correctly){
-        $("#correct_" + choice_id).show("fast","linear");
+        $("#correct_" + choice_id).show("fast","linear").css("display", "inline-block");;
       } else {
-        $("#incorrect_" + choice_id).show("fast","linear");
+        $("#incorrect_" + choice_id).show("fast","linear").css("display", "inline-block");
       }
 
       questionUnanswered = false;
@@ -109,7 +107,7 @@ function checkAnswer(choice_id) {
       $('#next').slideDown();
       $.post("{% url 'cochlear:speakerCompleted' %}",{'order_id':{{order_id}},'answered_correctly':answered_correctly,'user_response':choice_id,'isRepeat':{{repeatFlag}}}).fail(addFail);
     }
-    $.get("{% url 'cochlear:isCorrect' %}",{'module_id':{{speaker_module_id}},'speech_id':choice_id},success).fail(addFail)
+    $.get("{% url 'cochlear:isCorrectSpeaker' %}",{'module_id':{{speaker_module_id}},'speech_id':choice_id},success).fail(addFail)
   }
 }
 
@@ -125,8 +123,8 @@ $( document ).ready(function() {
     $('body').popover({title:"Help: Talker Identification", content:dashboardHelp, selector:"#helpButton", placement:"left", trigger: "click"});
 
     $("#ready").click(function(event){
-    $("#ready").hide("swing").promise().done(function(){
-      $("#test").slideDown("swing").promise().done(function(){
+      
+      $("#ready").hide("swing").promise().done(function(){
         for(var i = 0; i <responseIDs.length; i++){
           $("#" + responseIDs[i]).show("swing");
         }
@@ -137,7 +135,8 @@ $( document ).ready(function() {
           }
         }, 400);
       });
-    });
+
+    $("#test").slideDown("swing")
   })
 });
 

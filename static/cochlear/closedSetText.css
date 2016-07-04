@@ -1,8 +1,8 @@
-
 button {
   margin-left: 10px;
   margin-right:10px;
   margin-top: 20px;
+  min-width: 200px;
 }
 
 .col-centered {
@@ -22,13 +22,13 @@ button {
   vertical-align:-3px;
 }
 
-.correct-symbol {
+.glyphicon-ok {
   font-size: 25px;
   display:none;
   color:green;
 }
 
-.incorrect-symbol {
+.glyphicon-remove {
   font-size: 25px;
   display:none;
   color:red;

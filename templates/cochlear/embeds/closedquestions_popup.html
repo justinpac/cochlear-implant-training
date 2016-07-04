@@ -45,12 +45,12 @@ $('#closedquestionpopup_items').html(speakerListHTML)
 //Click to select
 var rows = $('#closedquestionpopup_items').find('tr')
 var page = 1
-var test_sound = ''
+var unknown_speech = ''
 
 rows.on("click",function(evt){//If any of these are clicked
 	if(page == 1){
 		page = 2
-		test_sound = evt.target.innerHTML
+		unknown_speech = evt.target.innerHTML
 		$("#closedquestionpopup_items").fadeOut()
 		$("#closedquestionpopup_header").fadeOut()
 		//Resize the table
