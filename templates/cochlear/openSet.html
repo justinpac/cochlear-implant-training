@@ -65,6 +65,25 @@ var MIN_CORRECT_ACCURACY = 70;
 
 var questionUnanswered = true;
 
+
+String.prototype.replaceWholeWord  = function(orig, replacement) {
+	wholeWord = " " + orig + " ";
+	if (this.includes(wholeWord)) {
+	    startWholeWord = this.indexOf(wholeWord); // index of the space before original word
+	    endWholeWord = startWholeWord + wholeWord.length - 1; // index of the space after the original word
+	    return (this.substring(0, startWholeWord + 1) + replacement + this.substring(endWholeWord, this.length));
+	} else if (this.indexOf(" " + orig) + (" " + orig).length == this.length) { // if it's the last word in the string
+		startWholeWord = this.indexOf(" " + orig);
+		return(this.substring(0, startWholeWord + 1) + replacement);
+	} else if (this.indexOf(orig + " ") == 0) { //if it's the last word in the string 
+		startWholeWord = this.indexOf(orig + " ");
+		return(replacement + this.substring(orig.length, this.length));
+	} else {
+		return this;
+	}
+}
+
+
 // Display database error on console output
 function addFail(failMessage) {
   console.log(failMessage.responseText);
@@ -145,17 +164,20 @@ var calcAccuracy = function(answer, keyWords,correctAnswer) {
         var altWordFound = false;
         for (i in altWords) {
             for (j in userWords) {
-                if (levDist(altWords[i].toLowerCase(),userWords[j].toLowerCase()) <= maxLevDistCorrect) {
+                if (levDist(altWords[i].toLowerCase(),userWords[j].toLowerCase()) <= maxLevDistCorrect && userWords[j] != "") {
                     altWordFound = true;
                     // Color code the correct answer based on user accuracy. 
                     // Replace incorrect key words with red in HTML and replace correct key words with green text in html
-                    var correctAnswer = correctAnswer.replace(altWords[i], '<span style="color:green;font-weight:bold">' + altWords[i] + '</span>');
+                    var correctAnswer = correctAnswer.replace('>' + altWords[i] + '<', '><span style="color:green;font-weight:bold">' + altWords[i] + '</span><');
+                    var correctAnswer = correctAnswer.replaceWholeWord(altWords[i], '<span style="color:green;font-weight:bold">' + altWords[i] + '</span>');
                 } else if (!(altWordFound)){
-                    var correctAnswer = correctAnswer.replace(altWords[i], '<span style="color:red;font-weight:bold">' + altWords[i] + '</span>');
+                    var correctAnswer = correctAnswer.replace('>' + altWords[i] + '<', '><span style="color:red;font-weight:bold">' + altWords[i] + '</span><');
+                    var correctAnswer = correctAnswer.replaceWholeWord(altWords[i], '<span style="color:red;font-weight:bold">' + altWords[i] + '</span>');
                 }
             }
         }
         numCorrect += altWordFound ? 1 : 0
+        console.log(altWordFound);
     }
 
     var perCorrect = Math.round( (numCorrect/totalKeyWords) * 100);
