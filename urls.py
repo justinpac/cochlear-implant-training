@@ -8,6 +8,7 @@ urlpatterns = patterns('cochlear',
     url(r'^sessionEndPage/$','views.sessionEndPage', name = 'sessionEndPage'),
     url(r'^trainingEndPage/$','views.trainingEndPage', name = 'trainingEndPage'),
     url(r'^speaker/(?P<speaker_module>[\d]+)/(?P<repeatFlag>[\d]+)/(?P<order_id>[\d]+)/$', 'views.speaker', name='speaker' ),
+    url(r'^closedSetText/(?P<closed_set_text>[\d]+)/(?P<repeatFlag>[\d]+)/(?P<order_id>[\d]+)/$','views.closedSetText', name = 'closedSetText'),
     url(r'^openSet/(?P<open_set_module>[\d]+)/(?P<repeatFlag>[\d]+)/(?P<order_id>[\d]+)/$','views.openSet', name = 'openSet'),
     url(r'^startNewSession/$','views.startNewSession', name = 'startNewSession'),
     url(r'^goToNextModule/$','views.goToNextModule', name = 'goToNextModule'),
@@ -19,7 +20,9 @@ urlpatterns = patterns('cochlear',
     #ajax methods
     url(r'^upload_sound/','views.uploadSound',name = 'uploadSound'),
     url(r'^openSetCompleted/$','views.openSetCompleted', name = 'openSetCompleted'),
-    url(r'^isCorrect/$','views.isCorrect', name = 'isCorrect'),
+    url(r'^isCorrectClosedSetText/$','views.isCorrectClosedSetText', name = 'isCorrectClosedSetText'),
+    url(r'^closedSetTextCompleted/$','views.closedSetTextCompleted', name = 'closedSetTextCompleted'),
+    url(r'^isCorrectSpeaker/$','views.isCorrectSpeaker', name = 'isCorrectSpeaker'),
     url(r'^speakerCompleted/$','views.speakerCompleted', name = 'speakerCompleted'),
     url(r'^getDashboardData/','views.getDashboardData',name = 'getDashboardData'),
     url(r'^getSpeakers/$','views.getSpeakers',name = 'getSpeakers'),
@@ -27,9 +30,13 @@ urlpatterns = patterns('cochlear',
     #CSV downloads
     url(r'^getAllUserDataCSV/$','views.getAllUserDataCSV', name = 'getAllUserDataCSV'),
     url(r'^talkerIDCSV/$','views.talkerIDCSV', name = 'talkerIDCSV'),
+    url(r'^otherCSV/$','views.otherCSV', name = 'otherCSV'),
     url(r'^meaningfulCSV/$','views.meaningfulCSV', name = 'meaningfulCSV'),
     url(r'^anomalousCSV/$','views.anomalousCSV', name = 'anomalousCSV'),
-    url(r'^wordCSV/$','views.wordCSV', name = 'wordCSV')
+    url(r'^wordCSV/$','views.wordCSV', name = 'wordCSV'),
+    url(r'^cstPhonemeCSV/$','views.cstPhonemeCSV', name = 'cstPhonemeCSV'),
+    url(r'^cstEnvironmentalCSV/$','views.cstEnvironmentalCSV', name = 'cstEnvironmentalCSV'),
+    url(r'^cstOtherCSV/$','views.cstOtherCSV', name = 'cstOtherCSV')
 )
 
 #if settings.DEBUG is True:

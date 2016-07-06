@@ -80,8 +80,8 @@ def trainingEndPage(request):
 def speaker(request, speaker_module, repeatFlag, order_id):
 	context = NavigationBar.generateAppContext(request,app="cochlear",title="speaker", navbarName=0)
 	userObj = User_Attrib.objects.get(username=request.user.username)
-	module = Closed_Set_Train.objects.get(id=speaker_module)
-	context['test_sound'] = module.test_sound
+	module = Speaker_ID.objects.get(id=speaker_module)
+	context['unknown_speech'] = module.unknown_speech
 	context['speaker_choices'] = module.choices.all().order_by('?')
 	context['speaker_module_id'] = module.id
 	context['user_attrib_id'] = userObj.id
@@ -90,15 +90,33 @@ def speaker(request, speaker_module, repeatFlag, order_id):
 
 	return render(request,'cochlear/speaker.html',context)
 
+# Render a closed set identification page
+def closedSetText(request, closed_set_text, repeatFlag, order_id):
+	context = NavigationBar.generateAppContext(request,app="cochlear",title="closedSetText", navbarName=0)
+	userObj = User_Attrib.objects.get(username=request.user.username)
+	module = Closed_Set_Text.objects.get(id=closed_set_text)
+	context['unknown_sound'] = module.unknown_speech.speech_file.url if module.unknown_speech else module.unknown_sound.sound_file.url
+	context['text_choices'] = module.text_choices.all().order_by('?')
+	context['closed_set_text_id'] = module.id
+	context['module_type'] = module.module_type
+	context['user_attrib_id'] = userObj.id
+	context['repeatFlag'] = repeatFlag
+	context['order_id'] = order_id
+
+	return render(request,'cochlear/closedSetText.html',context)
+
 #Render a generic page for a closed-set module
 def openSet(request, open_set_module, repeatFlag, order_id):
 	context = NavigationBar.generateAppContext(request,app="cochlear",title="openSet", navbarName=0)
 	user_attrib = User_Attrib.objects.get(username=request.user.username)
-	module = Open_Set_Train.objects.get(id=open_set_module)
-	context['test_sound'] = module.test_sound.speech_file.url
+	module = Open_Set_Module.objects.get(id=open_set_module)
+	if module.unknown_speech:
+		context['unknown_sound'] = module.unknown_speech.speech_file.url
+	else:
+		context['unknown_sound'] = module.unknown_sound.sound_file.url
 	context['correctAnswer'] = module.answer
 	context['keyWords'] = module.key_words
-	context['typeTrain'] = module.type_train
+	context['module_type'] = module.module_type
 	context['repeatFlag'] = repeatFlag
 	context['order_id'] = order_id
 	context['open_set_module_id'] = open_set_module
@@ -194,14 +212,14 @@ def openSetCompleted(request):
 	#Get some information passed in from the template
 	isRepeat = bool(int(request.POST['isRepeat']))
 	user_response = request.POST['user_response']
-	open_set_train_order = Open_Set_Train_Order.objects.get(id = int(request.POST['order_id']))
+	open_set_module_order = Open_Set_Module_Order.objects.get(id = int(request.POST['order_id']))
 	percentCorrect = int(request.POST['percentCorrect'])
 
 	if(not isRepeat):
 		# If this module is not being repeated, then we want to edit the existing User_Open Set_Train record
-		moduleHist = User_Open_Set_Train.objects.get(open_set_train_order = open_set_train_order, user_attrib = user, repeat = False)
+		moduleHist = User_Open_Set_Module.objects.get(open_set_module_order = open_set_module_order, user_attrib = user, repeat = False)
 		if (moduleHist.date_completed == None):
-			# Indicate the user has completed another module within the session. Tracked in User_Session and User_Open_Set_Train
+			# Indicate the user has completed another module within the session. Tracked in User_Session and User_Open_Set_Module
 			user_session = User_Session.objects.get(user=user.id, date_completed=None)
 			user_session.modules_completed += 1
 			user_session.save()
@@ -209,17 +227,53 @@ def openSetCompleted(request):
 			moduleHist.user_response = user_response
 			moduleHist.percent_correct = percentCorrect
 	else:
-		# if this module IS being repeated, then create a new User_Open_Set_Train
-		moduleHist = User_Open_Set_Train(open_set_train_order = open_set_train_order, user_attrib = user, repeat = True, 
+		# if this module IS being repeated, then create a new User_Open_Set_Module
+		moduleHist = User_Open_Module_Train(open_set_module_order = open_set_module_order, user_attrib = user, repeat = True, 
 			date_completed = timezone.now(), user_response = user_response, percent_correct=percentCorrect)
 	
 	moduleHist.save()
 	return HttpResponse("Success")
 
-def isCorrect(request):
-	closedSetTrain = Closed_Set_Train.objects.get(id = int(request.GET['module_id']))
+def isCorrectClosedSetText(request):
+	closedSetText = Closed_Set_Text.objects.get(id = int(request.GET['module_id']))
+	textChoice = Text_Choice.objects.get(id = int(request.GET['text_choice_id']))
+	iscorrect = Closed_Set_Text_Choice.objects.get(closed_set_text = closedSetText , choice = textChoice).iscorrect
+	purelist = [{'iscorrect':iscorrect}]
+	data = json.dumps(purelist)
+	return HttpResponse(data, content_type='application/json')
+
+def closedSetTextCompleted(request):
+	userList = User_Attrib.objects.filter(username=request.user.username)
+	user = userList[0]
+	#Get some information passed in from the template
+	isRepeat = bool(int(request.POST['isRepeat']))
+	user_response = Text_Choice.objects.get(id = int(request.POST['user_response']))
+	answered_correctly = bool(int(request.POST['answered_correctly']))
+	closed_set_text_order = Closed_Set_Text_Order.objects.get(id = int(request.POST['order_id']))
+
+	if(not isRepeat):
+		# If this module is not being repeated, then we want to edit the existing User_Closed Set_Text record
+		moduleHist = User_Closed_Set_Text.objects.get(closed_set_text_order = closed_set_text_order, user_attrib = user, repeat = False)
+		if(moduleHist.date_completed == None):
+			# Indicate the user has completed another module within the session. Tracked in User_Session and User_Closed_Set_Text
+			user_session = User_Session.objects.get(user=user.id, date_completed=None)
+			user_session.modules_completed += 1
+			user_session.save()
+			moduleHist.date_completed = timezone.now()
+			moduleHist.user_response = user_response
+			moduleHist.correct = answered_correctly
+	else:
+		# if this module IS being repeated, then create a new User_Speaker_ID
+		moduleHist = User_Closed_Set_Text(closed_set_text_order = closed_set_text_order, user_attrib = user, repeat = True, date_completed = timezone.now(), 
+			user_response = user_response, correct = answered_correctly)
+
+	moduleHist.save()
+	return HttpResponse("Success")
+
+def isCorrectSpeaker(request):
+	speakerID = Speaker_ID.objects.get(id = int(request.GET['module_id']))
 	speech = Speech.objects.get(id = int(request.GET['speech_id']))
-	iscorrect = Closed_Set_Question_Answer.objects.get(question = closedSetTrain, answer = speech).iscorrect
+	iscorrect = Speaker_ID_Choice.objects.get(speaker_id = speakerID, choice = speech).iscorrect
 	purelist = [{'iscorrect':iscorrect}]
 	data = json.dumps(purelist)
 	return HttpResponse(data, content_type='application/json')
@@ -232,13 +286,13 @@ def speakerCompleted(request):
 	isRepeat = bool(int(request.POST['isRepeat']))
 	user_response = Speech.objects.get(id = int(request.POST['user_response']))
 	answered_correctly = bool(int(request.POST['answered_correctly']))
-	closed_set_train_order = Closed_Set_Train_Order.objects.get(id = int(request.POST['order_id']))
+	speaker_id_order = Speaker_ID_Order.objects.get(id = int(request.POST['order_id']))
 
 	if(not isRepeat):
 		# If this module is not being repeated, then we want to edit the existing User_Closed Set_Train record
-		moduleHist = User_Closed_Set_Train.objects.get(closed_set_train_order = closed_set_train_order, user_attrib = user, repeat = False)
+		moduleHist = User_Speaker_ID.objects.get(speaker_id_order = speaker_id_order, user_attrib = user, repeat = False)
 		if(moduleHist.date_completed == None):
-			# Indicate the user has completed another module within the session. Tracked in User_Session and User_Closed_Set_Train
+			# Indicate the user has completed another module within the session. Tracked in User_Session and User_Speaker_ID
 			user_session = User_Session.objects.get(user=user.id, date_completed=None)
 			user_session.modules_completed += 1
 			user_session.save()
@@ -246,8 +300,8 @@ def speakerCompleted(request):
 			moduleHist.user_response = user_response
 			moduleHist.correct = answered_correctly
 	else:
-		# if this module IS being repeated, then create a new User_Closed_Set_Train
-		moduleHist = User_Closed_Set_Train(closed_set_train_order = closed_set_train_order, user_attrib = user, repeat = True, date_completed = timezone.now(), 
+		# if this module IS being repeated, then create a new User_Speaker_ID
+		moduleHist = User_Speaker_ID(speaker_id_order = speaker_id_order, user_attrib = user, repeat = True, date_completed = timezone.now(), 
 			user_response = user_response, correct = answered_correctly)
 
 	moduleHist.save()
@@ -324,9 +378,9 @@ def loadDashboardData(context):
 	context['closedQuestions']['rows'] = []
 	context['closedQuestions']['id'] = 'closedquestions'
 	context['closedQuestions']['colSize'] = int(12/len(context['closedQuestions']['headers']))
-	questions = Closed_Set_Train.objects.all();
+	questions = Speaker_ID.objects.all();
 	for q in questions:
-		row = [q.test_sound.speech_file.name.strip('cochlear/speech/'),q.choices.count()]
+		row = [q.unknown_speech.speech_file.name.strip('cochlear/speech/'),q.choices.count()]
 		context['closedQuestions']['rows'].append(row)
 
 	#Open set questions
@@ -344,7 +398,7 @@ def dashboard(request):
 	context['welcome_msg'] = random.choice(["Welcome","Hello","Howdy","What a fine day","Welcome back","Good to see you"])
 	#Get the number of speech files and modules in the app
 	context['file_number'] = Speech.objects.all().count();
-	context['modules'] = Closed_Set_Train.objects.all().count();
+	context['modules'] = Speaker_ID.objects.all().count();
 	return render(request,'cochlear/manager_dashboard.html',context)
 
 def new_sound(request):
@@ -375,25 +429,38 @@ def checkWeekProg(userObj):
 # This is in a separate function because it will be used in multiple contexts and
 # continue to grow with the number of modules
 def goToModule(session, moduleNum):
-	module = session.closed_set_trains.filter(closed_set_train_order__order = moduleNum)
+
+	module = session.speaker_ids.filter(speaker_id_order__order = moduleNum)
 	if not module:
-		module = session.open_set_trains.filter(open_set_train_order__order = moduleNum)
-		order_id = Open_Set_Train_Order.objects.all().get(session = session, order = moduleNum).id
+		module = session.open_set_modules.filter(open_set_module_order__order = moduleNum)
+		if not module:
+			module = session.closed_set_texts.filter(closed_set_text_order__order = moduleNum)
+			order_id = Closed_Set_Text_Order.objects.get(session = session, order = moduleNum).id
+			return redirect('cochlear:closedSetText', closed_set_text = module.first().id, repeatFlag = 0, order_id = order_id)
+
+		order_id = Open_Set_Module_Order.objects.get(session = session, order = moduleNum).id
 		return redirect('cochlear:openSet', open_set_module=module.first().id, repeatFlag = 0, order_id = order_id)
-	order_id = Closed_Set_Train_Order.objects.all().get(session = session, order = moduleNum).id
+
+	order_id = Speaker_ID_Order.objects.get(session = session, order = moduleNum).id
 	return redirect('cochlear:speaker', speaker_module=module.first().id, repeatFlag = 0, order_id = order_id)
 
 # Create user-specific objects for a given session
+# We create user module data at the start of a session in case there is any data we
+# want to gather as a module is being completed (time to complete a module, for example).
 def createUserSessionData(sessionObj, userObj):
 	newSession = User_Session(session = sessionObj, user = userObj, date_completed = None, modules_completed = 0)
 	newSession.save()
-	closed_set_train_orders = Closed_Set_Train_Order.objects.filter(session = sessionObj)
-	for closed_set_train_order in closed_set_train_orders:
-		temp = User_Closed_Set_Train(user_attrib = userObj, closed_set_train_order = closed_set_train_order, repeat = False)
+	speaker_id_orders = Speaker_ID_Order.objects.filter(session = sessionObj)
+	for speaker_id_order in speaker_id_orders:
+		temp = User_Speaker_ID(user_attrib = userObj, speaker_id_order = speaker_id_order, repeat = False)
 		temp.save()
-	open_set_train_orders = Open_Set_Train_Order.objects.filter(session = sessionObj)
-	for open_set_train_order in open_set_train_orders:
-		temp = User_Open_Set_Train(user_attrib = userObj, open_set_train_order = open_set_train_order, repeat = False)
+	open_set_module_orders = Open_Set_Module_Order.objects.filter(session = sessionObj)
+	for open_set_module_order in open_set_module_orders:
+		temp = User_Open_Set_Module(user_attrib = userObj, open_set_module_order = open_set_module_order, repeat = False)
+		temp.save()
+	closed_set_text_orders = Closed_Set_Text_Order.objects.filter(session = sessionObj)
+	for closed_set_text_order in closed_set_text_orders:
+		temp = User_Closed_Set_Text(user_attrib = userObj, closed_set_text_order = closed_set_text_order, repeat = False)
 		temp.save()
 
 ###################
@@ -402,19 +469,19 @@ def createUserSessionData(sessionObj, userObj):
 
 def appendTalkerID(rows):
 	# Add Rows for the Talker Identification training module 
-	rows.append(['Talker Identification'])
+	rows.append(['Speaker Identification'])
 	talkerIDHeaders = ['User','Session Week','Session Day', 'Repeat', 'Session Completed (Date)','Session Completed (Time)', 
 		'Module Completed (Date)','Module Completed (Time)', 'Talker Identification ID', 'Test Sound Speaker', 'Test Sound File', 
 		'Choices Speakers','Choices Files', 'User Response (Speaker)','User Response (File)', 'Correct']
 	rows.append(talkerIDHeaders)
-	talkerIDs = User_Closed_Set_Train.objects.filter(date_completed__isnull = False)
+	talkerIDs = User_Speaker_ID.objects.filter(date_completed__isnull = False)
 	for talkerID in talkerIDs:
 		talkerIDRow = []
 		talkerIDRow.append(talkerID.user_attrib.username)
-		talkerIDRow.append(talkerID.closed_set_train_order.session.week)
-		talkerIDRow.append(talkerID.closed_set_train_order.session.day)
+		talkerIDRow.append(talkerID.speaker_id_order.session.week)
+		talkerIDRow.append(talkerID.speaker_id_order.session.day)
 		talkerIDRow.append(("yes" if talkerID.repeat else "no"))
-		session = talkerID.closed_set_train_order.session
+		session = talkerID.speaker_id_order.session
 		user = talkerID.user_attrib
 		sessionDateTime = User_Session.objects.get(user = user, session = session).date_completed
 		if sessionDateTime == None:
@@ -431,11 +498,11 @@ def appendTalkerID(rows):
 		moduleTime = moduleDateTime.split(' ')[1].split('.')[0]
 		talkerIDRow.append(moduleDate)
 		talkerIDRow.append(moduleTime)
-		module = talkerID.closed_set_train_order.closed_set_train
+		module = talkerID.speaker_id_order.speaker_id
 		talkerIDRow.append(module.id)
-		testSoundSpeaker = module.test_sound.speaker.name
+		testSoundSpeaker = module.unknown_speech.speaker.name
 		talkerIDRow.append('NA') if (testSoundSpeaker == None) else talkerIDRow.append(testSoundSpeaker)
-		talkerIDRow.append(module.test_sound.speech_file.name.strip('cochlear/speech/'))
+		talkerIDRow.append(module.unknown_speech.speech_file.name.strip('cochlear/speech/'))
 		choicesSpeakers = ''
 		choicesFiles = ''
 		first = True
@@ -464,10 +531,10 @@ def appendOpenSets(rows, openSets):
 	for openSet in openSets:
 		openSetRow = []
 		openSetRow.append(openSet.user_attrib.username)
-		openSetRow.append(openSet.open_set_train_order.session.week)
-		openSetRow.append(openSet.open_set_train_order.session.day)
+		openSetRow.append(openSet.open_set_module_order.session.week)
+		openSetRow.append(openSet.open_set_module_order.session.day)
 		openSetRow.append(("yes" if openSet.repeat else "no"))
-		session = openSet.open_set_train_order.session
+		session = openSet.open_set_module_order.session
 		user = openSet.user_attrib
 		sessionDateTime = User_Session.objects.get(user = user, session = session).date_completed
 		if sessionDateTime == None:
@@ -484,15 +551,71 @@ def appendOpenSets(rows, openSets):
 		moduleTime = moduleDateTime.split(' ')[1].split('.')[0]
 		openSetRow.append(moduleDate)
 		openSetRow.append(moduleTime)
-		module = openSet.open_set_train_order.open_set_train
-		speakerName = module.test_sound.speaker.name
+		module = openSet.open_set_module_order.open_set_module
+		speakerName = module.unknown_speech.speaker.name
 		openSetRow.append('NA' if (speakerName == None) else speakerName)
-		openSetRow.append(module.test_sound.speech_file.name.strip('cochlear/speech/'))
+		openSetRow.append(module.unknown_speech.speech_file.name.strip('cochlear/speech/'))
 		openSetRow.append(module.answer)
 		openSetRow.append(module.key_words)
 		openSetRow.append(openSet.user_response)
 		openSetRow.append(openSet.percent_correct)
 		rows.append(openSetRow)
+
+def appendClosedSetTexts(rows, closedSetTexts):
+	# Add Rows for the Talker Identification training module 
+	closedSetTextHeaders = ['User','Session Week','Session Day', 'Repeat', 'Session Completed (Date)','Session Completed (Time)', 
+		'Module Completed (Date)','Module Completed (Time)', 'Closed Set Text ID', 'Test Sound Source', 'Test Sound File', 
+		'Choices', 'User Response', 'Correct']
+	rows.append(closedSetTextHeaders)
+	for closedSetText in closedSetTexts:
+		closedSetTextRow = []
+		closedSetTextRow.append(closedSetText.user_attrib.username)
+		closedSetTextRow.append(closedSetText.closed_set_text_order.session.week)
+		closedSetTextRow.append(closedSetText.closed_set_text_order.session.day)
+		closedSetTextRow.append(("yes" if closedSetText.repeat else "no"))
+		session = closedSetText.closed_set_text_order.session
+		user = closedSetText.user_attrib
+		sessionDateTime = User_Session.objects.get(user = user, session = session).date_completed
+		if sessionDateTime == None:
+			closedSetTextRow.append('NA')
+			closedSetTextRow.append('NA')
+		else:
+			sessionDateTime = str(sessionDateTime)
+			sessionDate = sessionDateTime.split(' ')[0]
+			sessionTime = sessionDateTime.split(' ')[1].split('.')[0]
+			closedSetTextRow.append(sessionDate)
+			closedSetTextRow.append(sessionTime)
+		moduleDateTime = str(closedSetText.date_completed)
+		moduleDate = moduleDateTime.split(' ')[0]
+		moduleTime = moduleDateTime.split(' ')[1].split('.')[0]
+		closedSetTextRow.append(moduleDate)
+		closedSetTextRow.append(moduleTime)
+		module = closedSetText.closed_set_text_order.closed_set_text
+		closedSetTextRow.append(module.id)
+		if module.unknown_speech:
+			testSoundSource = module.unknown_speech.speaker.name
+			closedSetTextRow.append(testSoundSource)
+			closedSetTextRow.append(module.unknown_speech.speech_file.name.strip('cochlear/speech/'))
+		elif module.unknown_sound:
+			testSoundSource = module.unknown_sound.source.name
+			closedSetTextRow.append(testSoundSource)
+			closedSetTextRow.append(module.unknown_sound.sound_file.name.strip('cochlear/sound/'))
+		else:
+			testSoundSource = 'NA'
+			closedSetTextRow.append(testSoundSource)
+			closedSetTextRow.append('NA')
+		textChoices = ''
+		first = True
+		for choice in module.text_choices.all():
+			if first:
+				first = False
+				textChoices += choice.text
+			else:
+				textChoices += ", " + choice.text
+		closedSetTextRow.append(textChoices)
+		closedSetTextRow.append(closedSetText.user_response.text) 
+		closedSetTextRow.append('correct' if closedSetText.correct else 'incorrect')
+		rows.append(closedSetTextRow)
 
 class Echo(object):
 	# An object that implements just the write method of the file-like interface.
@@ -510,19 +633,41 @@ def getAllUserDataCSV(request):
 	appendTalkerID(rows)
 	rows.append([]) #skip a line in the csv file
 
-	rows.append(['Meaningful'])
-	openSets = User_Open_Set_Train.objects.filter(open_set_train_order__open_set_train__type_train = 0, date_completed__isnull = False)
+	rows.append(['Meaningful (Open Set)'])
+	openSets = User_Open_Set_Module.objects.filter(open_set_module_order__open_set_module__module_type = 1, date_completed__isnull = False)
 	appendOpenSets(rows, openSets)
 	rows.append([])
 	
-	rows.append(['Anomalous'])
-	openSets = User_Open_Set_Train.objects.filter(open_set_train_order__open_set_train__type_train = 1, date_completed__isnull = False)
+	rows.append(['Anomalous (Open Set)'])
+	openSets = User_Open_Set_Module.objects.filter(open_set_module_order__open_set_module__module_type = 2, date_completed__isnull = False)
 	appendOpenSets(rows, openSets)
 	rows.append([])
 
-	rows.append(['Word'])
-	openSets = User_Open_Set_Train.objects.filter(open_set_train_order__open_set_train__type_train = 2, date_completed__isnull = False)
+	rows.append(['Word (Open Set)'])
+	openSets = User_Open_Set_Module.objects.filter(open_set_module_order__open_set_module__module_type = 3, date_completed__isnull = False)
 	appendOpenSets(rows, openSets)
+	rows.append([])
+
+	rows.append(['Environmental (Open Set)'])
+	openSets = User_Open_Set_Module.objects.filter(open_set_module_order__open_set_module__module_type = 4, date_completed__isnull = False)
+	appendOpenSets(rows, openSets)
+	rows.append([])
+
+	rows.append(['Other (Open Set)'])
+	openSets = User_Open_Set_Module.objects.filter(open_set_module_order__open_set_module__module_type = 0, date_completed__isnull = False)
+	appendOpenSets(rows, openSets)
+
+	rows.append(['Phoneme (Closed Set Text)'])
+	closedSetTexts = User_Closed_Set_Text.objects.filter(closed_set_text_order__closed_set_text__module_type = 1, date_completed__isnull = False)
+	appendClosedSetTexts(rows, closedSetTexts)
+
+	rows.append(['Environmental (Closed Set Text)'])
+	closedSetTexts = User_Closed_Set_Text.objects.filter(closed_set_text_order__closed_set_text__module_type = 2, date_completed__isnull = False)
+	appendClosedSetTexts(rows, closedSetTexts)
+
+	rows.append(['Other (Closed Set Text)'])
+	closedSetTexts = User_Closed_Set_Text.objects.filter(closed_set_text_order__closed_set_text__module_type = 0, date_completed__isnull = False)
+	appendClosedSetTexts(rows, closedSetTexts)
 
 	pseudo_buffer = Echo()
 	writer = csv.writer(pseudo_buffer)
@@ -543,7 +688,25 @@ def talkerIDCSV(request):
 	pseudo_buffer = Echo()
 	writer = csv.writer(pseudo_buffer)
 	response = StreamingHttpResponse((writer.writerow(row) for row in rows), content_type="text/csv")
-	filename = "CI_Training_Talker_ID_Data_" + str(timezone.now()).split(' ')[0].replace('-','') + ".csv"
+	filename = "CI_Training_Speaker_ID_Data_" + str(timezone.now()).split(' ')[0].replace('-','') + ".csv"
+	response['Content-Disposition'] = 'attachment; filename="' + filename + '"'
+	return response
+
+def otherCSV(request):
+	# A view that streams a large CSV file.
+	# Generate a sequence of rows. The range is based on the maximum number of
+	# rows that can be handled by a single sheet in most spreadsheet
+	# applications.
+	# Documentation: https://docs.djangoproject.com/en/1.8/howto/outputting-csv/
+	rows = []
+	rows.append(['Other (Open Set)'])
+	openSets = User_Open_Set_Module.objects.filter(open_set_module_order__open_set_module__module_type = 0, date_completed__isnull = False)
+	appendOpenSets(rows, openSets)
+
+	pseudo_buffer = Echo()
+	writer = csv.writer(pseudo_buffer)
+	response = StreamingHttpResponse((writer.writerow(row) for row in rows), content_type="text/csv")
+	filename = "CI_Training_OpenSet_Other_Data_" + str(timezone.now()).split(' ')[0].replace('-','') + ".csv"
 	response['Content-Disposition'] = 'attachment; filename="' + filename + '"'
 	return response
 
@@ -554,14 +717,14 @@ def meaningfulCSV(request):
 	# applications.
 	# Documentation: https://docs.djangoproject.com/en/1.8/howto/outputting-csv/
 	rows = []
-	rows.append(['Meaningful'])
-	openSets = User_Open_Set_Train.objects.filter(open_set_train_order__open_set_train__type_train = 0, date_completed__isnull = False)
+	rows.append(['Meaningful (Open Set)'])
+	openSets = User_Open_Set_Module.objects.filter(open_set_module_order__open_set_module__module_type = 1, date_completed__isnull = False)
 	appendOpenSets(rows, openSets)
 
 	pseudo_buffer = Echo()
 	writer = csv.writer(pseudo_buffer)
 	response = StreamingHttpResponse((writer.writerow(row) for row in rows), content_type="text/csv")
-	filename = "CI_Training_Meaningful_Sentence_Data_" + str(timezone.now()).split(' ')[0].replace('-','') + ".csv"
+	filename = "CI_Training_OpenSet_Meaningful_Sentence_Data_" + str(timezone.now()).split(' ')[0].replace('-','') + ".csv"
 	response['Content-Disposition'] = 'attachment; filename="' + filename + '"'
 	return response
 
@@ -572,14 +735,14 @@ def anomalousCSV(request):
 	# applications.
 	# Documentation: https://docs.djangoproject.com/en/1.8/howto/outputting-csv/
 	rows = []
-	rows.append(['Anomalous'])
-	openSets = User_Open_Set_Train.objects.filter(open_set_train_order__open_set_train__type_train = 1, date_completed__isnull = False)
+	rows.append(['Anomalous (Open Set)'])
+	openSets = User_Open_Set_Module.objects.filter(open_set_module_order__open_set_module__module_type = 2, date_completed__isnull = False)
 	appendOpenSets(rows, openSets)
 
 	pseudo_buffer = Echo()
 	writer = csv.writer(pseudo_buffer)
 	response = StreamingHttpResponse((writer.writerow(row) for row in rows), content_type="text/csv")
-	filename = "CI_Training_Anomalous_Sentence_Data_" + str(timezone.now()).split(' ')[0].replace('-','') + ".csv"
+	filename = "CI_Training_OpenSet_Anomalous_Sentence_Data_" + str(timezone.now()).split(' ')[0].replace('-','') + ".csv"
 	response['Content-Disposition'] = 'attachment; filename="' + filename + '"'
 	return response
 
@@ -590,13 +753,85 @@ def wordCSV(request):
 	# applications.
 	# Documentation: https://docs.djangoproject.com/en/1.8/howto/outputting-csv/
 	rows = []
-	rows.append(['Word'])
-	openSets = User_Open_Set_Train.objects.filter(open_set_train_order__open_set_train__type_train = 2, date_completed__isnull = False)
+	rows.append(['Word (Open Set)'])
+	openSets = User_Open_Set_Module.objects.filter(open_set_module_order__open_set_module__module_type = 3, date_completed__isnull = False)
 	appendOpenSets(rows, openSets)
 
 	pseudo_buffer = Echo()
 	writer = csv.writer(pseudo_buffer)
 	response = StreamingHttpResponse((writer.writerow(row) for row in rows), content_type="text/csv")
-	filename = "CI_Training_Word_Data_" + str(timezone.now()).split(' ')[0].replace('-','') + ".csv"
+	filename = "CI_Training_OpenSet_Word_Data_" + str(timezone.now()).split(' ')[0].replace('-','') + ".csv"
+	response['Content-Disposition'] = 'attachment; filename="' + filename + '"'
+	return response
+
+def environmentalCSV(request):
+	# A view that streams a large CSV file.
+	# Generate a sequence of rows. The range is based on the maximum number of
+	# rows that can be handled by a single sheet in most spreadsheet
+	# applications.
+	# Documentation: https://docs.djangoproject.com/en/1.8/howto/outputting-csv/
+	rows = []
+	rows.append(['Environmental (Open Set)'])
+	openSets = User_Open_Set_Module.objects.filter(open_set_module_order__open_set_module__module_type = 4, date_completed__isnull = False)
+	appendOpenSets(rows, openSets)
+
+	pseudo_buffer = Echo()
+	writer = csv.writer(pseudo_buffer)
+	response = StreamingHttpResponse((writer.writerow(row) for row in rows), content_type="text/csv")
+	filename = "CI_Training_OpenSet_Environmental_Data_" + str(timezone.now()).split(' ')[0].replace('-','') + ".csv"
+	response['Content-Disposition'] = 'attachment; filename="' + filename + '"'
+	return response
+
+def cstOtherCSV(request):
+	# A view that streams a large CSV file.
+	# Generate a sequence of rows. The range is based on the maximum number of
+	# rows that can be handled by a single sheet in most spreadsheet
+	# applications.
+	# Documentation: https://docs.djangoproject.com/en/1.8/howto/outputting-csv/
+	rows = []
+	rows.append(['Other (Closed Set Text)'])
+	closedSetTexts = User_Closed_Set_Text.objects.filter(closed_set_text_order__closed_set_text__module_type = 0, date_completed__isnull = False)
+	appendClosedSetTexts(rows, closedSetTexts)
+
+	pseudo_buffer = Echo()
+	writer = csv.writer(pseudo_buffer)
+	response = StreamingHttpResponse((writer.writerow(row) for row in rows), content_type="text/csv")
+	filename = "CI_Training_ClosedSetText_Other_Data_" + str(timezone.now()).split(' ')[0].replace('-','') + ".csv"
+	response['Content-Disposition'] = 'attachment; filename="' + filename + '"'
+	return response
+
+def cstPhonemeCSV(request):
+	# A view that streams a large CSV file.
+	# Generate a sequence of rows. The range is based on the maximum number of
+	# rows that can be handled by a single sheet in most spreadsheet
+	# applications.
+	# Documentation: https://docs.djangoproject.com/en/1.8/howto/outputting-csv/
+	rows = []
+	rows.append(['Phoneme (Closed Set Text)'])
+	closedSetTexts = User_Closed_Set_Text.objects.filter(closed_set_text_order__closed_set_text__module_type = 1, date_completed__isnull = False)
+	appendClosedSetTexts(rows, closedSetTexts)
+
+	pseudo_buffer = Echo()
+	writer = csv.writer(pseudo_buffer)
+	response = StreamingHttpResponse((writer.writerow(row) for row in rows), content_type="text/csv")
+	filename = "CI_Training_ClosedSetText_Phoneme_Data_" + str(timezone.now()).split(' ')[0].replace('-','') + ".csv"
+	response['Content-Disposition'] = 'attachment; filename="' + filename + '"'
+	return response
+
+def cstEnvironmentalCSV(request):
+	# A view that streams a large CSV file.
+	# Generate a sequence of rows. The range is based on the maximum number of
+	# rows that can be handled by a single sheet in most spreadsheet
+	# applications.
+	# Documentation: https://docs.djangoproject.com/en/1.8/howto/outputting-csv/
+	rows = []
+	rows.append(['Environmental (Closed Set Text)'])
+	closedSetTexts = User_Closed_Set_Text.objects.filter(closed_set_text_order__closed_set_text__module_type = 2, date_completed__isnull = False)
+	appendClosedSetTexts(rows, closedSetTexts)
+
+	pseudo_buffer = Echo()
+	writer = csv.writer(pseudo_buffer)
+	response = StreamingHttpResponse((writer.writerow(row) for row in rows), content_type="text/csv")
+	filename = "CI_Training_ClosedSetText_Environmental_Data_" + str(timezone.now()).split(' ')[0].replace('-','') + ".csv"
 	response['Content-Disposition'] = 'attachment; filename="' + filename + '"'
 	return response

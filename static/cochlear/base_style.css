@@ -53,3 +53,7 @@
  	font-size:28px;
   	color: #CD9B37;
 }
+
+#helpButton:hover {
+	color: #b88a2e;
+}

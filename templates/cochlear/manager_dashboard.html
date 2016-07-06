@@ -19,23 +19,37 @@
 
 	<center><h2>Get Data</h2></center>
 	<h3>Download as a CSV</h3>
+	<ro>
 	<a href="{% url 'cochlear:getAllUserDataCSV' %}">	
 		<button type="button" class="btn btn-primary"> Get All User Data </button> 
 	</a>
+	<br/>
 
 	<a href="{% url 'cochlear:talkerIDCSV' %}">	
-		<button type="button" class="btn btn-primary"> Talker ID </button> 
+		<button type="button" class="btn btn-primary"> Speaker ID </button> 
 	</a>
-
+	<br/>
 	<a href="{% url 'cochlear:meaningfulCSV' %}">	
-		<button type="button" class="btn btn-primary"> Meaningful Sentence </button> 
+		<button type="button" class="btn btn-primary"> (Open Set) Meaningful Sentence </button> 
 	</a>
-
 	<a href="{% url 'cochlear:anomalousCSV' %}">	
-		<button type="button" class="btn btn-primary"> Anomalous Sentence </button> 
+		<button type="button" class="btn btn-primary"> (Open Set) Anomalous Sentence </button> 
 	</a>
 	<a href="{% url 'cochlear:wordCSV' %}">	
-		<button type="button" class="btn btn-primary"> Word </button> 
+		<button type="button" class="btn btn-primary"> (Open Set) Word </button> 
+	</a>
+	<a href="{% url 'cochlear:otherCSV' %}">	
+		<button type="button" class="btn btn-primary"> (Open Set) Other </button>
+	</a>
+	<br/> 
+	<a href="{% url 'cochlear:cstPhonemeCSV' %}">	
+		<button type="button" class="btn btn-primary"> (Closed Set Text) Phoneme </button> 
+	</a>
+	<a href="{% url 'cochlear:cstEnvironmentalCSV' %}">	
+		<button type="button" class="btn btn-primary"> (Closed Set Text) Environmental </button> 
+	</a>
+	<a href="{% url 'cochlear:cstOtherCSV' %}">	
+		<button type="button" class="btn btn-primary"> (Closed Set Text) Other </button> 
 	</a>
 
 	<center><h2>Sounds & Speakers</h2></center>

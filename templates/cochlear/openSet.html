@@ -10,7 +10,9 @@
 <div class = "container">
     <div class="col-md-12" id="listen">
       <button id = "testSound" type = "button" class="btn btn-info btn-lg">
-        {% if typeTrain == 2 %}
+        {% if module_type == 4 %}
+        <span class="glyphicon glyphicon-volume-up" aria-hidden="true"></span> Listen to the sound
+        {% elif module_type == 3 %}
         <span class="glyphicon glyphicon-volume-up" aria-hidden="true"></span> Listen to the word
         {% else %}
         <span class="glyphicon glyphicon-volume-up" aria-hidden="true"></span> Listen to the sentence
@@ -19,7 +21,11 @@
     </div>
 
     <div class="form-group col-md-11">
-  		<label for="usr">Type what you hear in the box below (without punctuation, not case sensitive):</label>
+    {% if module_type == 4 %}
+    <label for="usr">Identify the sound in the box below (without punctuation, not case sensitive):</label>
+    {% else %}
+    <label for="usr">Type what you hear in the box below (without punctuation, not case sensitive):</label>
+    {% endif %}
   		<input id ="answer" type="text" class="form-control" id="usr">
 	</div>
 	<div id ="submitButton" class="col-md-1">
@@ -43,8 +49,8 @@
 
     <div id ="next" class="col-md-12">
       <a href = "{% url 'cochlear:goToNextModule' %}">
-        <button type = "button" class="btn btn-primary btn-lg" style="margin-bottom:20px">
-            <span class="glyphicon glyphicon-circle-arrow-right" aria-hidden="true" style="color:white"></span> Proceed To The Next Training Module
+        <button type = "button" class="btn btn-secondary btn-lg" style="margin-bottom:20px">
+            <span class="glyphicon glyphicon-circle-arrow-right" aria-hidden="true" style="color:black"></span> Proceed To The Next Training Module
         </button>
         </br>
         <a href = "{% url 'cochlear:openSet' open_set_module=open_set_module_id repeatFlag=1 order_id=order_id %}" >
@@ -188,15 +194,25 @@ var calcAccuracy = function(answer, keyWords,correctAnswer) {
 $( document ).ready(function() {
     // enable the bootstrap popover
     $('#helpButton').show()
-    {% if typeTrain == 0 %}
+    {% if module_type == 1 %}
     var dashboardHelp = 'This is a meaningful sentence training module. Listen to the sentence, then type what you hear. Do not use punctuation or capitalization. When you are ready for your response to be evaluated, click "Submit." Once you are finished, you may proceed to the next training module, or you may repeat this one. Click ? to close this message.'
     $('body').popover({title:"Help: Meaningful Sentence Training", content:dashboardHelp, selector:"#helpButton", placement:"left", trigger: "click"});
-    {% elif typeTrain == 1 %}
+    
+    {% elif module_type == 2 %}
     var dashboardHelp = 'This is an anomalous sentence training module. Listen to the sentence, then type what you hear. Do not use punctuation or capitalization. When you are ready for your response to be evaluated, click "Submit." Once you are finished, you may proceed to the next training module, or you may repeat this one. Click ? to close this message.'
     $('body').popover({title:"Help: Anomalous Sentence Training", content:dashboardHelp, selector:"#helpButton", placement:"left", trigger: "click"});
-    {% elif typeTrain == 2 %}
+    
+    {% elif module_type == 3 %}
     var dashboardHelp = 'This is a word training module. Listen to the word, then type what you hear. Do not use punctuation or capitalization. When you are ready for your response to be evaluated, click "Submit." Once you are finished, you may proceed to the next training module, or you may repeat this one. Click ? to close this message.'
     $('body').popover({title:"Help: Word Training", content:dashboardHelp, selector:"#helpButton", placement:"left", trigger: "click"});
+    
+    {% elif module_type == 4 %}
+    var dashboardHelp = 'This is an environmental sound training module.Identify the unknown sound, then type your answer in the box next to the submit button. Do not use punctuation or capitalization. When you are ready for your response to be evaluated, click "Submit." Once you are finished, you may proceed to the next training module, or you may repeat this one. Click ? to close this message.'
+    $('body').popover({title:"Help: Environmental Sounds", content:dashboardHelp, selector:"#helpButton", placement:"left", trigger: "click"});
+    
+    {% else %}
+    var dashboardHelp = 'This is an open response training module. Identify the unknown sound, then type your answer in the box next to the submit button. Do not use punctuation or capitalization. When you are ready for your response to be evaluated, click "Submit." Once you are finished, you may proceed to the next training module, or you may repeat this one. Click ? to close this message.'
+    $('body').popover({title:"Help: Open Response", content:dashboardHelp, selector:"#helpButton", placement:"left", trigger: "click"});
     {% endif %}
 
   $("#dashboardRedirect").click(function(event){
@@ -237,7 +253,7 @@ $( document ).ready(function() {
         }
 	});
   
-  var audio = new Audio("{{test_sound}}");
+  var audio = new Audio("{{unknown_sound}}");
 	$("#testSound").click(function(event){
 		audio.play();
 	});

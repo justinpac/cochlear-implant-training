@@ -1,0 +1,98 @@
+{% extends "cochlear_base.html" %}
+
+{% block cochlear-content %}
+
+{% load staticfiles %}
+<!-- Load our stylesheet -->
+<link href="{% static 'cochlear/closedSetText.css' %}" rel="stylesheet">
+
+<span id="helpButton" class="glyphicon glyphicon-question-sign"></span>
+<div class = "container">
+    <div class="col-md-12" id="test" style="text-align:center;">
+      <button id = "testSound" type = "button" class="btn btn-info btn-lg">
+        <span class="glyphicon glyphicon-volume-up" aria-hidden="true"></span> Listen To The Unknown Sound
+      </button>
+    </div>
+    <div style="height:100%;text-align:center">
+      {% for text_choice in text_choices %}
+        <div class="col-md-4" style="height:100%;">
+            <span id="correct_{{text_choice.id}}" class="glyphicon glyphicon-ok vertical-centered" aria-hidden="true"></span>
+            <span id="incorrect_{{text_choice.id}}" class="glyphicon glyphicon-remove vertical-centered" aria-hidden="true"></span>
+            <button id = "response_{{text_choice.id}}" type = "button" class="btn btn-primary btn-lg" onclick='checkAnswer("{{text_choice.id}}")'>
+              {{text_choice.text}}
+            </button>
+        </div>
+      {% endfor %}
+      <div id ="next" class="col-md-12" style="display:none;"">
+      <a href = "{% url 'cochlear:goToNextModule' %}">
+        <button type = "button" class="btn btn-secondary btn-lg">
+            <span class="glyphicon glyphicon-circle-arrow-right" aria-hidden="true" style="color:black"></span> Proceed To The Next Training Module
+        </button>
+        </br>
+        <a href = "{% url 'cochlear:closedSetText' closed_set_text=closed_set_text_id repeatFlag=1 order_id=order_id %}" >
+          <button type = "button" class="btn btn-secondary btn-lg" >
+              <span class="glyphicon glyphicon-repeat" aria-hidden="true"></span> Repeat This Question
+          </button>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <br>
+{% include "cochlear/embeds/backbuttondialogue.html" %}
+<script src="{% static 'js/backbuttondialogue.js' %}"></script>
+<script src="{% static 'js/jquery.cookie.js' %}"></script>
+<script src="{% static 'js/CSRF.js' %}"></script>
+<script type="text/javascript">
+
+// an integer (0 or 1) indicating if the training module was answered correctly
+var answered_correctly;
+//Switches to false once question is answered in order to disable button functionality
+var questionUnanswered = true;
+
+//display database error on console output
+function addFail(failMessage) {
+  console.log(failMessage.responseText);
+}
+
+/* Display an X (if answer was incorrect) or check mark (if answer was incorrect)
+next to the user's answer. show buttons for proceeding to the next training
+module and retrying the current module */
+function checkAnswer(choice_id) {
+  if(questionUnanswered) {
+    function success(data){
+      iscorrect = data[0].iscorrect;
+      // The text_choice id of the user's answer to this training module
+      answered_correctly =  (String(iscorrect) == 'true') ? 1 : 0;
+      if(answered_correctly){
+        $("#correct_" + choice_id).show("fast","linear").css("display", "inline-block");
+      } else {
+        $("#incorrect_" + choice_id).show("fast","linear").css("display", "inline-block");
+      }
+
+      questionUnanswered = false;
+      var b = ["repeat","next"];
+      $('#next').slideDown();
+      $.post("{% url 'cochlear:closedSetTextCompleted' %}",{'order_id':{{order_id}},'answered_correctly':answered_correctly,'user_response':choice_id,'isRepeat':{{repeatFlag}},'module_type':{{module_type}}}).fail(addFail);
+    }
+    $.get("{% url 'cochlear:isCorrectClosedSetText' %}",{'module_id':{{closed_set_text_id}},'text_choice_id':choice_id},success).fail(addFail)
+  }
+}
+
+// Display unknown speaker and possible answer choices
+$( document ).ready(function() {
+
+  // enable the bootstrap popover
+  var dashboardHelp = 'This is a closed set training module. Listen to the unknown sound, then select the button labeled with what you think the unknown sound is. When you are finished, you may proceed to the next training module, or you may repeat this one. Click ? to close this message.'
+  $('body').popover({title:"Help: Closed Set Training", content:dashboardHelp, selector:"#helpButton", placement:"left", trigger: "click"});
+
+  var audio = new Audio("{{unknown_sound}}");
+  $("#testSound").click(function(event){
+    audio.play();
+  });
+
+});
+
+</script>
+
+{% endblock %}
