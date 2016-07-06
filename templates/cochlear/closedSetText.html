@@ -25,8 +25,8 @@
       {% endfor %}
       <div id ="next" class="col-md-12" style="display:none;"">
       <a href = "{% url 'cochlear:goToNextModule' %}">
-        <button type = "button" class="btn btn-primary btn-lg">
-            <span class="glyphicon glyphicon-circle-arrow-right" aria-hidden="true" style="color:white"></span> Proceed To The Next Training Module
+        <button type = "button" class="btn btn-secondary btn-lg">
+            <span class="glyphicon glyphicon-circle-arrow-right" aria-hidden="true" style="color:black"></span> Proceed To The Next Training Module
         </button>
         </br>
         <a href = "{% url 'cochlear:closedSetText' closed_set_text=closed_set_text_id repeatFlag=1 order_id=order_id %}" >

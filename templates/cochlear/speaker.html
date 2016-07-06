@@ -9,30 +9,30 @@
 <span id="helpButton" class="glyphicon glyphicon-question-sign"></span>
 <div class = "container">
     <div class="col-md-12" id="test" style="text-align:center;display:none;">
-      <button id = "test" type = "button" class="btn btn-primary btn-lg" onclick='play_speaker(0)'>
+      <button id = "test" type = "button" class="btn btn-info btn-lg" onclick='play_speaker(0)'>
         <span class="glyphicon glyphicon-user" aria-hidden="true" style="color:white"></span> Listen To The Unknown Speaker
       </button>
     </div>
     <div style="height:100%;text-align:center">
       {% for speech in speaker_choices %}
         <div class="col-md-6" style="height:100%;">
-          <button id = "choice_{{speech.id}}" type = "button" class="btn btn-info btn-lg" onclick='play_speaker({{forloop.counter}})'>
+          <button id = "choice_{{speech.id}}" type = "button" class="btn btn-primary btn-lg" onclick='play_speaker({{forloop.counter}})'>
             <span class="glyphicon glyphicon-user" aria-hidden="true" style="color:white;"></span> Listen to {{speech.speaker.display_name}}
           </button>
             <span id="correct_{{speech.id}}" class="glyphicon glyphicon-ok correct-symbol vertical-centered" aria-hidden="true"></span>
             <span id="incorrect_{{speech.id}}" class="glyphicon glyphicon-remove incorrect-symbol vertical-centered" aria-hidden="true"></span>
-            <button id = "response_{{speech.id}}" type = "button" class="btn btn-info btn-lg" style="display:none" onclick='checkAnswer("{{speech.id}}")'>
+            <button id = "response_{{speech.id}}" type = "button" class="btn btn-primary btn-lg" style="display:none" onclick='checkAnswer("{{speech.id}}")'>
               <span class="glyphicon glyphicon-user" aria-hidden="true" style="color:white"></span> The unknown speaker is {{speech.speaker.display_name}}
             </button>
         </div>
       {% endfor %}
       <div class="col-md-12" style="text-align:center">
-        <button id = "ready" type = "button" class="btn btn-primary btn-lg">Proceed to question</button>
+        <button id = "ready" type = "button" class="btn btn-secondary btn-lg">Proceed to question</button>
       </div>
       <div id ="next" class="col-md-12" style="display:none;"">
       <a href = "{% url 'cochlear:goToNextModule' %}">
-        <button type = "button" class="btn btn-primary btn-lg">
-            <span class="glyphicon glyphicon-circle-arrow-right" aria-hidden="true" style="color:white"></span> Proceed To The Next Training Module
+        <button type = "button" class="btn btn-secondary btn-lg">
+            <span class="glyphicon glyphicon-circle-arrow-right" aria-hidden="true" style="color:black"></span> Proceed To The Next Training Module
         </button>
         </br>
         <a href = "{% url 'cochlear:speaker' speaker_module=speaker_module_id repeatFlag=1 order_id=order_id %}" >
@@ -123,8 +123,9 @@ $( document ).ready(function() {
     $('body').popover({title:"Help: Talker Identification", content:dashboardHelp, selector:"#helpButton", placement:"left", trigger: "click"});
 
     $("#ready").click(function(event){
-      
-      $("#ready").hide("swing").promise().done(function(){
+      $("#test").slideDown("swing");
+      $("#ready").hide("swing").promise().done(function() {
+
         for(var i = 0; i <responseIDs.length; i++){
           $("#" + responseIDs[i]).show("swing");
         }
@@ -135,9 +136,12 @@ $( document ).ready(function() {
           }
         }, 400);
       });
+/*      setTimeout(function() {
+        $("#test").slideDown("swing");
+        $("#ready").hide("swing");
+      },800);*/
+    })
 
-    $("#test").slideDown("swing")
-  })
 });
 
 </script>

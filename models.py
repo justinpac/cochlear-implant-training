@@ -105,7 +105,7 @@ class Closed_Set_Text(models.Model):
 	text_choices = models.ManyToManyField('Text_Choice', through = 'Closed_Set_Text_Choice', help_text = "A set of simple text-based response choices.")
 	unknown_speech = models.ForeignKey('Speech', blank = True, null = True, on_delete = models.CASCADE, help_text = "The unknown speech to be identified. Pick one sound or speech.")
 	unknown_sound = models.ForeignKey('Sound', blank = True, null = True, on_delete = models.CASCADE, help_text = "The unknown sound to be identified. Pich one sound or speech.")
-	module_type = models.PositiveSmallIntegerField(help_text = "0 = other, 1 = Phoneme Training, 2 = Environmental sound training")
+	module_type = models.PositiveSmallIntegerField(help_text = "0 = other, 1 = phoneme training, 2 = environmental sound training")
 
 	def __str__(self):
 		module_types = ["Other","Phoneme", "Environmental"]
@@ -227,7 +227,7 @@ class Open_Set_Module(models.Model):
 	unknown_speech = models.ForeignKey('Speech', on_delete = models.CASCADE, blank = True, null = True, help_text = "The unknown speech to be identified. Pick one sound or speech.")
 	unknown_sound = models.ForeignKey('Sound', on_delete = models.CASCADE, blank = True, null = True, help_text = "The unknown sound to be identified. Pick one sound or speech.")
 	answer = models.TextField()
-	module_type = models.PositiveSmallIntegerField(help_text="0 = other, 1 = meaningful sentence training, 2 = anomalous sentence training, 3 = word training, 4 = envirionmental sound training")
+	module_type = models.PositiveSmallIntegerField(help_text="0 = other, 1 = meaningful sentence training, 2 = anomalous sentence training, 3 = word training, 4 = environmental sound training")
 	key_words = models.TextField(blank=True, help_text='''The key words of this answer (used to determine accuracy). Enter each word separated by spaces. Group together alternate words and separate them by forward slashes. 
 		For example, "birch canoe slid/hid/bid down smooth planks"''')
 

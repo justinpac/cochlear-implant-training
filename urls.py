@@ -30,9 +30,13 @@ urlpatterns = patterns('cochlear',
     #CSV downloads
     url(r'^getAllUserDataCSV/$','views.getAllUserDataCSV', name = 'getAllUserDataCSV'),
     url(r'^talkerIDCSV/$','views.talkerIDCSV', name = 'talkerIDCSV'),
+    url(r'^otherCSV/$','views.otherCSV', name = 'otherCSV'),
     url(r'^meaningfulCSV/$','views.meaningfulCSV', name = 'meaningfulCSV'),
     url(r'^anomalousCSV/$','views.anomalousCSV', name = 'anomalousCSV'),
-    url(r'^wordCSV/$','views.wordCSV', name = 'wordCSV')
+    url(r'^wordCSV/$','views.wordCSV', name = 'wordCSV'),
+    url(r'^cstPhonemeCSV/$','views.cstPhonemeCSV', name = 'cstPhonemeCSV'),
+    url(r'^cstEnvironmentalCSV/$','views.cstEnvironmentalCSV', name = 'cstEnvironmentalCSV'),
+    url(r'^cstOtherCSV/$','views.cstOtherCSV', name = 'cstOtherCSV')
 )
 
 #if settings.DEBUG is True:
