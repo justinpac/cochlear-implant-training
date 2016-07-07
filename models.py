@@ -17,7 +17,7 @@ class User_Attrib(models.Model):
 		verbose_name_plural = "User Attributes"
 		verbose_name = "user attribute"
 
-# Tracking Data for a particular user session (a set of training modules copleted on a given day)
+# Tracking Data for a particular user session (a set of training modules completed on a given day)
 class Session(models.Model):
 	speaker_ids = models.ManyToManyField('Speaker_ID', through='Speaker_ID_Order')
 	open_set_modules = models.ManyToManyField('Open_Set_Module', through='Open_Set_Module_Order')
@@ -44,12 +44,13 @@ class User_Session(models.Model):
 		verbose_name_plural = "(User Data) User Session Data"
 		verbose_name = "user session"
 
-# Speaker associated with potentiallly many speech files
+# Speaker associated with potentially many speech files
 class Speaker(models.Model):
 	name = models.CharField(max_length = 50, unique=True)
 	display_name = models.CharField(max_length = 50, help_text="This is the name the user will see when encountering this speaker, such as in the speaker identification module")
 	difficulty = models.PositiveSmallIntegerField(default = 0)
-	gender = models.CharField(max_length=20, help_text="type 'male' for male or 'female' for female") 
+	gender = models.CharField(max_length=20, help_text="Type 'male' for male or 'female' for female")
+	notes = models.TextField(help_text="Miscellaneous information", blank=True) 
 
 	def __str__(self):
 		return self.name
@@ -73,6 +74,7 @@ class Sound_Source(models.Model):
 	name = models.CharField(max_length=50, unique=True, help_text="WARNING: this should not be a speaker")
 	display_name = models.CharField(max_length = 50, help_text="This is the name the user will see when encountering this source, such as in environmental sound training")
 	difficulty = models.PositiveSmallIntegerField(default = 0)
+	notes = models.TextField(help_text="Miscellaneous information", blank=True)
 
 	def __str__(self):
 		return self.name
@@ -83,7 +85,7 @@ class Sound_Source(models.Model):
 
 # A non-speech sound
 class Sound(models.Model):
-	sound_file = models.FileField(upload_to = 'cochlear/sound', help_text="This is not intended to be spoken word associatied with a known speaker")
+	sound_file = models.FileField(upload_to = 'cochlear/sound', help_text="This is not intended to be spoken word associated with a known speaker")
 	source = models.ForeignKey('Sound_Source',on_delete=models.SET_NULL, blank = True, null = True)
 	difficulty = models.PositiveSmallIntegerField(default = 0)
 
@@ -104,7 +106,7 @@ class Text_Choice(models.Model):
 class Closed_Set_Text(models.Model):
 	text_choices = models.ManyToManyField('Text_Choice', through = 'Closed_Set_Text_Choice', help_text = "A set of simple text-based response choices.")
 	unknown_speech = models.ForeignKey('Speech', blank = True, null = True, on_delete = models.CASCADE, help_text = "The unknown speech to be identified. Pick one sound or speech.")
-	unknown_sound = models.ForeignKey('Sound', blank = True, null = True, on_delete = models.CASCADE, help_text = "The unknown sound to be identified. Pich one sound or speech.")
+	unknown_sound = models.ForeignKey('Sound', blank = True, null = True, on_delete = models.CASCADE, help_text = "The unknown sound to be identified. Pick one sound or speech.")
 	module_type = models.PositiveSmallIntegerField(help_text = "0 = other, 1 = phoneme training, 2 = environmental sound training")
 
 	def __str__(self):
@@ -117,7 +119,7 @@ class Closed_Set_Text(models.Model):
 		verbose_name = "closed set text module"
 
 
-# A text-based reponse within a given Closed_Set_Text
+# A text-based response within a given Closed_Set_Text
 class Closed_Set_Text_Choice(models.Model):
 	closed_set_text = models.ForeignKey('Closed_Set_Text', on_delete = models.CASCADE)
 	choice = models.ForeignKey('Text_Choice', on_delete = models.CASCADE)
@@ -134,7 +136,7 @@ class Closed_Set_Text_Choice(models.Model):
 class Closed_Set_Text_Order(models.Model):
 	session = models.ForeignKey('Session', on_delete=models.CASCADE)
 	closed_set_text = models.ForeignKey('Closed_Set_Text', on_delete=models.CASCADE)
-	order = models.PositiveIntegerField()
+	order = models.PositiveIntegerField(help_text = "unique integer value, starting at one, that spans all module types.")
 
 	def __str__(self):
 		return "Session: " + str(self.session) + ", Closed Set Text: ["+ str(self.closed_set_text) + "]"
@@ -147,7 +149,7 @@ class Closed_Set_Text_Order(models.Model):
 class User_Closed_Set_Text(models.Model):
 	user_attrib = models.ForeignKey('User_Attrib', on_delete = models.CASCADE)
 	closed_set_text_order = models.ForeignKey('Closed_Set_Text_Order', on_delete = models.CASCADE)
-	repeat = models.BooleanField(help_text = "Was this completed while the user was repeating the training module?") # Indicates if this instance was generateed while the user was repeating the training module
+	repeat = models.BooleanField(help_text = "Was this completed while the user was repeating the training module?") # Indicates if this instance was generated while the user was repeating the training module
 	date_completed = models.DateTimeField(blank = True, null = True)
 	user_response = models.ForeignKey('Text_Choice', on_delete = models.PROTECT, blank = True, null = True)
 	correct = models.NullBooleanField(blank = True, null = True)
@@ -192,7 +194,7 @@ class Speaker_ID_Choice(models.Model):
 class Speaker_ID_Order(models.Model):
 	session = models.ForeignKey('Session', on_delete=models.CASCADE)
 	speaker_id = models.ForeignKey('Speaker_ID', on_delete=models.CASCADE)
-	order = models.PositiveSmallIntegerField()
+	order = models.PositiveSmallIntegerField(help_text = "unique integer value, starting at one, that spans all module types.")
 
 	def __str__(self):
 		return "Session: " + str(self.session) + ", Speaker_ID: ["+ str(self.speaker_id) + "]"
@@ -207,7 +209,7 @@ class Speaker_ID_Order(models.Model):
 class User_Speaker_ID(models.Model):
 	user_attrib = models.ForeignKey('User_Attrib', on_delete=models.CASCADE)
 	speaker_id_order = models.ForeignKey('Speaker_ID_Order', on_delete=models.CASCADE)
-	repeat = models.BooleanField(help_text = "Was this completed while the user was repeating the training module?") # Indicates if this instance was generateed while the user was repeating the training module
+	repeat = models.BooleanField(help_text = "Was this completed while the user was repeating the training module?") # Indicates if this instance was generated while the user was repeating the training module
 	date_completed = models.DateTimeField(blank = True, null = True)
 	user_response = models.ForeignKey('Speech', on_delete = models.PROTECT, blank = True, null = True)
 	correct = models.NullBooleanField(blank = True, null = True)
@@ -228,8 +230,8 @@ class Open_Set_Module(models.Model):
 	unknown_sound = models.ForeignKey('Sound', on_delete = models.CASCADE, blank = True, null = True, help_text = "The unknown sound to be identified. Pick one sound or speech.")
 	answer = models.TextField()
 	module_type = models.PositiveSmallIntegerField(help_text="0 = other, 1 = meaningful sentence training, 2 = anomalous sentence training, 3 = word training, 4 = environmental sound training")
-	key_words = models.TextField(blank=True, help_text='''The key words of this answer (used to determine accuracy). Enter each word separated by spaces. Group together alternate words and separate them by forward slashes. 
-		For example, "birch canoe slid/hid/bid down smooth planks"''')
+	key_words = models.TextField(blank=True, help_text='''The keywords of this answer (used to determine accuracy). Enter each word separated by spaces. Group together alternate words and separate them by forward slashes. 
+		For example, "birch canoe slid/hid/bid down smooth planks". The user is allow one typo (insertion, deletion, or substitution) when evaluating each keyword.''')
 
 	def __str__(self):
 		return self.answer
@@ -243,7 +245,7 @@ class Open_Set_Module(models.Model):
 class Open_Set_Module_Order(models.Model):
 	session = models.ForeignKey('Session', on_delete=models.CASCADE)
 	open_set_module = models.ForeignKey('Open_Set_Module', on_delete=models.CASCADE)
-	order = models.PositiveSmallIntegerField()
+	order = models.PositiveSmallIntegerField(help_text = "unique integer value, starting at one, that spans all module types.")
 
 	def __str__(self):
 		return "Session: " + str(self.session) + ", OpenSetModule: "+ str(self.open_set_module)
@@ -259,7 +261,7 @@ class Open_Set_Module_Order(models.Model):
 class User_Open_Set_Module(models.Model):
 	user_attrib = models.ForeignKey('User_Attrib', on_delete=models.CASCADE)
 	open_set_module_order = models.ForeignKey('Open_Set_Module_Order', on_delete=models.CASCADE)
-	repeat = models.BooleanField(help_text = "Was this completed while the user was repeating the training module?") # Indicates if this instance was generateed while the user was repeating the training module
+	repeat = models.BooleanField(help_text = "Was this completed while the user was repeating the training module?") # Indicates if this instance was generated while the user was repeating the training module
 	date_completed = models.DateTimeField(blank = True, null = True)
 	user_response = models.TextField(blank = True, null = True)
 	percent_correct = models.PositiveSmallIntegerField(blank = True, null = True)

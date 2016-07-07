@@ -15,7 +15,7 @@ import cochlear.util
 from django.utils import timezone
 import random #To generate random numbers
 
-#For genereating csv files
+#For generating csv files
 import csv
 from django.utils.six.moves import range
 from django.http import StreamingHttpResponse
@@ -24,7 +24,7 @@ from django.http import StreamingHttpResponse
 SESSION_CAP = 4
 
 def index(request):
-	#If user is manager, redirect to the manager dashboard (so the homepage always takes the manager to their dasboard)
+	#If user is manager, redirect to the manager dashboard (so the homepage always takes the manager to their dashboard)
 	permission = cochlear.util.GetUserPermission(request.user.username);
 	if(permission > 0):
 		return redirect('cochlear:dashboard')
