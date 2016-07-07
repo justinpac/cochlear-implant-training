@@ -1,6 +1,7 @@
 from django.shortcuts import render,redirect
 from django.http import HttpResponse
 import json, datetime, logging
+from django.db.models import Q, Max
 
 # We need this to generate the navbar
 from hipercore.helpers import NavigationBar
@@ -54,10 +55,14 @@ def index(request):
 
 	#Indicate if there is an active session
 	active_session = User_Session.objects.filter(user=userList[0], date_completed=None)
-	if not active_session:
-		context['activeSessionFlag'] = False
-	else:
-		context['activeSessionFlag'] = True
+	nextSession = getNextSession(userList[0])
+	print(str(nextSession))
+	if not nextSession: # There are no more sessions for the user to complete
+		context['sessionFlag'] = 0
+	elif not active_session: # The user may start a new session
+		context['sessionFlag'] = 1
+	else: # the user may continue their current session
+		context['sessionFlag'] = 2
 	return render(request,'cochlear/index.html',context)
 
 def history(request):
@@ -124,48 +129,18 @@ def openSet(request, open_set_module, repeatFlag, order_id):
 
 	return render(request,'cochlear/openSet.html',context)
 
-#############################
-## Views Without Templates ##
-#############################
+###################
+## Session Logic ##
+###################
 
 def startNewSession(request):
 	context = NavigationBar.generateAppContext(request,app="cochlear",title="startNewSession", navbarName=0)
 	userObj = User_Attrib.objects.get(username=request.user.username)
-	user_sessions = User_Session.objects.filter(user = userObj)
-
-	#If the user has not completed any sessions, then they are on the session for week 1, day 1
-	if not user_sessions:
-		checkWeekProg(userObj)
-		week1Day1 = Session.objects.get(week = 1, day = 1)
-		createUserSessionData(week1Day1, userObj)
-		return goToModule(week1Day1, 1)
-
-	#Get the max session day and week that the user has completed
-	maxWeekComplete = 0;
-	maxDayComplete = 0;
-	for user_session in user_sessions:
-		day = user_session.session.day
-		week = user_session.session.week
-		if (day > maxDayComplete):
-			maxDayComplete = day
-		if (week > maxWeekComplete):
-			maxWeekComplete = week
-
-	# Get the next session the user needs to complete
-	nextSession = Session.objects.filter(week = (maxWeekComplete), day = (maxDayComplete + 1))
-	if not nextSession: 
-		# Either the next session is on a new week or there are no sessions left for the user to complete
-		nextSession = Session.objects.filter(week = (maxWeekComplete + 1), day = 1)
-		if not nextSession:
-			# We want this date to change the next time there is actually another session to complete, so no call to checkWeekProg
-			return redirect('cochlear:trainingEndPage')
-	
-	# Go to the first module of the next session
-	nextSession = nextSession.first()
-	
+	nextSession = getNextSession(userObj)
+	if not nextSession:
+		return redirect('cochlear:trainingEndPage')
 	#Create user-specific objects for this session
 	createUserSessionData(nextSession, userObj)
-
 	checkWeekProg(userObj)
 
 	return goToModule(nextSession, 1)
@@ -182,6 +157,29 @@ def goToNextModule(request):
 		return redirect('cochlear:sessionEndPage')
 	nextModule = user_session.modules_completed + 1
 	return goToModule(user_session.session, nextModule)
+
+#Takes in a user_attrib object and returns the next session the user needs to complete
+def getNextSession(userObj):
+	user_sessions = User_Session.objects.filter(user = userObj, date_completed__isnull = False) # get the sessions that the user has completed
+	#If the user has not completed any sessions, then they are on the session for week 1, day 1
+	if not user_sessions:
+		checkWeekProg(userObj)
+		week1Day1 = Session.objects.get(week = 1, day = 1)
+		return week1Day1
+
+	#Get the max session day and week that the user has completed
+	maxWeekComplete = user_sessions.aggregate(Max('session__week'))['session__week__max']
+	maxDayComplete = user_sessions.aggregate(Max('session__day'))['session__day__max']
+
+	# Get the next session the user needs to complete
+	nextSession = Session.objects.filter(Q(speaker_ids__isnull=False) | Q(open_set_modules__isnull=False) | Q(closed_set_texts__isnull=False), week = (maxWeekComplete), day = (maxDayComplete + 1)).distinct()
+	if not nextSession: 
+		# Either the next session is on a new week or there are no sessions left for the user to complete
+		nextSession = Session.objects.filter(Q(speaker_ids__isnull=False) | Q(open_set_modules__isnull=False) | Q(closed_set_texts__isnull=False), week = (maxWeekComplete + 1), day = 1).distinct()
+		if not nextSession:
+			# We want this date to change the next time there is actually another session to complete, so no call to checkWeekProg
+			return None
+	return nextSession.first()
 
 ##################
 ## Ajax methods ##

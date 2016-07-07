@@ -24,19 +24,19 @@
 		</div>
 	</div>
 	<div class="row">
-	{% if activeSessionFlag %}
-   	<a href = "{% url 'cochlear:goToNextModule' %}">
-			<button id = "continueSession" type="button" class="btn btn-success btn-lg">Continue your current session</button>
-    </a>
+	{% if sessionFlag == 0 %}
+		<span id="noSessions"><span class="glyphicon glyphicon-lock" style="color:#CD9B37"></span> no new sessions avaiable at this time</span>
+    {% elif sessionFlag == 1 %}
+	<button id = "startSession" type="button" class="btn btn-primary btn-lg">start a new training session</button>
     {% else %}
-<!--     <a href = "{% url 'cochlear:startNewSession' %}"> -->
-			<button id = "startSession" type="button" class="btn btn-primary btn-lg">Start a new training session</button>
-<!--     </a> -->
-    {% endif %}
-    <a href = "{% url 'cochlear:history' %}" >
-      <button id = "history" type="button" class="btn btn-secondary btn-lg">View training history</button>
+    <a href = "{% url 'cochlear:goToNextModule' %}">
+		<button id = "continueSession" type="button" class="btn btn-success btn-lg">continue your current session</button>
     </a>
-	</div>
+    {% endif %}
+    	<a href = "{% url 'cochlear:history' %}" >
+	    	<button id = "history" type="button" class="btn btn-secondary btn-lg">view training history</button>
+	    </a>
+    </div>
 
 	<!-- Modal -->
 	<div id="24HourWarning" class="modal fade" role="dialog">
