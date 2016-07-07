@@ -181,7 +181,7 @@ class Speaker_ID_Choice(models.Model):
 	iscorrect = models.BooleanField()
 
 	def __str__(self):
-		return "Speaker ID: [" + str(self.module) + "], Choice: " + str(self.choice)
+		return "Speaker ID: [" + str(self.speaker_id) + "], Choice: " + str(self.choice)
 
 	class Meta:
 		# admin panel display name
