@@ -119,8 +119,6 @@ def openSet(request, open_set_module, repeatFlag, order_id):
 		context['unknown_sound'] = module.unknown_speech.speech_file.url
 	else:
 		context['unknown_sound'] = module.unknown_sound.sound_file.url
-	context['correctAnswer'] = module.answer
-	context['keyWords'] = module.key_words
 	context['module_type'] = module.module_type
 	context['repeatFlag'] = repeatFlag
 	context['order_id'] = order_id
@@ -128,6 +126,31 @@ def openSet(request, open_set_module, repeatFlag, order_id):
 	context['user_attrib_id'] = user_attrib.id
 
 	return render(request,'cochlear/openSet.html',context)
+
+#################################
+## Training Module "Gap" Pages ##
+#################################
+
+def speakerGap(request, speaker_module, repeatFlag, order_id):
+	context = NavigationBar.generateAppContext(request,app="cochlear",title="speakerGap", navbarName=0)
+	context['speaker_module'] = speaker_module
+	context['repeatFlag'] = repeatFlag
+	context['order_id'] = order_id
+	return render(request,'cochlear/speakerGap.html',context)
+
+def closedSetTextGap(request, closed_set_text, repeatFlag, order_id):
+	context = NavigationBar.generateAppContext(request,app="cochlear",title="closedSetTextGap", navbarName=0)
+	context['closed_set_text'] = closed_set_text
+	context['repeatFlag'] = repeatFlag
+	context['order_id'] = order_id
+	return render(request,'cochlear/closedSetTextGap.html',context)
+
+def openSetGap(request, open_set_module, repeatFlag, order_id):
+	context = NavigationBar.generateAppContext(request,app="cochlear",title="openSetGap", navbarName=0)
+	context['open_set_module'] = open_set_module
+	context['repeatFlag'] = repeatFlag
+	context['order_id'] = order_id
+	return render(request,'cochlear/openSetGap.html',context)
 
 ###################
 ## Session Logic ##
@@ -143,7 +166,7 @@ def startNewSession(request):
 	createUserSessionData(nextSession, userObj)
 	checkWeekProg(userObj)
 
-	return goToModule(nextSession, 1)
+	return goToModule(nextSession, 1, userObj)
 
 def goToNextModule(request):
 	userObj = User_Attrib.objects.get(username=request.user.username)
@@ -156,7 +179,38 @@ def goToNextModule(request):
 		user_session.save()
 		return redirect('cochlear:sessionEndPage')
 	nextModule = user_session.modules_completed + 1
-	return goToModule(user_session.session, nextModule)
+	return goToModule(user_session.session, nextModule, userObj)
+
+# Get a module in a particular session based on its order in sequence (moduleNum)
+# This is in a separate function because it will be used in multiple contexts and
+# continue to grow with the number of modules
+def goToModule(session, moduleNum, userObj):
+	user_session = User_Session.objects.get(user = userObj, date_completed = None)
+	module = session.speaker_ids.filter(speaker_id_order__order = moduleNum)
+	if not module:
+		module = session.open_set_modules.filter(open_set_module_order__order = moduleNum)
+		if not module:
+			module = session.closed_set_texts.filter(closed_set_text_order__order = moduleNum)
+			order_id = Closed_Set_Text_Order.objects.get(session = session, order = moduleNum).id
+			if user_session.first_closed_set_text:
+				user_session.first_closed_set_text = False
+				user_session.save()
+				return redirect('cochlear:closedSetTextGap', closed_set_text = module.first().id, repeatFlag = 0, order_id = order_id)
+			return redirect('cochlear:closedSetText', closed_set_text = module.first().id, repeatFlag = 0, order_id = order_id)
+
+		order_id = Open_Set_Module_Order.objects.get(session = session, order = moduleNum).id
+		if user_session.first_open_set_module:
+			user_session.first_open_set_module = False
+			user_session.save()
+			return redirect('cochlear:openSetGap', open_set_module=module.first().id, repeatFlag = 0, order_id = order_id)
+		return redirect('cochlear:openSet', open_set_module=module.first().id, repeatFlag = 0, order_id = order_id)
+
+	order_id = Speaker_ID_Order.objects.get(session = session, order = moduleNum).id
+	if user_session.first_speaker_id:
+		user_session.first_speaker_id = False
+		user_session.save()
+		return redirect('cochlear:speakerGap', speaker_module=module.first().id, repeatFlag = 0, order_id = order_id)
+	return redirect('cochlear:speaker', speaker_module=module.first().id, repeatFlag = 0, order_id = order_id)
 
 #Takes in a user_attrib object and returns the next session the user needs to complete
 def getNextSession(userObj):
@@ -169,7 +223,11 @@ def getNextSession(userObj):
 
 	#Get the max session day and week that the user has completed
 	maxWeekComplete = user_sessions.aggregate(Max('session__week'))['session__week__max']
-	maxDayComplete = user_sessions.aggregate(Max('session__day'))['session__day__max']
+	user_sessions_cur_week = user_sessions.filter(session__week = maxWeekComplete)
+	maxDayComplete = user_sessions_cur_week.aggregate(Max('session__day'))['session__day__max']
+
+	print(maxWeekComplete)
+	print(maxDayComplete)
 
 	# Get the next session the user needs to complete
 	nextSession = Session.objects.filter(Q(speaker_ids__isnull=False) | Q(open_set_modules__isnull=False) | Q(closed_set_texts__isnull=False), week = (maxWeekComplete), day = (maxDayComplete + 1)).distinct()
@@ -180,6 +238,7 @@ def getNextSession(userObj):
 			# We want this date to change the next time there is actually another session to complete, so no call to checkWeekProg
 			return None
 	return nextSession.first()
+
 
 ##################
 ## Ajax methods ##
@@ -231,6 +290,14 @@ def openSetCompleted(request):
 	
 	moduleHist.save()
 	return HttpResponse("Success")
+
+def openSetAnswerKey(request):
+	module = Open_Set_Module_Order.objects.get(id = int(request.GET['order_id'])).open_set_module
+	keyWords = module.key_words
+	correctAnswer = module.answer
+	purelist = [{'keyWords':keyWords, 'correctAnswer':correctAnswer}]
+	data = json.dumps(purelist)
+	return HttpResponse(data, content_type='application/json')
 
 def isCorrectClosedSetText(request):
 	closedSetText = Closed_Set_Text.objects.get(id = int(request.GET['module_id']))
@@ -422,25 +489,6 @@ def checkWeekProg(userObj):
 	if (userObj.current_week_start_date == None) or (timezone.now() - userObj.current_week_start_date) > datetime.timedelta(days=7):
 			userObj.current_week_start_date = timezone.now()
 			userObj.save()
-
-# Get a module in a particular session based on its order in sequence (moduleNum)
-# This is in a separate function because it will be used in multiple contexts and
-# continue to grow with the number of modules
-def goToModule(session, moduleNum):
-
-	module = session.speaker_ids.filter(speaker_id_order__order = moduleNum)
-	if not module:
-		module = session.open_set_modules.filter(open_set_module_order__order = moduleNum)
-		if not module:
-			module = session.closed_set_texts.filter(closed_set_text_order__order = moduleNum)
-			order_id = Closed_Set_Text_Order.objects.get(session = session, order = moduleNum).id
-			return redirect('cochlear:closedSetText', closed_set_text = module.first().id, repeatFlag = 0, order_id = order_id)
-
-		order_id = Open_Set_Module_Order.objects.get(session = session, order = moduleNum).id
-		return redirect('cochlear:openSet', open_set_module=module.first().id, repeatFlag = 0, order_id = order_id)
-
-	order_id = Speaker_ID_Order.objects.get(session = session, order = moduleNum).id
-	return redirect('cochlear:speaker', speaker_module=module.first().id, repeatFlag = 0, order_id = order_id)
 
 # Create user-specific objects for a given session
 # We create user module data at the start of a session in case there is any data we

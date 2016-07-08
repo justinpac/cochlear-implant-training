@@ -1,0 +1,21 @@
+{% extends "cochlear_base.html" %}
+
+{% block cochlear-content %}
+
+{% load staticfiles %}
+
+<div class = "container">
+  <div style="text-align:center">
+    <h1>Open Set Training</h1>
+   	<p style="font-size:18px">You are about to start an open set training module. In this module, you will listen to an unknown sound. This unknown sound could be speech, such as a word or a sentence, or it could be an environmental sound, such as a river or car horn. Identify the unknown sound, then type your answer in the box next to the submit button. Do not use punctuation or capitalization. When you are ready for your response to be evaluated, click "Submit."</p>
+    <br/>
+    <a href = "{% url 'cochlear:openSet' open_set_module=open_set_module repeatFlag=repeatFlag order_id=order_id %}" >
+      <button type = "button" class="btn btn-primary btn-lg" style="margin-bottom:20px;">
+        Okay, I'm ready!
+      </button>
+    </a>
+  </div>
+</div>
+
+
+{% endblock %}

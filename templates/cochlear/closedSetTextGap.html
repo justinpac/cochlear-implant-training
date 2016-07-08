@@ -1,0 +1,21 @@
+{% extends "cochlear_base.html" %}
+
+{% block cochlear-content %}
+
+{% load staticfiles %}
+
+<div class = "container">
+  <div style="text-align:center">
+    <h1>Closed Set Training</h1>
+   	<p style="font-size:18px">You are about to start a closed set training module. In this module, you will listen to an unknown sound. This unknown sound could be speech, such as a phoneme, or it could be an environmental sound, such as a river or car horn. Once you have listened to the sound, select the button labeled with what you think the unknown sound is.</p>
+    <br/>
+    <a href = "{% url 'cochlear:closedSetText' closed_set_text=closed_set_text repeatFlag=repeatFlag order_id=order_id %}" >
+      <button type = "button" class="btn btn-primary btn-lg" style="margin-bottom:20px;">
+        Okay, I'm ready!
+      </button>
+    </a>
+  </div>
+</div>
+
+
+{% endblock %}

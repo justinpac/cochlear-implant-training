@@ -221,35 +221,38 @@ $( document ).ready(function() {
 
 	$("#submit").click(function(event){
 		if(questionUnanswered) {
-            questionUnanswered = false;
-            var answer = $('#answer').val();
-			var correctAnswer = "{{correctAnswer}}";
-            var keyWords = "{{keyWords}}";
-            var accuracy = calcAccuracy(answer,keyWords, correctAnswer);
+            function success(data) {
+                questionUnanswered = false;
+                var answer = $('#answer').val();
+    			var correctAnswer = data[0].correctAnswer;
+                var keyWords = data[0].keyWords;
+                var accuracy = calcAccuracy(answer,keyWords, correctAnswer);
 
-			if (accuracy.percentCorrect < MIN_CORRECT_ACCURACY) {
-                if (keyWords == ''){
-                    $("#incorrectHeader").html("<p>Not quite!</p>")
-                } else {
-                    $("#incorrectHeader").html("<p>Your response contained " + accuracy.percentCorrect + "% of the keywords for this question</p>");
-                }
-                $("#incorrectBody").html("<p><span style='font-weight:bold'>Your answer was:</span> " + answer + "</p><p><span style='font-weight:bold'>The correct answer was:</span> " + accuracy.gradedAnswer + "</p>");
-                $("#incorrect").slideDown("swing").promise().done(function(){
-                    $('#next').slideDown("swing");
-                });
-			} else {
-                if(keyWords == '') {
-                    $("#correctHeader").html("<p>Correct!</p>")
-                } else {
-                    $("#correctHeader").html("<p>Great job! Your response contained " + accuracy.percentCorrect + "% of the keywords for this question</p>");
-                }
-                $("#correctBody").html("<p><span style='font-weight:bold'>Your answer was:</span> " + answer + "</p><p><span style='font-weight:bold'>The correct answer was:</span> " + accuracy.gradedAnswer + "</p>");
-                $("#correct").slideDown("swing").promise().done(function(){
-                    $('#next').slideDown("swing");
-                });
-			}
+    			if (accuracy.percentCorrect < MIN_CORRECT_ACCURACY) {
+                    if (keyWords == ''){
+                        $("#incorrectHeader").html("<p>Not quite!</p>")
+                    } else {
+                        $("#incorrectHeader").html("<p>Your response contained " + accuracy.percentCorrect + "% of the keywords for this question</p>");
+                    }
+                    $("#incorrectBody").html("<p><span style='font-weight:bold'>Your answer was:</span> " + answer + "</p><p><span style='font-weight:bold'>The correct answer was:</span> " + accuracy.gradedAnswer + "</p>");
+                    $("#incorrect").slideDown("swing").promise().done(function(){
+                        $('#next').slideDown("swing");
+                    });
+    			} else {
+                    if(keyWords == '') {
+                        $("#correctHeader").html("<p>Correct!</p>")
+                    } else {
+                        $("#correctHeader").html("<p>Great job! Your response contained " + accuracy.percentCorrect + "% of the keywords for this question</p>");
+                    }
+                    $("#correctBody").html("<p><span style='font-weight:bold'>Your answer was:</span> " + answer + "</p><p><span style='font-weight:bold'>The correct answer was:</span> " + accuracy.gradedAnswer + "</p>");
+                    $("#correct").slideDown("swing").promise().done(function(){
+                        $('#next').slideDown("swing");
+                    });
+    			}
 
-            $.post("{% url 'cochlear:openSetCompleted' %}",{'order_id':{{order_id}},'isRepeat':{{repeatFlag}},'user_response':answer,'percentCorrect':accuracy.percentCorrect}).fail(addFail);
+                $.post("{% url 'cochlear:openSetCompleted' %}",{'order_id':{{order_id}},'isRepeat':{{repeatFlag}},'user_response':answer,'percentCorrect':accuracy.percentCorrect}).fail(addFail);
+            }
+            $.get("{% url 'cochlear:openSetAnswerKey' %}",{'order_id':{{order_id}}}, success).fail(addFail)
         }
 	});
   

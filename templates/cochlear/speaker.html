@@ -27,7 +27,7 @@
         </div>
       {% endfor %}
       <div class="col-md-12" style="text-align:center">
-        <button id = "ready" type = "button" class="btn btn-secondary btn-lg">Proceed to question</button>
+        <button id = "ready" type = "button" class="btn btn-secondary btn-lg"> Ready </button>
       </div>
       <div id ="next" class="col-md-12" style="display:none;"">
       <a href = "{% url 'cochlear:goToNextModule' %}">
@@ -119,8 +119,8 @@ function play_speaker(index) {
 // Display unknown speaker and possible answer choices
 $( document ).ready(function() {
     // enable the bootstrap popover
-    var dashboardHelp = 'This is a talker identification training module. Listen to the speakers by clicking on their respective buttons. Try your best to memorize each speaker\'s voice, then click "Start Testing." Listen to the unknown speaker, then select who you think the unknown speaker is. When you are finished, you may proceed to the next training module, or you may repeat this one. Click ? to close this message.'
-    $('body').popover({title:"Help: Talker Identification", content:dashboardHelp, selector:"#helpButton", placement:"left", trigger: "click"});
+    var dashboardHelp = 'This is a Speaker identification training module. Listen to the speakers by clicking on their respective buttons. Try your best to memorize each speaker\'s voice, then click "Ready." Listen to the unknown speaker, then select who you think the unknown speaker is. When you are finished, you may proceed to the next training module, or you may repeat this one. Click ? to close this message.'
+    $('body').popover({title:"Help: Speaker Identification", content:dashboardHelp, selector:"#helpButton", placement:"left", trigger: "click"});
 
     $("#ready").click(function(event){
       $("#test").slideDown("swing");

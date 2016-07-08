@@ -7,9 +7,15 @@ urlpatterns = patterns('cochlear',
     url(r'^history/$','views.history', name = 'history'),
     url(r'^sessionEndPage/$','views.sessionEndPage', name = 'sessionEndPage'),
     url(r'^trainingEndPage/$','views.trainingEndPage', name = 'trainingEndPage'),
-    url(r'^speaker/(?P<speaker_module>[\d]+)/(?P<repeatFlag>[\d]+)/(?P<order_id>[\d]+)/$', 'views.speaker', name='speaker' ),
+    #Training modules
+    url(r'^speaker/(?P<speaker_module>[\d]+)/(?P<repeatFlag>[\d]+)/(?P<order_id>[\d]+)/$', 'views.speaker', name='speaker'),
     url(r'^closedSetText/(?P<closed_set_text>[\d]+)/(?P<repeatFlag>[\d]+)/(?P<order_id>[\d]+)/$','views.closedSetText', name = 'closedSetText'),
     url(r'^openSet/(?P<open_set_module>[\d]+)/(?P<repeatFlag>[\d]+)/(?P<order_id>[\d]+)/$','views.openSet', name = 'openSet'),
+    #Training module "gap" pages
+    url(r'^speakerGap/(?P<speaker_module>[\d]+)/(?P<repeatFlag>[\d]+)/(?P<order_id>[\d]+)/$', 'views.speakerGap', name='speakerGap'),
+    url(r'^closedSetTextGap/(?P<closed_set_text>[\d]+)/(?P<repeatFlag>[\d]+)/(?P<order_id>[\d]+)/$','views.closedSetTextGap', name = 'closedSetTextGap'),
+    url(r'^openSetGap/(?P<open_set_module>[\d]+)/(?P<repeatFlag>[\d]+)/(?P<order_id>[\d]+)/$','views.openSetGap', name = 'openSetGap'),
+    #Session logic
     url(r'^startNewSession/$','views.startNewSession', name = 'startNewSession'),
     url(r'^goToNextModule/$','views.goToNextModule', name = 'goToNextModule'),
     #Manager pages
@@ -20,6 +26,7 @@ urlpatterns = patterns('cochlear',
     #ajax methods
     url(r'^upload_sound/','views.uploadSound',name = 'uploadSound'),
     url(r'^openSetCompleted/$','views.openSetCompleted', name = 'openSetCompleted'),
+    url(r'^openSetAnswerKey/$','views.openSetAnswerKey', name = 'openSetAnswerKey'),
     url(r'^isCorrectClosedSetText/$','views.isCorrectClosedSetText', name = 'isCorrectClosedSetText'),
     url(r'^closedSetTextCompleted/$','views.closedSetTextCompleted', name = 'closedSetTextCompleted'),
     url(r'^isCorrectSpeaker/$','views.isCorrectSpeaker', name = 'isCorrectSpeaker'),

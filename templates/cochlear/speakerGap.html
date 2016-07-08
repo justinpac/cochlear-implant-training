@@ -1,0 +1,21 @@
+{% extends "cochlear_base.html" %}
+
+{% block cochlear-content %}
+
+{% load staticfiles %}
+
+<div class = "container">
+  <div style="text-align:center">
+    <h1>Speaker Identification Training</h1>
+   	<p style="font-size:18px">You about to start a speaker identification module. Listen to the speakers by clicking on their respective buttons. Try your best to memorize each speaker's voice, then click "Ready." Once you click this button, you will no longer be able to listen to the earlier speakers, and you will be presented with an unknown speaker. Listen to the unknown speaker, then select who you think the unknown speaker is.</p>
+    <br/>
+    <a href = "{% url 'cochlear:speaker' speaker_module=speaker_module repeatFlag=repeatFlag order_id=order_id %}" >
+      <button type = "button" class="btn btn-primary btn-lg" style="margin-bottom:20px;">
+        Okay, I'm ready!
+      </button>
+    </a>
+  </div>
+</div>
+
+
+{% endblock %}

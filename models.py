@@ -36,6 +36,9 @@ class User_Session(models.Model):
 	user = models.ForeignKey('User_Attrib', on_delete=models.CASCADE)
 	date_completed = models.DateTimeField('date_completed', blank = True, null = True)
 	modules_completed = models.PositiveSmallIntegerField(default=0)
+	first_speaker_id = models.BooleanField(default = True)
+	first_open_set_module = models.BooleanField(default = True)
+	first_closed_set_text = models.BooleanField(default = True)
 
 	def __str__(self):
 		return "User: " + self.user.username + ", Session: " + str(self.session)+ ", DateCompleted: " + str(self.date_completed)
