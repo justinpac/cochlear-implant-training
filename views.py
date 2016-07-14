@@ -244,25 +244,6 @@ def getNextSession(userObj):
 ## Ajax methods ##
 ##################
 
-def uploadSound(request):
-	if(request.method == "POST"):#If the user has submitted something, Handle the upload
-		speakerID = int(request.POST['speaker_id']);
-		rawFile = request.FILES['file'];
-		#If the speaker doesn't exist, create it
-		if(speakerID == -1):
-			speaker_name = str(request.POST['speaker_name'])
-			speakerList = Speaker.objects.filter(name=speaker_name);
-			speakerID = speakerList[0].pk;
-		#Create a new speech object, and attach it to the speaker
-		speakerObj = Speaker.objects.get(pk=speakerID);
-		newSoundObj = Speech();
-		newSoundObj.speaker = speakerObj;
-		newSoundObj.speech_file = rawFile;
-		newSoundObj.save();
-		return HttpResponse("Success")
-	else:
-		return HttpResponse("No POST data received.")
-
 def openSetCompleted(request):
 	userList = User_Attrib.objects.filter(username=request.user.username)
 	user = userList[0]
@@ -379,6 +360,41 @@ def getDashboardData(request):
 	data = json.dumps(ctx)
 	return HttpResponse(data, content_type='application/json')
 
+def refreshClosedSetTextAdd(request):
+	#Wrap dashboard data in json 
+	context =  {}
+	context['speechFileList'] = {}
+	context['speechFileList']['Names'] = []
+	speechFiles = Speech.objects.all()
+	for speech in speechFiles:
+		context['speechFileList']['Names'].append(str(speech))
+	context['soundFileList'] = {}
+	context['soundFileList']['Names'] = []
+	soundFiles = Sound.objects.all()
+	for sound in soundFiles:
+		context['soundFileList']['Names'].append(str(sound))
+	data = json.dumps(context)
+	return HttpResponse(data, content_type='application/json')
+
+def uploadSpeech(request):
+	if(request.method == "POST"):#If the user has submitted something, Handle the upload
+		speakerID = int(request.POST['speaker_id']);
+		rawFile = request.FILES['file'];
+		#A new speaker was added via the popup
+		if(speakerID == -1):
+			speaker_name = str(request.POST['speaker_name'])
+			speakerList = Speaker.objects.filter(name=speaker_name);
+			speakerID = speakerList[0].pk;
+		#Create a new speech object, and attach it to the speaker
+		speakerObj = Speaker.objects.get(pk=speakerID);
+		newSoundObj = Speech();
+		newSoundObj.speaker = speakerObj;
+		newSoundObj.speech_file = rawFile;
+		newSoundObj.save();
+		return HttpResponse("Success")
+	else:
+		return HttpResponse("No POST data received.")
+
 def getSpeakers(request):
 	#Gets a list of authors whose names start with 'name'
 	speakerList = Speaker.objects.filter(name__istartswith=request.GET['name'])
@@ -398,8 +414,49 @@ def createSpeaker(request):
 	newSpeaker.name = request.POST['speaker_name']
 	newSpeaker.display_name = request.POST['speaker_display_name']
 	newSpeaker.gender = request.POST['speaker_gender']
+	newSpeaker.notes = request.POST['speaker_notes']
 	newSpeaker.save();
 	return HttpResponse("Success")
+
+def uploadSound(request):
+	if(request.method == "POST"):#If the user has submitted something, Handle the upload
+		sourceID = int(request.POST['source_id']);
+		rawFile = request.FILES['file'];
+		# A new source was added via the popup
+		if(sourceID == -1):
+			source_name = str(request.POST['source_name'])
+			sourceList = Sound_Source.objects.filter(name=source_name);
+			sourceID = sourceList[0].pk;
+		#Create a new speech object, and attach it to the speaker
+		sourceObj = Sound_Source.objects.get(pk=sourceID);
+		newSoundObj = Sound();
+		newSoundObj.source = sourceObj;
+		newSoundObj.sound_file = rawFile;
+		newSoundObj.save();
+		return HttpResponse("Success")
+	else:
+		return HttpResponse("No POST data received.")
+
+def getSoundSources(request):
+	#Gets a list of authors whose names start with 'name'
+	sourceList = Sound_Source.objects.filter(name__istartswith=request.GET['name'])
+	purelist = []
+	for source in sourceList:
+		sourceObj = {}
+		sourceObj['name'] = source.name;
+		sourceObj['id'] = source.pk;
+		#Get number of attached sound files
+		sourceObj['file_count'] = Sound.objects.filter(source=source).count();
+		purelist.append(sourceObj)
+	data = json.dumps(purelist)
+	return HttpResponse(data, content_type='application/json')
+
+def createSoundSource(request):
+	newSource = Sound_Source(name = request.POST['source_name'], display_name = request.POST['source_display_name'], notes = request.POST['source_notes']);
+	newSource.save();
+	return HttpResponse("Success")
+
+
 
 ###################
 ## Manager Pages ##
@@ -408,14 +465,26 @@ def createSpeaker(request):
 #NOTE: Make sure to add the names of all the pages that should only be accessible
 #by managers in middleware.py
 
-def loadDashboardData(context):
-	#Putting all the loading of the data in a seperate function so it can be done asynchronously 
+def loadClosedSetTextData(context):
+	context['closedSetText'] = {}
+	context['closedSetText']['headers'] = ['Test Sound','# of choices']
+	context['closedSetText']['rows'] = []
+	context['closedSetText']['id'] = 'closedsettext'
+	context['closedSetText']['colSize'] = int(12/len(context['closedSetText']['headers']))
+	closedSetTexts = Closed_Set_Text.objects.all();
+	for closedSetText in closedSetTexts:
+		filename = closedSetText.unknown_speech.speech_file.name.strip('cochlear/speech') if closedSetText.unknown_speech else closedSetText.unknown_sound.sound_file.name.strip('cochlear/sound')
+		row = [filename, closedSetText.text_choices.count()]
+		context['closedSetText']['rows'].append(row)
+
+def loadSpeechData(context):
+	#Putting all the loading of the data in a separate function so it can be done asynchronously 
 	#Sound files
-	context['soundFileList'] = {}
-	context['soundFileList']['headers'] = ['Filename','Speaker Name','Date Uploaded']
-	context['soundFileList']['rows'] = []
-	context['soundFileList']['id'] = 'soundfiles'
-	context['soundFileList']['colSize'] = int(12/len(context['soundFileList']['headers']))
+	context['speechFileList'] = {}
+	context['speechFileList']['headers'] = ['Filename','Speaker Name','Date Uploaded']
+	context['speechFileList']['rows'] = []
+	context['speechFileList']['id'] = 'speechfiles'
+	context['speechFileList']['colSize'] = int(12/len(context['speechFileList']['headers']))
 	soundFiles = Speech.objects.all();
 	for sound in soundFiles:
 		if(sound.speaker == None):
@@ -423,7 +492,11 @@ def loadDashboardData(context):
 		else:
 			speaker_name = sound.speaker.name
 		row = [sound.speech_file.name.strip('cochlear/speech/'), speaker_name,str(sound.uploaded_date)]
-		context['soundFileList']['rows'].append(row)
+		context['speechFileList']['rows'].append(row)
+
+def loadDashboardData(context):
+	loadClosedSetTextData(context)
+	loadSpeechData(context)
 
 	#Speaker objects
 	context['speakerFileList'] = {}
@@ -466,14 +539,47 @@ def dashboard(request):
 	context['modules'] = Speaker_ID.objects.all().count();
 	return render(request,'cochlear/manager_dashboard.html',context)
 
-def new_sound(request):
-	context = NavigationBar.generateAppContext(request,app="cochlear",title="new_sound", navbarName='manager',activeLink="Manager Dashboard")
-	return render(request,'cochlear/new_sound.html',context)
+def closedsettextAdd(request):
+	if request.method == 'POST':
+		moduleNum = int(request.POST['moduleNum']) # Number of modules to be created
+		for mn in range(1, moduleNum + 1):
+			newCST = Closed_Set_Text()
+			# indicate the type of closed set text
+			newCST.module_type = int(request.POST['moduleType_' + str(mn)])
+			# save so that we can edit the many to many field
+			newCST.save()
+			# Add a test sound or speech
+			speechFile = request.POST['speechFile_' + str(mn)]
+			soundFile = request.POST['soundFile_' + str(mn)]
+			if (soundFile != ""):
+				testSoundFile = ('cochlear/sound/' + soundFile)
+				testSound =  Sound.objects.get(sound_file=testSoundFile)
+				newCST.unknown_sound = testSound
+			else:
+				testSpeechFile = ('cochlear/speech/' + speechFile)
+				testSpeech = Speech.objects.get(speech_file=testSpeechFile)
+				newCST.unknown_speech = testSpeech
+			# Add text choices
+			textChoices = request.POST.getlist('textChoice_' + str(mn));
+			first = True
+			for textChoice in textChoices:
+				if textChoice != "":
+					if first:
+						first = False
+						obj, __ = Text_Choice.objects.get_or_create(text=textChoice)
+						Closed_Set_Text_Choice(iscorrect = True, closed_set_text = newCST, choice = obj).save()
+					else:
+						obj, __ = Text_Choice.objects.get_or_create(text=textChoice)
+						Closed_Set_Text_Choice(iscorrect = False, closed_set_text = newCST, choice = obj).save()
+			newCST.save()
+			return redirect('cochlear:closedsettextAdd') # prevent form resubmission of refresh
 
-def new_module(request):
-	context = NavigationBar.generateAppContext(request,app="cochlear",title="new_module", navbarName='manager',activeLink="Manager Dashboard")
-
-	return render(request,'cochlear/new_module.html',context)
+	context = NavigationBar.generateAppContext(request,app="cochlear",title="closedSetTextAdd",navbarName='manager')
+	loadClosedSetTextData(context)
+	context['text_choices'] = Text_Choice.objects.all()
+	context['speech_choices'] = Speech.objects.all()
+	context['sound_choices'] = Sound.objects.all()
+	return render(request,'cochlear/closedsettextAdd.html',context)
 
 def analytics(request):
 	context = NavigationBar.generateAppContext(request,app="cochlear",title="index", navbarName='manager',activeLink="Analytics")
@@ -671,9 +777,6 @@ class Echo(object):
 
 def getAllUserDataCSV(request):
 	# A view that streams a large CSV file.
-	# Generate a sequence of rows. The range is based on the maximum number of
-	# rows that can be handled by a single sheet in most spreadsheet
-	# applications.
 	# Documentation: https://docs.djangoproject.com/en/1.8/howto/outputting-csv/
 	rows = []
 	appendTalkerID(rows)
@@ -724,9 +827,6 @@ def getAllUserDataCSV(request):
 
 def talkerIDCSV(request):
 	# A view that streams a large CSV file.
-	# Generate a sequence of rows. The range is based on the maximum number of
-	# rows that can be handled by a single sheet in most spreadsheet
-	# applications.
 	# Documentation: https://docs.djangoproject.com/en/1.8/howto/outputting-csv/
 	rows = []
 	appendTalkerID(rows)
@@ -740,9 +840,6 @@ def talkerIDCSV(request):
 
 def otherCSV(request):
 	# A view that streams a large CSV file.
-	# Generate a sequence of rows. The range is based on the maximum number of
-	# rows that can be handled by a single sheet in most spreadsheet
-	# applications.
 	# Documentation: https://docs.djangoproject.com/en/1.8/howto/outputting-csv/
 	rows = []
 	rows.append(['Other (Open Set)'])
@@ -758,9 +855,6 @@ def otherCSV(request):
 
 def meaningfulCSV(request):
 	# A view that streams a large CSV file.
-	# Generate a sequence of rows. The range is based on the maximum number of
-	# rows that can be handled by a single sheet in most spreadsheet
-	# applications.
 	# Documentation: https://docs.djangoproject.com/en/1.8/howto/outputting-csv/
 	rows = []
 	rows.append(['Meaningful (Open Set)'])
@@ -776,9 +870,6 @@ def meaningfulCSV(request):
 
 def anomalousCSV(request):
 	# A view that streams a large CSV file.
-	# Generate a sequence of rows. The range is based on the maximum number of
-	# rows that can be handled by a single sheet in most spreadsheet
-	# applications.
 	# Documentation: https://docs.djangoproject.com/en/1.8/howto/outputting-csv/
 	rows = []
 	rows.append(['Anomalous (Open Set)'])
@@ -794,9 +885,6 @@ def anomalousCSV(request):
 
 def wordCSV(request):
 	# A view that streams a large CSV file.
-	# Generate a sequence of rows. The range is based on the maximum number of
-	# rows that can be handled by a single sheet in most spreadsheet
-	# applications.
 	# Documentation: https://docs.djangoproject.com/en/1.8/howto/outputting-csv/
 	rows = []
 	rows.append(['Word (Open Set)'])
@@ -812,9 +900,6 @@ def wordCSV(request):
 
 def environmentalCSV(request):
 	# A view that streams a large CSV file.
-	# Generate a sequence of rows. The range is based on the maximum number of
-	# rows that can be handled by a single sheet in most spreadsheet
-	# applications.
 	# Documentation: https://docs.djangoproject.com/en/1.8/howto/outputting-csv/
 	rows = []
 	rows.append(['Environmental (Open Set)'])
@@ -830,9 +915,6 @@ def environmentalCSV(request):
 
 def cstOtherCSV(request):
 	# A view that streams a large CSV file.
-	# Generate a sequence of rows. The range is based on the maximum number of
-	# rows that can be handled by a single sheet in most spreadsheet
-	# applications.
 	# Documentation: https://docs.djangoproject.com/en/1.8/howto/outputting-csv/
 	rows = []
 	rows.append(['Other (Closed Set Text)'])
@@ -848,9 +930,6 @@ def cstOtherCSV(request):
 
 def cstPhonemeCSV(request):
 	# A view that streams a large CSV file.
-	# Generate a sequence of rows. The range is based on the maximum number of
-	# rows that can be handled by a single sheet in most spreadsheet
-	# applications.
 	# Documentation: https://docs.djangoproject.com/en/1.8/howto/outputting-csv/
 	rows = []
 	rows.append(['Phoneme (Closed Set Text)'])
@@ -866,9 +945,6 @@ def cstPhonemeCSV(request):
 
 def cstEnvironmentalCSV(request):
 	# A view that streams a large CSV file.
-	# Generate a sequence of rows. The range is based on the maximum number of
-	# rows that can be handled by a single sheet in most spreadsheet
-	# applications.
 	# Documentation: https://docs.djangoproject.com/en/1.8/howto/outputting-csv/
 	rows = []
 	rows.append(['Environmental (Closed Set Text)'])

@@ -1,8 +1,21 @@
-#hipercic-banner h2 {
-  font-size: 50px
+#apps-menu-nav-btn {
+	display: none !important;
 }
+
 #hipercic-banner {
-  padding: 10px
+	padding: 10px;
+}
+
+#hipercic-banner h2 {
+	font-size: 52px;
+
+}
+
+#hipercic-banner a {
+	margin-left: 20px;
+}
+#hipercic-banner ul {
+	margin-top: 20px;
 }
 
 .page-title {
@@ -21,8 +34,8 @@
 .item-explorer {
 	max-height: 300px;
 	overflow-y: scroll;
-	border-bottom: #DEDEDE dotted 4px;
-	border-left: #DEDEDE dotted 4px;
+	border-bottom: #ECECEC solid 4px;
+	border-left: #ECECEC solid 4px;
 }
 .item-table-header {
 	margin-bottom: 0px;

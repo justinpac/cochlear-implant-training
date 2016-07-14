@@ -1,4 +1,3 @@
-<a href="#{{data.id}}_popup" type="button" class="btn btn-success addbtn" id="{{data.id}}_addbtn"><i class="fa fa-plus upload-new-icon" aria-hidden="true"></i>Add New</a>
 <table class="item-table-header table" id="{{data.id}}_header">
     <thead>
       <tr>
@@ -9,7 +8,7 @@
     </thead>
 </table>
 <div class="item-explorer">
-	<table class="item-table-items table" id="{{data.id}}_items">
+	<table class="item-table-items table table-striped" id="{{data.id}}_items">
 	    <tbody>
 	     {% for row in data.rows %}
 	      <tr>

@@ -1,0 +1,187 @@
+{% extends "cochlear_base.html" %}
+
+{% block cochlear-content %}
+
+{% load staticfiles %}
+
+<!-- Load our stylesheet -->
+<link href="{% static 'cochlear/closedsettextAdd.css' %}" rel="stylesheet">
+<script type="text/javascript" src="{% static 'cochlear/js/alphanum.js' %}"></script>
+
+<!-- Magnific Popup core JS file -->
+<script src="{% static 'cochlear/js/jquery.magnific-popup.min.js' %}"></script>
+<!-- Magnific Popup core CSS file -->
+<link href="{% static 'cochlear/magnific-popup.css' %}" rel="stylesheet">
+<link href="{% static 'cochlear/popup.css' %}" rel="stylesheet">
+<!-- include once per page where Dropzone is used -->
+<script src="{% static 'cochlear/js/dropzone.js' %}"></script>
+<link href="{% static 'cochlear/dropzone.css' %}" rel="stylesheet">
+
+<div class ="container">
+
+	<h1>Closed Set Text Modules</h1>
+	<p>A test sound with closed set, text-based responses.</p>
+
+	{% include "cochlear/embeds/file_list.html" with data=closedSetText %}
+	<form id="modulesForm" action="{% url 'cochlear:closedsettextAdd' %}" method="post" enctype="multipart/form-data">
+		<div id="modules">
+			<div id="module_1" class="panel panel-default">
+				<div class="panel-body">
+					{% csrf_token %}
+					<h2 class="module-header">Module 1</h2>
+					<h4>Select a module type</h4>
+					<label class="radio-inline"><input type="radio" name="moduleType_1" value="1">Phoneme</label>
+					<label class="radio-inline"><input type="radio" name="moduleType_1" value="2">Environmental</label>
+					<label class="radio-inline"><input type="radio" name="moduleType_1" value="0">Other</label>
+					<h4>Select an unknown speech or sound</h4>
+					<button type="button" id="addSpeechBtn_1" class="btn btn-secondary">select speech</button>
+					<button type="button" id="addSoundBtn_1" class="btn btn-secondary">select sound</button>
+					<div id="addSpeechDiv_1">
+						<input id="existingSpeech" name="speechFile_1" list="speech_choices" class="form-control" placeholder="Type an existing speech file name"> 	
+						<a href="#speechfiles_popup" type="button" class="btn btn-success addbtn" id="speechfiles_addbtn"><i class="fa fa-plus upload-new-icon" aria-hidden="true"></i>Add New Speech</a>
+					</div>
+					<div id="addSoundDiv_1">
+						<input id="existingSound" name="soundFile_1" list="sound_choices" class="form-control" placeholder="Type an existing sound file name">
+						<a href="#soundfiles_popup" type="button" class="btn btn-success addbtn" id="soundfiles_addbtn"><i class="fa fa-plus upload-new-icon" aria-hidden="true"></i>Add New Sound</a>
+					</div>
+					<h4>Add text responses (enter correct answer first, leave unused input boxes blank)</h4>
+					<div id="textChoiceInputList_1">
+						<input id="textChoiceInput" list="text_choices" class="form-control" name="textChoice_1" placeholder="Enter the correct answer" />
+						<input id="textChoiceInput" list="text_choices" class="form-control" name="textChoice_1"/>
+						<input id="textChoiceInput" list="text_choices" class="form-control" name="textChoice_1"/>
+						<input id="textChoiceInput" list="text_choices" class="form-control" name="textChoice_1"/>
+						<input id="textChoiceInput" list="text_choices" class="form-control" name="textChoice_1"/>
+						<input id="textChoiceInput" list="text_choices" class="form-control" name="textChoice_1"/>
+					</div>
+					<button type="button" id="moreTextResponses_1" class="btn btn-secondary">more text responses</button>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<button id="submitForm" class="btn btn-primary">create all modules</button>
+			<button id="addModule" type="button" class="btn btn-secondary"><i class="fa fa-plus" aria-hidden="true"></i> add module</button>
+		</div>
+	</form>
+</div>
+<br/>
+
+
+<!-- Keeping datalists away from the form so that they are shared between all models -->
+<datalist id="speech_choices">
+	{% for speech in speech_choices %}
+	<option value="{{speech}}"/>
+	{% endfor %}
+</datalist>
+
+<datalist id="sound_choices">
+	{% for sound in sound_choices %}
+	<option value="{{sound}}"/>
+	{% endfor %}
+</datalist>
+
+<datalist id="text_choices">
+	{% for textChoice in text_choices %}
+	<option value="{{ textChoice.text }}"/>
+	{% endfor %}
+</datalist>
+
+{% include "cochlear/embeds/soundfiles_popup.html" %}
+{% include "cochlear/embeds/speechfiles_popup.html" %}
+
+<script type="text/javascript" src="{% static 'cochlear/js/file_list.js' %}"></script>
+<script type="text/javascript">
+
+var moduleNum = 1;
+
+// add click functionality to each of the buttons in a module so that each is treated separately
+// Here we are using the .on() function to delegate events, which have the advantage of attaching event handlers to descendant
+// elements, whether or not they exist
+function clickifyModule(indx) {
+	$("#modules").on("click",'#addSpeechBtn_' + indx, function () {
+		$('#addSoundDiv_' + indx).hide();
+		$('input[name=soundFile_' + indx + ']').val("");
+		$('#addSoundBtn_' + indx).css("border","1px solid transparent")
+		$('#addSpeechDiv_' + indx).show()
+		$('#addSpeechBtn_' + indx).css("border","2px solid #555555");
+	});
+
+	$("#modules").on("click", '#addSoundBtn_' + indx, function () {
+		$('#addSpeechDiv_' + indx).hide();
+		$('input[name=speechFile_' + indx + ']').val("");
+		$('#addSpeechBtn_' + indx).css("border","1px solid transparent");
+		$('#addSoundDiv_' + indx).show();
+		$('#addSoundBtn_' + indx).css("border","2px solid #555555");
+	});
+
+	$("#modules").on("click", "#moreTextResponses_" + indx, function() {
+		var inputBoxes = "";
+		for (var j = 1; j <= 3; j++) {
+			inputBoxes += '<input id="textChoiceInput" list="text_choices" class="form-control" name="textChoice_' + indx + '"/> ';
+		}
+		$("#textChoiceInputList_" + indx).append(inputBoxes);
+	});
+}
+
+function RefreshData(){
+	//Refreshes the data. Called by each popup after it closes
+	function success(data){
+		// Refresh data lists
+		function refreshDatalist(name, id) {
+			$("#" + id).empty();
+			names = data[name]["Names"];
+			newOptions = "";
+			for (i in names) {
+				newOptions += '<option value="' + names[i] + '"/> ';
+			}
+			$("#" + id).append(newOptions);
+		}
+		refreshDatalist('speechFileList', 'speech_choices');
+		refreshDatalist('soundFileList', 'sound_choices');
+	}
+	function fail(msg){
+		console.log("Failed to refresh!", msg);
+	}
+	$.get('{% url "cochlear:refreshClosedSetTextAdd" %}',success).fail(fail);
+}
+
+
+
+$(document).ready(function() {
+	clickifyModule(moduleNum);
+
+	$('#addModule').click(function(){
+		moduleNum += 1;
+		// Get a copy of the code for a module
+		var $newModule = $("#module_1").clone(true);
+		// Remove any added text options
+		$newModule.find("#textChoiceInputList_1").children().slice(6).remove();
+		// Remove styling
+		$newModule.find("div, button").attr("style", "");
+		//remove input values
+		$newModule.find("#textChoiceInput, #existingSpeech, #existingSound").val("");
+		$newModule.find("input[type='radio']").prop("checked",false);
+		// change the naming so that it is unique for each module
+		$newModule.attr('id',"module_" + moduleNum);
+		$newModule.find(".module-header").html("Module " + moduleNum);
+		$newModule.find("input[name$='_1']").each(function() {
+			$(this).attr("name", $(this).attr("name").slice(0,-1) + moduleNum);
+		});
+		$newModule.find("[id$='_1']").each(function(){
+			$(this).attr('id', $(this).attr("id").slice(0,-1) + moduleNum);
+		});
+
+		$("#modules").append($newModule);
+		clickifyModule(moduleNum);
+	});
+
+	$("#modulesForm").submit(function(){
+		// TODO: check for invalid form submission
+		
+		// append moduleNum to form
+		var input = $("<input>", { type: "hidden", name: "moduleNum", value: moduleNum }); 
+		$('#modulesForm').append($(input));
+	});
+
+});
+</script>
+{% endblock %}

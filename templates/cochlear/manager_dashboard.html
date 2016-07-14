@@ -12,6 +12,9 @@
 <!-- Magnific Popup core JS file -->
 <script src="{% static 'cochlear/js/jquery.magnific-popup.min.js' %}"></script>
 <link href="{% static 'cochlear/popup.css' %}" rel="stylesheet">
+<!-- include once per page where Dropzone is used -->
+<script src="{% static 'cochlear/js/dropzone.js' %}"></script>
+<link href="{% static 'cochlear/dropzone.css' %}" rel="stylesheet">
 
 <div class="container"><!-- This is a bootstrap class -->
 	<h3> {{welcome_msg}}, {{name}}! </h3>
@@ -53,21 +56,26 @@
 	</a>
 
 	<center><h2>Sounds & Speakers</h2></center>
-	<h3>Sound Files</h3>
-	{% include "cochlear/embeds/file_list.html" with data=soundFileList %}
-	{% include "cochlear/embeds/soundfiles_popup.html" %}
+	<h3>Speech Files</h3>
+	<a href="#speechfiles_popup" type="button" class="btn btn-success addbtn" id="speechfiles_addbtn"><i class="fa fa-plus upload-new-icon" aria-hidden="true"></i>Add New</a>
+	{% include "cochlear/embeds/file_list.html" with data=speechFileList %}
+	{% include "cochlear/embeds/speechfiles_popup.html" %}
 
 	<h3>Speakers</h3>
 	{% include "cochlear/embeds/file_list.html" with data=speakerFileList %}
-	{% include "cochlear/embeds/speakerfiles_popup.html" %}
 
 	<center><h2>Training Modules</h2></center>
+	<h3>Closed Set Text</h3>
+	<p>A test sound with closed set, text-based responses.</p>
+	<a href="{% url 'cochlear:closedsettextAdd' %}" type="button" class="btn btn-success addbtn" id="closedsettext_addbtn"><i class="fa fa-plus upload-new-icon" aria-hidden="true"></i>Add New</a>
+	{% include "cochlear/embeds/file_list.html" with data=closedSetText %}
 	
 	<h3>Speaker Identification Questions</h3>
 	<p>These are the questions where the user listens to a test sound, then has to choose the correct answer from a set of sounds.</p>
+	{% comment %}
 	{% include "cochlear/embeds/file_list.html" with data=closedQuestions %}
 	{% include "cochlear/embeds/closedquestions_popup.html" %}
-
+	{% endcomment %}
 
 	<h3>Open Set Questions</h3>
 	<p>These are questions where the user listens to a test sound, then has to type in the correct answer in a text box.</p>
@@ -100,7 +108,7 @@
 				child += "</tbody>"
 				itemList.append(child)
 			}
-			refreshList('soundFileList','soundfiles')
+			refreshList('speechFileList','speechfiles')
 			refreshList('speakerFileList','speakerfiles')
 
 		}

@@ -12,7 +12,7 @@
 }
 
 #submitButton {
-	margin-top:22px;
+	margin-top:29px;
 }
 
 #next{
@@ -24,4 +24,10 @@
   color:white;
   font-size:20px;
   vertical-align:-3px;
+}
+
+label {
+	font-size: 18px;
+	font-style: normal;
+	font-weight: normal;
 }

@@ -89,14 +89,14 @@ class Sound_Source(models.Model):
 # A non-speech sound
 class Sound(models.Model):
 	sound_file = models.FileField(upload_to = 'cochlear/sound', help_text="This is not intended to be spoken word associated with a known speaker")
-	source = models.ForeignKey('Sound_Source',on_delete=models.SET_NULL, blank = True, null = True)
+	source = models.ForeignKey('Sound_Source',on_delete=models.CASCADE)
 	difficulty = models.PositiveSmallIntegerField(default = 0)
 
 	def __str__(self):
 		return self.sound_file.name.strip('cochlear/sound/')
 
 class Text_Choice(models.Model):        
-	text = models.TextField()
+	text = models.TextField(unique=True)
 
 	def __str__(self):
 		return self.text
