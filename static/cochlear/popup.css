@@ -5,6 +5,7 @@
     max-width: 650px;
     margin: 40px auto;
     position: relative;
+    min-height: 400px;
 }
 
 #speakerchoice_list_div {
