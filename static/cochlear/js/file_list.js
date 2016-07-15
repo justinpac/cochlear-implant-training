@@ -59,14 +59,13 @@ $(function(){
 				
 				
 				//Produce the new html
-				var newBodyHTML = "";
+				var newBodyHTML = tBody.clone(true, true);
+				newBodyHTML.html("");
 				for(var k=0;k<itemArray.length;k++){
 					var row = $(itemArray[k]).parent();
-					newBodyHTML += "<tr>"
-						newBodyHTML +=  row.html()
-					newBodyHTML += "</tr>"
+					newBodyHTML.append(row);
 				}
-				tBody.html(newBodyHTML);
+				tBody.html(newBodyHTML.html());
 			})
 		}	
 	}
