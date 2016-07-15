@@ -362,22 +362,6 @@ def getDashboardData(request):
 	data = json.dumps(ctx)
 	return HttpResponse(data, content_type='application/json')
 
-def refreshClosedSetTextAdd(request):
-	#Wrap dashboard data in json 
-	context =  {}
-	context['speechFileList'] = {}
-	context['speechFileList']['Names'] = []
-	speechFiles = Speech.objects.all()
-	for speech in speechFiles:
-		context['speechFileList']['Names'].append(str(speech))
-	context['soundFileList'] = {}
-	context['soundFileList']['Names'] = []
-	soundFiles = Sound.objects.all()
-	for sound in soundFiles:
-		context['soundFileList']['Names'].append(str(sound))
-	data = json.dumps(context)
-	return HttpResponse(data, content_type='application/json')
-
 def uploadSpeech(request):
 	if(request.method == "POST"):#If the user has submitted something, Handle the upload
 		speakerID = int(request.POST['speaker_id']);
@@ -467,21 +451,6 @@ def createSoundSource(request):
 #NOTE: Make sure to add the names of all the pages that should only be accessible
 #by managers in middleware.py
 
-def loadClosedSetTextData(context):
-	context['closedSetText'] = {}
-	context['closedSetText']['headers'] = ['Test Sound','# of choices']
-	context['closedSetText']['rows'] = []
-	context['closedSetText']['id'] = 'closedsettext'
-	context['closedSetText']['colSize'] = int(12/len(context['closedSetText']['headers']))
-	context['closedSetText']['moduleTypes'] = CLOSED_SET_TEXT_TYPES
-	context['closedSetText']['rowModuleTypes'] = []
-	closedSetTexts = Closed_Set_Text.objects.all();
-	for closedSetText in closedSetTexts:
-		filename = closedSetText.unknown_speech.speech_file.name.strip('cochlear/speech') if closedSetText.unknown_speech else closedSetText.unknown_sound.sound_file.name.strip('cochlear/sound')
-		row = [filename, closedSetText.text_choices.count()]
-		context['closedSetText']['rows'].append(row)
-		context['closedSetText']['rowModuleTypes'].append(closedSetText.module_type)
-
 def loadSpeechData(context):
 	#Putting all the loading of the data in a separate function so it can be done asynchronously 
 	#Sound files
@@ -499,9 +468,40 @@ def loadSpeechData(context):
 		row = [sound.speech_file.name.strip('cochlear/speech/'), speaker_name,str(sound.uploaded_date)]
 		context['speechFileList']['rows'].append(row)
 
+def loadClosedSetTextData(context):
+	context['closedSetText'] = {}
+	context['closedSetText']['headers'] = ['Test Sound','# of choices']
+	context['closedSetText']['rows'] = []
+	context['closedSetText']['id'] = 'closedsettext'
+	context['closedSetText']['colSize'] = int(12/len(context['closedSetText']['headers']))
+	context['closedSetText']['moduleTypes'] = CLOSED_SET_TEXT_TYPES
+	context['closedSetText']['rowModuleTypes'] = []
+	closedSetTexts = Closed_Set_Text.objects.all();
+	for closedSetText in closedSetTexts:
+		filename = closedSetText.unknown_speech.speech_file.name.strip('cochlear/speech') if closedSetText.unknown_speech else closedSetText.unknown_sound.sound_file.name.strip('cochlear/sound')
+		row = [filename, closedSetText.text_choices.count()]
+		context['closedSetText']['rows'].append(row)
+		context['closedSetText']['rowModuleTypes'].append(closedSetText.module_type)
+
+def loadOpenSetData(context):
+	context['openSet'] = {}
+	context['openSet']['headers'] = ['Test Sound','Answer','Keywords']
+	context['openSet']['rows'] = []
+	context['openSet']['id'] = 'openset'
+	context['openSet']['colSize'] = int(12/len(context['openSet']['headers']))
+	context['openSet']['moduleTypes'] = OPEN_SET_TYPES
+	context['openSet']['rowModuleTypes'] = []
+	openSets = Open_Set_Module.objects.all();
+	for openSet in openSets:
+		filename = openSet.unknown_speech.speech_file.name.strip('cochlear/speech') if openSet.unknown_speech else openSet.unknown_sound.sound_file.name.strip('cochlear/sound')
+		row = [filename, openSet.answer, openSet.key_words]
+		context['openSet']['rows'].append(row)
+		context['openSet']['rowModuleTypes'].append(openSet.module_type)
+
 def loadDashboardData(context):
-	loadClosedSetTextData(context)
 	loadSpeechData(context)
+	loadClosedSetTextData(context)
+	loadOpenSetData(context)
 
 	#Speaker objects
 	context['speakerFileList'] = {}
@@ -577,7 +577,7 @@ def closedsettextAdd(request):
 						obj, __ = Text_Choice.objects.get_or_create(text=textChoice)
 						Closed_Set_Text_Choice(iscorrect = False, closed_set_text = newCST, choice = obj).save()
 			newCST.save()
-			return redirect('cochlear:closedsettextAdd') # prevent form resubmission of refresh
+		return redirect('cochlear:closedsettextAdd') # prevent form resubmission of refresh
 
 	context = NavigationBar.generateAppContext(request,app="cochlear",title="closedSetTextAdd",navbarName='manager')
 	loadClosedSetTextData(context)
@@ -585,6 +585,54 @@ def closedsettextAdd(request):
 	context['speech_choices'] = Speech.objects.all()
 	context['sound_choices'] = Sound.objects.all()
 	return render(request,'cochlear/closedsettextAdd.html',context)
+
+def refreshClosedSetTextAdd(request):
+	#Wrap dashboard data in json 
+	context =  {}
+	context['speechFileList'] = {}
+	context['speechFileList']['Names'] = []
+	speechFiles = Speech.objects.all()
+	for speech in speechFiles:
+		context['speechFileList']['Names'].append(str(speech))
+	context['soundFileList'] = {}
+	context['soundFileList']['Names'] = []
+	soundFiles = Sound.objects.all()
+	for sound in soundFiles:
+		context['soundFileList']['Names'].append(str(sound))
+	data = json.dumps(context)
+	return HttpResponse(data, content_type='application/json')
+
+def opensetAdd(request):
+	if request.method == 'POST':
+		moduleNum = int(request.POST['moduleNum']) # Number of modules to be created
+		for mn in range(1, moduleNum + 1):
+			newOSM = Open_Set_Module()
+			# indicate the type of closed set text
+			newOSM.module_type = int(request.POST['moduleType_' + str(mn)])
+			# save so that we can edit the many to many field
+			newOSM.save()
+			# Add a test sound or speech
+			speechFile = request.POST['speechFile_' + str(mn)]
+			soundFile = request.POST['soundFile_' + str(mn)]
+			if (soundFile != ""):
+				testSoundFile = ('cochlear/sound/' + soundFile)
+				testSound =  Sound.objects.get(sound_file=testSoundFile)
+				newOSM.unknown_sound = testSound
+			else:
+				testSpeechFile = ('cochlear/speech/' + speechFile)
+				testSpeech = Speech.objects.get(speech_file=testSpeechFile)
+				newOSM.unknown_speech = testSpeech
+			# Add answer
+			newOSM.answer = request.POST['answer_' + str(mn)]
+			newOSM.key_words = request.POST['keywords_' + str(mn)]
+			newOSM.save()
+		return redirect('cochlear:opensetAdd') # prevent form resubmission of refresh
+
+	context = NavigationBar.generateAppContext(request,app="cochlear",title="opensetAdd",navbarName='manager')
+	loadOpenSetData(context)
+	context['speech_choices'] = Speech.objects.all()
+	context['sound_choices'] = Sound.objects.all()
+	return render(request,'cochlear/opensetAdd.html',context)
 
 def analytics(request):
 	context = NavigationBar.generateAppContext(request,app="cochlear",title="index", navbarName='manager',activeLink="Analytics")

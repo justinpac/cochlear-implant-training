@@ -22,16 +22,18 @@
 	<h1>Closed Set Text Modules</h1>
 	<p>A test sound with closed set, text-based responses.</p>
 
-	{% include "cochlear/embeds/file_list.html" with data=closedSetText %}
-	<form id="modulesForm" action="{% url 'cochlear:closedsettextAdd' %}" method="post" enctype="multipart/form-data">
+	{% include "cochlear/embeds/file_list.html" with data=openSet %}
+	<form id="modulesForm" action="{% url 'cochlear:opensetAdd' %}" method="post" enctype="multipart/form-data">
 		<div id="modules">
 			<div id="module_1" class="panel panel-default">
 				<div class="panel-body">
 					{% csrf_token %}
 					<h2 class="module-header">Module 1</h2>
 					<h4>Select a module type</h4>
-					<label class="radio-inline"><input type="radio" name="moduleType_1" value="1">Phoneme</label>
-					<label class="radio-inline"><input type="radio" name="moduleType_1" value="2">Environmental</label>
+					<label class="radio-inline"><input type="radio" name="moduleType_1" value="1">Meaningful Sentence</label>
+					<label class="radio-inline"><input type="radio" name="moduleType_1" value="2">Anomalous Sentence</label>
+					<label class="radio-inline"><input type="radio" name="moduleType_1" value="3">Word</label>
+					<label class="radio-inline"><input type="radio" name="moduleType_1" value="4">Environmental</label>
 					<label class="radio-inline"><input type="radio" name="moduleType_1" value="0">Other</label>
 					<h4>Select an unknown speech or sound</h4>
 					<button type="button" id="addSpeechBtn_1" class="btn btn-secondary">select speech</button>
@@ -44,16 +46,12 @@
 						<input id="existingSound" name="soundFile_1" list="sound_choices" class="form-control" placeholder="Enter an existing sound file name">
 						<a href="#soundfiles_popup" type="button" class="btn btn-success addbtn" id="soundfiles_addbtn"><i class="fa fa-plus upload-new-icon" aria-hidden="true"></i>Add New Sound</a>
 					</div>
-					<h4>Add text responses (enter correct answer first, leave unused input boxes blank)</h4>
-					<div id="textChoiceInputList_1">
-						<input id="textChoiceInput" list="text_choices" class="form-control" name="textChoice_1" placeholder="Enter the correct answer" />
-						<input id="textChoiceInput" list="text_choices" class="form-control" name="textChoice_1"/>
-						<input id="textChoiceInput" list="text_choices" class="form-control" name="textChoice_1"/>
-						<input id="textChoiceInput" list="text_choices" class="form-control" name="textChoice_1"/>
-						<input id="textChoiceInput" list="text_choices" class="form-control" name="textChoice_1"/>
-						<input id="textChoiceInput" list="text_choices" class="form-control" name="textChoice_1"/>
-					</div>
-					<button type="button" id="moreTextResponses_1" class="btn btn-secondary">more text responses</button>
+					<h4>Answer</h4>
+					<input id="answer" name="answer_1" class="form-control" placeholder="Enter the correct response for this module"> 	
+
+					<h4>Key Words</h4>
+					<p>Enter each word separated by spaces. Group together alternate words and separate them by forward slashes. For example, "birch canoe slid/hid/bid down smooth planks". The user is allowed one typo (insertion, deletion, or substitution) when evaluating each keyword.</p>
+					<input id="keywords" name="keywords_1" class="form-control">
 				</div>
 			</div>
 		</div>
@@ -76,12 +74,6 @@
 <datalist id="sound_choices">
 	{% for sound in sound_choices %}
 	<option value="{{sound}}"/>
-	{% endfor %}
-</datalist>
-
-<datalist id="text_choices">
-	{% for textChoice in text_choices %}
-	<option value="{{ textChoice.text }}"/>
 	{% endfor %}
 </datalist>
 
@@ -113,14 +105,6 @@ function clickifyModule(indx) {
 		$('#addSoundDiv_' + indx).show();
 		$('#addSoundBtn_' + indx).css("border","2px solid #555555");
 	});
-
-	$("#modules").on("click", "#moreTextResponses_" + indx, function() {
-		var inputBoxes = "";
-		for (var j = 1; j <= 3; j++) {
-			inputBoxes += '<input id="textChoiceInput" list="text_choices" class="form-control" name="textChoice_' + indx + '"/> ';
-		}
-		$("#textChoiceInputList_" + indx).append(inputBoxes);
-	});
 }
 
 function RefreshData(){
@@ -147,12 +131,6 @@ function RefreshData(){
 
 
 function validateForm() {
-	function validateChoices () {
-		for (var i =1; i<= moduleNum; i++) {
-			if ($.trim($("[name=textChoice_" + i +"]").first().val()) == "") return i;
-		}
-		return -1;
-	}
 	function validateTestSound() {
 		for (var i =1; i<= moduleNum; i++) {
 			var existingSpeech = $('[name="speechFile_' + i + '"]').val();
@@ -182,16 +160,27 @@ function validateForm() {
 		}
 		return -1;
 	}
+	function validateTextInput(name) {
+		for (var i =1; i<= moduleNum; i++) {
+			if ($.trim( $("[name='"+ name +"_" + i + "']").val() ) == '') return i;
+		}
+		return -1
+	}
 
-	var validateChoicesResult = validateChoices();
+
 	var validateTestSoundResult = validateTestSound();
 	var validateModuleTypeResult = validateModuleType();
-	if ( validateChoicesResult != -1) {
-		return "Please provide a correct text response for module " + validateChoicesResult + ".";
-	} else if ( validateTestSoundResult != -1 ) {
+	var validateAnswerResult = validateTextInput('answer');
+	var validateKeywordsResult = validateTextInput('keywords');
+
+	if ( validateTestSoundResult != -1 ) {
 		return "Please provide a valid sound/speech file for module " + validateTestSoundResult + ". To ensure the selection is valid, choose a file from the drop down of the input box.";
 	} else if (validateModuleTypeResult != -1) {
 		return "Please select a module type for module " + validateModuleTypeResult + ".";
+	} else  if (validateAnswerResult != -1) {
+		return "Please provide an answer for module " + validateAnswerResult + ".";
+	} else if (validateKeywordsResult != -1) {
+		return "Please provide keywords for module " + validateKeywordsResult + "."
 	} else {
 		return "validated";
 	}
@@ -204,12 +193,10 @@ $(document).ready(function() {
 		moduleNum += 1;
 		// Get a copy of the code for a module
 		var $newModule = $("#module_1").clone(true);
-		// Remove any added text options
-		$newModule.find("#textChoiceInputList_1").children().slice(6).remove();
 		// Remove styling
 		$newModule.find("div, button").attr("style", "");
 		//remove input values
-		$newModule.find("#textChoiceInput, #existingSpeech, #existingSound").val("");
+		$newModule.find("#existingSpeech, #existingSound, #keywords, #answer").val("");
 		$newModule.find("input[type='radio']").prop("checked",false);
 		// change the naming so that it is unique for each module
 		$newModule.attr('id',"module_" + moduleNum);
@@ -226,6 +213,7 @@ $(document).ready(function() {
 	});
 
 	$("#modulesForm").submit(function(event){
+		console.log(moduleNum);
 		// TODO: check for invalid form submission
 		validation = validateForm()
 		if (validation == "validated") {

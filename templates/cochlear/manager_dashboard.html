@@ -55,7 +55,7 @@
 		<button type="button" class="btn btn-primary"> (Closed Set Text) Other </button> 
 	</a>
 
-	<center><h2>Sounds & Speakers</h2></center>
+	<center><h2>Speech & Speakers</h2></center>
 	<h3>Speech Files</h3>
 	<a href="#speechfiles_popup" type="button" class="btn btn-success addbtn" id="speechfiles_addbtn"><i class="fa fa-plus upload-new-icon" aria-hidden="true"></i>Add New</a>
 	{% include "cochlear/embeds/file_list.html" with data=speechFileList %}
@@ -67,21 +67,21 @@
 	<center><h2>Training Modules</h2></center>
 	<h3>Closed Set Text</h3>
 	<p>A test sound with closed set, text-based responses.</p>
-	<a href="{% url 'cochlear:closedsettextAdd' %}" type="button" class="btn btn-success addbtn" id="closedsettext_addbtn"><i class="fa fa-plus upload-new-icon" aria-hidden="true"></i>Add New</a>
+	<a href="{% url 'cochlear:closedsettextAdd' %}" type="button" class="btn btn-success addbtn"><i class="fa fa-plus upload-new-icon" aria-hidden="true"></i>Add New</a>
 	{% include "cochlear/embeds/file_list.html" with data=closedSetText %}
 	
+	<h3>Open Set Questions</h3>
+	<p>A test sound with an open-set response.</p>
+	<a href="{% url 'cochlear:opensetAdd' %}" type="button" class="btn btn-success addbtn"><i class="fa fa-plus upload-new-icon" aria-hidden="true"></i>Add New</a>
+	{% include "cochlear/embeds/file_list.html" with data=openSet %}
+
+
 	<h3>Speaker Identification Questions</h3>
 	<p>These are the questions where the user listens to a test sound, then has to choose the correct answer from a set of sounds.</p>
 	{% comment %}
 	{% include "cochlear/embeds/file_list.html" with data=closedQuestions %}
 	{% include "cochlear/embeds/closedquestions_popup.html" %}
 	{% endcomment %}
-
-	<h3>Open Set Questions</h3>
-	<p>These are questions where the user listens to a test sound, then has to type in the correct answer in a text box.</p>
-
-	<h3>Sessions</h3>
-	<p>Create sessions out of open and closed set questions.</p>
 
 	
 	

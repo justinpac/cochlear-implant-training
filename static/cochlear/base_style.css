@@ -37,6 +37,20 @@
 	border-bottom: #ECECEC solid 4px;
 	border-left: #ECECEC solid 4px;
 }
+
+.item-explorer>table {
+	width: 100%;
+}
+
+.item-explorer>table>tbody>tr>td {
+	max-width: 0;
+	text-overflow: ellipsis;
+
+  	/* Required for text-overflow to do anything */
+  	white-space: nowrap;
+  	overflow: hidden;
+}
+
 .item-table-header {
 	margin-bottom: 0px;
 	background: #ECECEC;
