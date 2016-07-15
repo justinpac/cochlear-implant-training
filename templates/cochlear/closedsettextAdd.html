@@ -37,11 +37,11 @@
 					<button type="button" id="addSpeechBtn_1" class="btn btn-secondary">select speech</button>
 					<button type="button" id="addSoundBtn_1" class="btn btn-secondary">select sound</button>
 					<div id="addSpeechDiv_1">
-						<input id="existingSpeech" name="speechFile_1" list="speech_choices" class="form-control" placeholder="Type an existing speech file name"> 	
+						<input id="existingSpeech" name="speechFile_1" list="speech_choices" class="form-control" placeholder="Enter an existing speech file name"> 	
 						<a href="#speechfiles_popup" type="button" class="btn btn-success addbtn" id="speechfiles_addbtn"><i class="fa fa-plus upload-new-icon" aria-hidden="true"></i>Add New Speech</a>
 					</div>
 					<div id="addSoundDiv_1">
-						<input id="existingSound" name="soundFile_1" list="sound_choices" class="form-control" placeholder="Type an existing sound file name">
+						<input id="existingSound" name="soundFile_1" list="sound_choices" class="form-control" placeholder="Enter an existing sound file name">
 						<a href="#soundfiles_popup" type="button" class="btn btn-success addbtn" id="soundfiles_addbtn"><i class="fa fa-plus upload-new-icon" aria-hidden="true"></i>Add New Sound</a>
 					</div>
 					<h4>Add text responses (enter correct answer first, leave unused input boxes blank)</h4>
@@ -87,6 +87,7 @@
 
 {% include "cochlear/embeds/soundfiles_popup.html" %}
 {% include "cochlear/embeds/speechfiles_popup.html" %}
+{% include "cochlear/embeds/formInvalidDialogue.html" %}
 
 <script type="text/javascript" src="{% static 'cochlear/js/file_list.js' %}"></script>
 <script type="text/javascript">
@@ -145,6 +146,56 @@ function RefreshData(){
 }
 
 
+function validateForm() {
+	function validateChoices () {
+		for (var i =1; i<= moduleNum; i++) {
+			if ($("[name=textChoice_" + i +"]").first().val() == "") return i;
+		}
+		return -1;
+	}
+	function validateTestSound() {
+		for (var i =1; i<= moduleNum; i++) {
+			var existingSpeech = $('[name="speechFile_' + i + '"]').val();
+			var existingSound = $('[name="soundFile_' + i + '"]').val();
+			var matchFound = false;
+			if (existingSpeech == "") {
+				$('#sound_choices').children('option').each(function() {
+					if (existingSound == $(this).val()) matchFound = true;
+				});
+			} else {
+				$('#speech_choices').children('option').each(function() {
+					if (existingSpeech == $(this).val()) matchFound = true;
+
+				});
+			}
+			if (!matchFound) return i;
+		}
+		return -1;
+	}
+	function validateModuleType() {
+		for (var i =1; i<= moduleNum; i++) {
+			ischecked = false;
+			$("[name='moduleType_" + i +"']").each(function(){
+				if ($(this).is(":checked")) ischecked = true;
+			});
+			if (!ischecked) return i;
+		}
+		return -1;
+	}
+
+	var validateChoicesResult = validateChoices();
+	var validateTestSoundResult = validateTestSound();
+	var validateModuleTypeResult = validateModuleType();
+	if ( validateChoicesResult != -1) {
+		return "Please provide a correct text response for module " + validateChoicesResult + ".";
+	} else if ( validateTestSoundResult != -1 ) {
+		return "Please provide a valid sound/speech file for module " + validateTestSoundResult + ". To ensure the selection is valid, choose a file from the drop down of the input box.";
+	} else if (validateModuleTypeResult != -1) {
+		return "Please select a module type for module " + validateModuleTypeResult + ".";
+	} else {
+		return "validated";
+	}
+}
 
 $(document).ready(function() {
 	clickifyModule(moduleNum);
@@ -174,9 +225,17 @@ $(document).ready(function() {
 		clickifyModule(moduleNum);
 	});
 
-	$("#modulesForm").submit(function(){
+	$("#modulesForm").submit(function(event){
 		// TODO: check for invalid form submission
-		
+		validation = validateForm()
+		console.log(validation);
+		if (validation == "validated") {
+			// do nothing
+		} else {
+			event.preventDefault(); // prevent form submission
+			$("#errmsg").html(validation);
+			$("#formInvalid").modal({'show':true});
+		}
 		// append moduleNum to form
 		var input = $("<input>", { type: "hidden", name: "moduleNum", value: moduleNum }); 
 		$('#modulesForm').append($(input));

@@ -23,6 +23,8 @@ from django.http import StreamingHttpResponse
 
 
 SESSION_CAP = 4
+CLOSED_SET_TEXT_TYPES = ['Other','Phoneme','Environmental']
+OPEN_SET_TYPES = ['Other','Meaningful Sentence','Anomalous Sentence','Word','Environmental']
 
 def index(request):
 	#If user is manager, redirect to the manager dashboard (so the homepage always takes the manager to their dashboard)
@@ -471,11 +473,14 @@ def loadClosedSetTextData(context):
 	context['closedSetText']['rows'] = []
 	context['closedSetText']['id'] = 'closedsettext'
 	context['closedSetText']['colSize'] = int(12/len(context['closedSetText']['headers']))
+	context['closedSetText']['moduleTypes'] = CLOSED_SET_TEXT_TYPES
+	context['closedSetText']['rowModuleTypes'] = []
 	closedSetTexts = Closed_Set_Text.objects.all();
 	for closedSetText in closedSetTexts:
 		filename = closedSetText.unknown_speech.speech_file.name.strip('cochlear/speech') if closedSetText.unknown_speech else closedSetText.unknown_sound.sound_file.name.strip('cochlear/sound')
 		row = [filename, closedSetText.text_choices.count()]
 		context['closedSetText']['rows'].append(row)
+		context['closedSetText']['rowModuleTypes'].append(closedSetText.module_type)
 
 def loadSpeechData(context):
 	#Putting all the loading of the data in a separate function so it can be done asynchronously 

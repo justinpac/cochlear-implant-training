@@ -58,6 +58,11 @@
 	padding-right: 5px;
 }
 
+.radio-inline {
+	font-size: 14px;
+}
+
+
 #helpButton {
 	cursor: pointer;
 	float: right;
@@ -69,4 +74,19 @@
 
 #helpButton:hover {
 	color: #b88a2e;
+}
+
+#moduleFilterDiv {
+	margin-bottom: -10px;
+	border: #ECECEC solid 4px;
+	border-radius: 0px;
+}
+#moduleFilterDiv .panel-heading {
+	background-color: #ECECEC;
+	font-weight: bold;
+	padding: 8px;
+}
+
+input[name="moduleTypeFilter"] {
+	margin-bottom: 10px;
 }

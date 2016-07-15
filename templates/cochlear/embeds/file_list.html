@@ -1,3 +1,18 @@
+{% load cochlear_extras %}
+
+{% for moduleType in data.moduleTypes %}
+{% if forloop.first %}
+<div id="moduleFilterDiv" class="panel panel-default">
+  <div class="panel-heading">Table Filters</div>
+  <div class="panel-body">
+{% endif %}
+<label class="radio-inline"><input type="radio" name="moduleTypeFilter_{{data.id}}" value="{{forloop.counter0}}">{{moduleType}}</label>
+{% if forloop.last %}
+<label class="radio-inline"><input type="radio" name="moduleTypeFilter_{{data.id}}" value="all">All</label>
+</div>
+</div>
+{% endif %}
+{% endfor %}
 <table class="item-table-header table" id="{{data.id}}_header">
     <thead>
       <tr>
@@ -11,12 +26,32 @@
 	<table class="item-table-items table table-striped" id="{{data.id}}_items">
 	    <tbody>
 	     {% for row in data.rows %}
-	      <tr>
-	       {% for item in row %}
-	        <td class="col-md-{{ data.colSize }} {{data.id}}_items_{{forloop.counter0}}">{{item}}</td>
+	     {% if data.rowModuleTypes %}
+	     <tr data-module-type="{% get_obj_at_index data.rowModuleTypes  forloop.counter0 %}">
+	     {% else %}
+	     <tr>
+	     {% endif %}
+	    	{% for item in row %}
+	       	<td class="col-md-{{ data.colSize }} {{data.id}}_items_{{forloop.counter0}}">{{item}}</td>
 	        {% endfor %}
-	      </tr>
+	     </tr>
 	      {% endfor %}
 	    </tbody>
 	 </table>
 </div>
+
+{% if data.rowModuleTypes %}
+<script type="text/javascript">
+	$(document).ready(function() {
+		$("[name='moduleTypeFilter_{{data.id}}']").click(function() {
+			var moduleType = $(this).val()
+			if (moduleType == "all") {
+				$('td[class*="{{data.id}}_items_"]').parent('tr').show()
+			} else {
+				$('td[class*="{{data.id}}_items_"]').parent('tr').hide()
+				$('td[class*="{{data.id}}_items_"]').parent('tr[data-module-type="' + moduleType + '"]').show();
+			}
+		});
+	});
+</script>
+{% endif %}
