@@ -1,0 +1,175 @@
+{% extends "cochlear_base.html" %}
+
+{% block cochlear-content %}
+
+{% load staticfiles %}
+
+<!-- Load our stylesheet -->
+<link href="{% static 'cochlear/speakeridAdd.css' %}" rel="stylesheet">
+<script type="text/javascript" src="{% static 'cochlear/js/alphanum.js' %}"></script>
+
+<!-- Magnific Popup core JS file -->
+<script src="{% static 'cochlear/js/jquery.magnific-popup.min.js' %}"></script>
+<!-- Magnific Popup core CSS file -->
+<link href="{% static 'cochlear/magnific-popup.css' %}" rel="stylesheet">
+<link href="{% static 'cochlear/popup.css' %}" rel="stylesheet">
+<!-- include once per page where Dropzone is used -->
+<script src="{% static 'cochlear/js/dropzone.js' %}"></script>
+<link href="{% static 'cochlear/dropzone.css' %}" rel="stylesheet">
+
+<div class ="container">
+
+	<h1>Closed Set Text Modules</h1>
+	<p>A test sound with closed set, text-based responses.</p>
+
+	{% include "cochlear/embeds/file_list.html" with data=speakerid %}
+	<form id="modulesForm" action="{% url 'cochlear:speakeridAdd' %}" method="post" enctype="multipart/form-data">
+		<div id="modules">
+			<div id="module_1" class="panel panel-default">
+				<div class="panel-body">
+					{% csrf_token %}
+					<h2 class="module-header">Module 1</h2>
+					<h4>Select a speech file for the unknown speaker</h4>
+					<input name="unknownSpeech_1" list="speech_choices" class="inpBox form-control" placeholder="Enter an existing speech file name"> 	
+					<a href="#speechfiles_popup" type="button" class="btn btn-success addbtn" id="speechfiles_addbtn"><i class="fa fa-plus upload-new-icon" aria-hidden="true"></i>Add New Speech</a>
+					<h4>Select speech files for possible speakers (enter correct answer first, leave unused input boxes blank)</h4>
+					<div id="speechChoices_1">
+						<input list="speech_choices" class="inpBox form-control" name="speechChoice_1" placeholder="Enter the correct answer" />
+						<input list="speech_choices" class="inpBox form-control" name="speechChoice_1"/>
+						<input list="speech_choices" class="inpBox form-control" name="speechChoice_1"/>
+						<input list="speech_choices" class="inpBox form-control" name="speechChoice_1"/>
+						<input list="speech_choices" class="inpBox form-control" name="speechChoice_1"/>
+						<input list="speech_choices" class="inpBox form-control" name="speechChoice_1"/>
+					</div>
+					<button id="moreSpeech_1" type="button" class="btn btn-secondary">more speech files</button>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<button id="submitForm" class="btn btn-primary">create all modules</button>
+			<button id="addModule" type="button" class="btn btn-secondary"><i class="fa fa-plus" aria-hidden="true"></i> add module</button>
+		</div>
+	</form>
+</div>
+<br/>
+
+
+<!-- Keeping datalists away from the form so that they are shared between all models -->
+<datalist id="speech_choices">
+	{% for speech in speech_choices %}
+	<option value="{{speech}}"/>
+	{% endfor %}
+</datalist>
+
+{% include "cochlear/embeds/speechfiles_popup.html" %}
+{% include "cochlear/embeds/formInvalidDialogue.html" %}
+
+<script type="text/javascript" src="{% static 'cochlear/js/file_list.js' %}"></script>
+<script type="text/javascript">
+
+var moduleNum = 1;
+
+// add click functionality to each of the buttons in a module so that each is treated separately
+// Here we are using the .on() function to delegate events, which have the advantage of attaching event handlers to descendant
+// elements, whether or not they exist
+function clickifyModule(indx) {
+	$("#modules").on("click", "#moreSpeech_" + indx, function() {
+		var inputBoxes = "";
+		for (var j = 1; j <= 3; j++) {
+			inputBoxes += '<input list="speech_choices" class="inpBox form-control" name="speechChoice_' + indx + '"/> ';
+		}
+		$("#speechChoices_" + indx).append(inputBoxes);
+	});
+}
+
+function RefreshData(){
+	//Refreshes the data. Called by each popup after it closes
+	function success(data){
+		// Refresh data lists
+		function refreshDatalist(name, id) {
+			$("#" + id).empty();
+			names = data[name]["Names"];
+			newOptions = "";
+			for (i in names) {
+				newOptions += '<option value="' + names[i] + '"/> ';
+			}
+			$("#" + id).append(newOptions);
+		}
+		refreshDatalist('speechFileList', 'speech_choices');
+	}
+	function fail(msg){
+		console.log("Failed to refresh!", msg);
+	}
+	$.get('{% url "cochlear:refreshClosedSetTextAdd" %}',success).fail(fail);
+}
+
+
+function validateForm() {
+	function validateSpeech(name) {
+		for (var i =1; i<= moduleNum; i++) {
+			var existingSpeech = $('[name="' + name + '_' + i + '"]').first().val();
+			var matchFound = false;
+			$('#speech_choices').children('option').each(function() {
+				if (existingSpeech == $(this).val()) matchFound = true;
+			});
+			if (!matchFound) return i;
+		}
+		return -1;
+	}
+
+	var validateUnknownSpeechResult = validateSpeech('unknownSpeech');
+	var validateSpeechChoiceResult = validateSpeech('speechChoice');
+
+	if ( validateUnknownSpeechResult != -1 ) {
+		return "Please provide a valid speech file for the unknown speaker in module " + validateUnknownSpeechResult + ". To ensure the selection is valid, choose a file from the drop down of the input box.";
+	} else if (validateSpeechChoiceResult != -1) {
+		return "Please provide a valid speech file for the correct choice in module " + validateSpeechChoiceResult + ". To ensure the selection is valid, choose a file from the drop down of the input box.";
+	} else {
+		return "validated";
+	}
+}
+
+$(document).ready(function() {
+	clickifyModule(moduleNum);
+
+	$('#addModule').click(function(){
+		moduleNum += 1;
+		// Get a copy of the code for a module
+		var $newModule = $("#module_1").clone(true);
+		//remove additional speech boxes
+		$newModule.find("#speechChoices_1").children().slice(6).remove();
+		//remove input values
+		$newModule.find(".inpBox").val("");
+		// change the naming so that it is unique for each module
+		$newModule.attr('id',"module_" + moduleNum);
+		$newModule.find(".module-header").html("Module " + moduleNum);
+		$newModule.find("input[name$='_1']").each(function() {
+			$(this).attr("name", $(this).attr("name").slice(0,-1) + moduleNum);
+		});
+		$newModule.find("[id$='_1']").each(function(){
+			$(this).attr('id', $(this).attr("id").slice(0,-1) + moduleNum);
+		});
+
+		$("#modules").append($newModule);
+		clickifyModule(moduleNum);
+	});
+
+	$("#modulesForm").submit(function(event){
+		// TODO: check for invalid form submission
+		validation = validateForm()
+		if (validation == "validated") {
+			// do nothing
+		} else {
+			event.preventDefault(); // prevent form submission
+			$("#errmsg").html(validation);
+			$("#formInvalid").modal({'show':true});
+		}
+		// append moduleNum to form
+		var input = $("<input>", { type: "hidden", name: "moduleNum", value: moduleNum }); 
+		$('#modulesForm').append($(input));
+	});
+
+});
+</script>
+
+{% endblock %}

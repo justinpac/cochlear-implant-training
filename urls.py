@@ -21,8 +21,10 @@ urlpatterns = patterns('cochlear',
     #Manager pages
     url(r'^dashboard/$','views.dashboard', name = 'dashboard'),
     url(r'^dashboard/closedsettextAdd/$','views.closedsettextAdd', name='closedsettextAdd'),
-    url(r'^refreshClosedSetTextAdd/$','views.refreshClosedSetTextAdd', name = 'refreshClosedSetTextAdd'),
+    url(r'^dashboard/refreshClosedSetTextAdd/$','views.refreshClosedSetTextAdd', name = 'refreshClosedSetTextAdd'),
     url(r'^dashboard/opensetAdd/$','views.opensetAdd', name='opensetAdd'),
+    url(r'^dashboard/speakeridAdd/$','views.speakeridAdd', name='speakeridAdd'),
+    url(r'^dashboard/refreshspeakeridAdd/$','views.refreshspeakeridAdd', name = 'refreshspeakeridAdd'),
     url(r'^analytics/$','views.analytics', name = 'analytics'),
     #ajax methods
     url(r'^openSetCompleted/$','views.openSetCompleted', name = 'openSetCompleted'),

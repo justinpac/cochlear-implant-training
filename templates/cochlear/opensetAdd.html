@@ -5,7 +5,7 @@
 {% load staticfiles %}
 
 <!-- Load our stylesheet -->
-<link href="{% static 'cochlear/closedsettextAdd.css' %}" rel="stylesheet">
+<link href="{% static 'cochlear/opensetAdd.css' %}" rel="stylesheet">
 <script type="text/javascript" src="{% static 'cochlear/js/alphanum.js' %}"></script>
 
 <!-- Magnific Popup core JS file -->
@@ -49,9 +49,8 @@
 					<h4>Answer</h4>
 					<input id="answer" name="answer_1" class="form-control" placeholder="Enter the correct response for this module"> 	
 
-					<h4>Key Words</h4>
-					<p>Enter each word separated by spaces. Group together alternate words and separate them by forward slashes. For example, "birch canoe slid/hid/bid down smooth planks". The user is allowed one typo (insertion, deletion, or substitution) when evaluating each keyword.</p>
-					<input id="keywords" name="keywords_1" class="form-control">
+					<h4 id="keyWordsHeader">Key Words<span id="keywordsInfo_1" class="moreInfo glyphicon glyphicon-question-sign"></span></h4>
+					<input id="keywords" name="keywords_1" class="form-control" placeholder="Enter each keyword separated by spaces">
 				</div>
 			</div>
 		</div>
@@ -105,6 +104,9 @@ function clickifyModule(indx) {
 		$('#addSoundDiv_' + indx).show();
 		$('#addSoundBtn_' + indx).css("border","2px solid #555555");
 	});
+	keyWordsInfo = 'Enter each word separated by spaces. Group together alternate words and separate them by forward slashes. For example, "birch canoe slid/hid/bid down smooth planks". The user is allowed one typo (insertion, deletion, or substitution) when evaluating each keyword.'
+	var popoverSettings = {title:"Keywords", title:'Keywords', content:keyWordsInfo, placement:"right", trigger: "click"};
+	$("#keywordsInfo_" + indx).popover(popoverSettings);
 }
 
 function RefreshData(){
@@ -198,6 +200,10 @@ $(document).ready(function() {
 		//remove input values
 		$newModule.find("#existingSpeech, #existingSound, #keywords, #answer").val("");
 		$newModule.find("input[type='radio']").prop("checked",false);
+		//Remove event handlers
+		$newModule.find("#keywordsInfo_1").remove()
+		var keywordsPopover = '<span id="keywordsInfo_'+ moduleNum +'"" class="moreInfo glyphicon glyphicon-question-sign">'
+		$newModule.find("#keyWordsHeader").append(keywordsPopover);
 		// change the naming so that it is unique for each module
 		$newModule.attr('id',"module_" + moduleNum);
 		$newModule.find(".module-header").html("Module " + moduleNum);
@@ -213,7 +219,6 @@ $(document).ready(function() {
 	});
 
 	$("#modulesForm").submit(function(event){
-		console.log(moduleNum);
 		// TODO: check for invalid form submission
 		validation = validateForm()
 		if (validation == "validated") {

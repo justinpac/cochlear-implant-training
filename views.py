@@ -498,10 +498,22 @@ def loadOpenSetData(context):
 		context['openSet']['rows'].append(row)
 		context['openSet']['rowModuleTypes'].append(openSet.module_type)
 
+def loadSpeakerIDData(context):
+	context['speakerid'] = {}
+	context['speakerid']['headers'] = ['Test Sound','# of choices']
+	context['speakerid']['rows'] = []
+	context['speakerid']['id'] = 'speakerid'
+	context['speakerid']['colSize'] = int(12/len(context['speakerid']['headers']))
+	questions = Speaker_ID.objects.all();
+	for q in questions:
+		row = [q.unknown_speech.speech_file.name.strip('cochlear/speech/'),q.choices.count()]
+		context['speakerid']['rows'].append(row)
+
 def loadDashboardData(context):
 	loadSpeechData(context)
 	loadClosedSetTextData(context)
 	loadOpenSetData(context)
+	loadSpeakerIDData(context)
 
 	#Speaker objects
 	context['speakerFileList'] = {}
@@ -514,21 +526,6 @@ def loadDashboardData(context):
 		numOfFiles = Speech.objects.filter(speaker=speaker).count();
 		row = [speaker.name,numOfFiles]
 		context['speakerFileList']['rows'].append(row)
-
-	#Closed set questions
-	context['closedQuestions'] = {}
-	context['closedQuestions']['headers'] = ['Test Sound','# of choices']
-	context['closedQuestions']['rows'] = []
-	context['closedQuestions']['id'] = 'closedquestions'
-	context['closedQuestions']['colSize'] = int(12/len(context['closedQuestions']['headers']))
-	questions = Speaker_ID.objects.all();
-	for q in questions:
-		row = [q.unknown_speech.speech_file.name.strip('cochlear/speech/'),q.choices.count()]
-		context['closedQuestions']['rows'].append(row)
-
-	#Open set questions
-
-	#Session objects
 
 def dashboard(request):
 	context = NavigationBar.generateAppContext(request,app="cochlear",title="index", navbarName='manager',activeLink="Manager Dashboard")
@@ -633,6 +630,49 @@ def opensetAdd(request):
 	context['speech_choices'] = Speech.objects.all()
 	context['sound_choices'] = Sound.objects.all()
 	return render(request,'cochlear/opensetAdd.html',context)
+
+def speakeridAdd(request):
+	if request.method == 'POST':
+		moduleNum = int(request.POST['moduleNum']) # Number of modules to be created
+		for mn in range(1, moduleNum + 1):
+			newSID = Speaker_ID()
+			# Add a test sound or speech
+			speechFile = request.POST['unknownSpeech_' + str(mn)]
+			testSpeechFile = ('cochlear/speech/' + speechFile)
+			testSpeech = Speech.objects.get(speech_file=testSpeechFile)
+			newSID.unknown_speech = testSpeech
+			#save so we can add to manytomany field
+			newSID.save()
+			# Add text choices
+			speechChoices = request.POST.getlist('speechChoice_' + str(mn));
+			first = True
+			for speechChoice in speechChoices:
+				if speechChoice != "":
+					speechChoiceFile = ('cochlear/speech/' + speechChoice)
+					speechObj = Speech.objects.get(speech_file=speechChoiceFile)
+					if first:
+						first = False
+						Speaker_ID_Choice(iscorrect = True, speaker_id = newSID, choice = speechObj).save()
+					else:
+						Speaker_ID_Choice(iscorrect = False,speaker_id = newSID, choice = speechObj).save()
+			newSID.save()
+		return redirect('cochlear:speakeridAdd') # prevent form resubmission of refresh
+
+	context = NavigationBar.generateAppContext(request,app="cochlear",title="speakeridAdd",navbarName='manager')
+	loadSpeakerIDData(context)
+	context['speech_choices'] = Speech.objects.all()
+	return render(request,'cochlear/speakeridAdd.html',context)
+
+def refreshspeakeridAdd(request):
+	#Wrap dashboard data in json 
+	context =  {}
+	context['speechFileList'] = {}
+	context['speechFileList']['Names'] = []
+	speechFiles = Speech.objects.all()
+	for speech in speechFiles:
+		context['speechFileList']['Names'].append(str(speech))
+	data = json.dumps(context)
+	return HttpResponse(data, content_type='application/json')
 
 def analytics(request):
 	context = NavigationBar.generateAppContext(request,app="cochlear",title="index", navbarName='manager',activeLink="Analytics")

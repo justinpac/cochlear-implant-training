@@ -1,0 +1,59 @@
+button {
+	margin-right: 10px;
+}
+
+h4 {
+	margin-top: 20px;
+}
+
+p {
+	font-size:14px;
+}
+
+.addbtn {
+	margin-bottom: 5px;
+}
+
+.module-header {
+	margin-top: 0px;
+}
+
+.panel-default {
+	margin-top: 20px;
+}
+
+.popover-title {
+
+	font-size: initial;
+}
+
+.popover-content {
+	font-size: smaller;
+}
+
+.row {
+	text-align: center;
+}
+
+
+
+[id^="addSpeechBtn"]:focus, [id^="addSoundBtn"]:focus {outline:0;}
+
+[id^="addSpeechDiv"], [id^="addSoundDiv"] {
+	margin-top: 20px;
+}
+
+[id^="addSpeechDiv"] {
+	display: none;
+}
+
+[id^="addSoundDiv"]{
+	display: none;
+}
+
+#textChoiceInput, #existingSpeech, #existingSound {
+	margin-right:20px;
+	margin-bottom: 10px;
+	max-width: 347px;
+	display: inline-block;
+}

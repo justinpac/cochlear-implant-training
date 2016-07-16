@@ -76,6 +76,17 @@
 	font-size: 14px;
 }
 
+.moreInfo {
+	cursor: pointer;
+	margin-left: 10px;
+ 	font-size:20px;
+  	color: darkgrey;
+}
+
+.moreInfo:hover {
+	color: grey;
+}
+
 
 #helpButton {
 	cursor: pointer;
@@ -89,6 +100,7 @@
 #helpButton:hover {
 	color: #b88a2e;
 }
+
 
 #moduleFilterDiv {
 	margin-bottom: -10px;

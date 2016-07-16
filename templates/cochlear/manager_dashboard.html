@@ -70,20 +70,18 @@
 	<a href="{% url 'cochlear:closedsettextAdd' %}" type="button" class="btn btn-success addbtn"><i class="fa fa-plus upload-new-icon" aria-hidden="true"></i>Add New</a>
 	{% include "cochlear/embeds/file_list.html" with data=closedSetText %}
 	
-	<h3>Open Set Questions</h3>
+	<h3>Open Set</h3>
 	<p>A test sound with an open-set response.</p>
 	<a href="{% url 'cochlear:opensetAdd' %}" type="button" class="btn btn-success addbtn"><i class="fa fa-plus upload-new-icon" aria-hidden="true"></i>Add New</a>
 	{% include "cochlear/embeds/file_list.html" with data=openSet %}
 
 
-	<h3>Speaker Identification Questions</h3>
-	<p>These are the questions where the user listens to a test sound, then has to choose the correct answer from a set of sounds.</p>
-	{% comment %}
-	{% include "cochlear/embeds/file_list.html" with data=closedQuestions %}
-	{% include "cochlear/embeds/closedquestions_popup.html" %}
-	{% endcomment %}
+	<h3>Speaker Identification</h3>
+	<p>An unknown speaker that must be identified after listening to a set of known speakers.</p>
+	<a href="{% url 'cochlear:speakeridAdd' %}" type="button" class="btn btn-success addbtn"><i class="fa fa-plus upload-new-icon" aria-hidden="true"></i>Add New</a>
+	{% include "cochlear/embeds/file_list.html" with data=speakerid %}
 
-	
+	<br>
 	
 	<script type="text/javascript" src="{% static 'cochlear/js/file_list.js' %}"></script>
 	<script type="text/javascript">
