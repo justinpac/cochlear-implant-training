@@ -19,8 +19,8 @@
 
 <div class ="container">
 
-	<h1>Closed Set Text Modules</h1>
-	<p>A test sound with closed set, text-based responses.</p>
+	<h1>Speaker Identification</h1>
+	<p>An unknown speaker that must be identified after listening to a set of known speakers.</p>
 
 	{% include "cochlear/embeds/file_list.html" with data=speakerid %}
 	<form id="modulesForm" action="{% url 'cochlear:speakeridAdd' %}" method="post" enctype="multipart/form-data">

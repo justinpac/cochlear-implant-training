@@ -19,8 +19,8 @@
 
 <div class ="container">
 
-	<h1>Closed Set Text Modules</h1>
-	<p>A test sound with closed set, text-based responses.</p>
+	<h1>Open Set Modules</h1>
+	<p>A test sound with an open-set response.</p>
 
 	{% include "cochlear/embeds/file_list.html" with data=openSet %}
 	<form id="modulesForm" action="{% url 'cochlear:opensetAdd' %}" method="post" enctype="multipart/form-data">
