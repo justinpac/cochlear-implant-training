@@ -23,8 +23,10 @@ from django.http import StreamingHttpResponse
 
 
 SESSION_CAP = 4
+
+OPEN_SET_MODULE_TYPES = ['Other','Meaningful Sentence','Anomalous Sentence','Word','Environmental'] 
 CLOSED_SET_TEXT_TYPES = ['Other','Phoneme','Environmental']
-OPEN_SET_TYPES = ['Other','Meaningful Sentence','Anomalous Sentence','Word','Environmental']
+ALL_MODULE_TYPES = ['Closed Set Text','Open Set','Speaker ID']
 
 def index(request):
 	#If user is manager, redirect to the manager dashboard (so the homepage always takes the manager to their dashboard)
@@ -451,52 +453,148 @@ def createSoundSource(request):
 #NOTE: Make sure to add the names of all the pages that should only be accessible
 #by managers in middleware.py
 
+# Loads data for a table
+# ID - the uniwue identifier for this table
+# headerArr - a one-dimensional array of table column headers
+# dropDownHeaderArr - a one-dimensional array of labels for each dropdown (may be empty)
+# dropDownArr - A two dimensionsal array of arrays, with each inner arrray being a set of dropdown options for eac dropdown header
+# The outer array of dropdown arr should have as many elements as dropDownHeaderArr
+# IMPORTANT - user must populate context[ID][rows] and context[ID][rowData] themselves after using this function.
+# These are also arrays of arrays, with rows and rowData corresponding to headers and dropdown headers respectively.  
+def loadTableData(context, ID, headerArr, dropDownHeaderArr, dropDownArr, subDropHeaderArr, subDropArr):
+	context[ID] = {}
+	context[ID]['headers'] = headerArr
+	stdID = ID
+	stdID = stdID.lower()
+	stdID = stdID.replace(" ","-")
+	context[ID]['id'] = stdID
+	context[ID]['dropDownHeaders'] = dropDownHeaderArr
+	#Each dropDownHeader should have an associated array in it
+	context[ID]['dropDowns'] = dropDownArr
+	# Sub drop down array positions should correspond to the drop down positions
+	context[ID]['subDropHeaders'] = subDropHeaderArr
+	context[ID]['subDrops'] = subDropArr
+
+	#The below lines should not change between tables
+	context[ID]['colSize'] = int(12/len(context[ID]['headers']))
+	context[ID]['dropDownHeaderIDs'] = list(context[ID]['dropDownHeaders'])
+	for i in range(len(context[ID]['dropDownHeaderIDs'])):
+		context[ID]['dropDownHeaderIDs'][i] = context[ID]['dropDownHeaderIDs'][i].replace(' ','-')
+		context[ID]['dropDownHeaderIDs'][i] = context[ID]['dropDownHeaderIDs'][i].lower()	
+		context[ID]['subDropHeaderIDs'] = list(context[ID]['subDropHeaders'])
+	for i in range(len(context[ID]['subDropHeaderIDs'])):
+		context[ID]['subDropHeaderIDs'][i] = context[ID]['subDropHeaderIDs'][i].replace(' ','-')
+		context[ID]['subDropHeaderIDs'][i] = context[ID]['subDropHeaderIDs'][i].lower()
+
+	context[ID]['rows'] = []
+	context[ID]['rowData'] = []
+	context[ID]['rowSubData'] = []
+
 def loadSpeechData(context):
-	#Putting all the loading of the data in a separate function so it can be done asynchronously 
-	#Sound files
-	context['speechFileList'] = {}
-	context['speechFileList']['headers'] = ['Filename','Speaker Name','Date Uploaded']
-	context['speechFileList']['rows'] = []
-	context['speechFileList']['id'] = 'speechfiles'
-	context['speechFileList']['colSize'] = int(12/len(context['speechFileList']['headers']))
-	soundFiles = Speech.objects.all();
-	for sound in soundFiles:
-		if(sound.speaker == None):
-			speaker_name = "No Speaker"
+	ID = 'speechFileList'
+	headerArr = ['Filename','Speaker Name','Speaker Gender','Upload Date']
+	dropDownHeaderArr = ['Module','Gender']
+	dropDownArr = []
+	dropDownArr.append(ALL_MODULE_TYPES)
+	dropDownArr.append(['Male','Female','Other'])
+	subDropHeaderArr = ['Module Type']
+	subDropArr = []
+	subDropArr.append([CLOSED_SET_TEXT_TYPES,OPEN_SET_MODULE_TYPES,[]])
+	loadTableData(context, ID, headerArr, dropDownHeaderArr, dropDownArr, subDropHeaderArr, subDropArr)
+
+	speechFiles = Speech.objects.all();
+	for speech in speechFiles:
+		rowSubData = [None] * len(context[ID]['dropDownHeaders'])
+		for i in range(len(rowSubData)):
+			rowSubData[i] = [''] * len(context[ID]['dropDowns'][i])
+		row = [speech.speech_file.name.strip('cochlear/speech/'),speech.speaker.name, speech.speaker.gender, str(speech.uploaded_date)]
+		context[ID]['rows'].append(row)
+		module = ""
+		if Closed_Set_Text.objects.filter(unknown_speech=speech).exists():
+			module += "0"
+			for cst in Closed_Set_Text.objects.filter(unknown_speech=speech):
+				rowSubData[0][0] += str(cst.module_type)
+		elif Open_Set_Module.objects.filter(unknown_speech=speech).exists():
+			module += "1"
+			for osm in Open_Set_Module.objects.filter(unknown_speech=speech):
+				rowSubData[0][1] += str(osm.module_type)
+		elif Speaker_ID.objects.filter(Q(unknown_speech=speech) | Q(choices=speech)).exists():
+			module += "2"
+		if speech.speaker.gender.lower() == 'male':
+			gender = 0
+		elif speech.speaker.gender.lower() == 'female':
+			gender = 1
 		else:
-			speaker_name = sound.speaker.name
-		row = [sound.speech_file.name.strip('cochlear/speech/'), speaker_name,str(sound.uploaded_date)]
-		context['speechFileList']['rows'].append(row)
+			gender = 2
+		context[ID]['rowData'].append([module, gender])
+		context[ID]['rowSubData'].append(rowSubData)
+
+def loadSpeakerData(context):
+	#Speaker objects
+	context['speakerFileList'] = {}
+	context['speakerFileList']['headers'] = ['Speaker Name','Number of attached files','Notes']
+	context['speakerFileList']['rows'] = []
+	context['speakerFileList']['id'] = 'speakerfiles'
+	context['speakerFileList']['colSize'] = int(12/len(context['speakerFileList']['headers']))
+	speakerList = Speaker.objects.all();
+	for speaker in speakerList:
+		numOfFiles = Speech.objects.filter(speaker=speaker).count();
+		row = [speaker.name,numOfFiles,speaker.notes]
+		context['speakerFileList']['rows'].append(row)
+
+def loadSoundData(context):
+	context['soundFileList'] = {}
+	context['soundFileList']['headers'] = ['Filename','Source Name']
+	context['soundFileList']['rows'] = []
+	context['soundFileList']['id'] = 'soundfiles'
+	context['soundFileList']['colSize'] = int(12/len(context['soundFileList']['headers']))
+	soundFiles = Sound.objects.all();
+	for sound in soundFiles:
+		row = [sound.sound_file.name.strip('cochlear/sound/'), sound.source.name]
+		context['soundFileList']['rows'].append(row)
+
+def loadSourceData(context):
+	context['sourceFileList'] = {}
+	context['sourceFileList']['headers'] = ['Source Name','Number of attached files','Notes']
+	context['sourceFileList']['rows'] = []
+	context['sourceFileList']['id'] = 'sourcefiles'
+	context['sourceFileList']['colSize'] = int(12/len(context['sourceFileList']['headers']))
+	sourceList = Sound_Source.objects.all();
+	for source in sourceList:
+		numOfFiles = Sound.objects.filter(source=source).count();
+		row = [source.name,numOfFiles,source.notes]
+		context['sourceFileList']['rows'].append(row)
 
 def loadClosedSetTextData(context):
-	context['closedSetText'] = {}
-	context['closedSetText']['headers'] = ['Test Sound','# of choices']
-	context['closedSetText']['rows'] = []
-	context['closedSetText']['id'] = 'closedsettext'
-	context['closedSetText']['colSize'] = int(12/len(context['closedSetText']['headers']))
-	context['closedSetText']['moduleTypes'] = CLOSED_SET_TEXT_TYPES
-	context['closedSetText']['rowModuleTypes'] = []
+	ID = 'closedSetText'
+	headerArr = ['Test Sound','# of choices']
+	dropDownHeaderArr = ['Module Types']
+	dropDownArr = []
+	dropDownArr.append(CLOSED_SET_TEXT_TYPES)
+	loadTableData(context, ID, headerArr, dropDownHeaderArr, dropDownArr, [], [])
+	
 	closedSetTexts = Closed_Set_Text.objects.all();
 	for closedSetText in closedSetTexts:
 		filename = closedSetText.unknown_speech.speech_file.name.strip('cochlear/speech') if closedSetText.unknown_speech else closedSetText.unknown_sound.sound_file.name.strip('cochlear/sound')
 		row = [filename, closedSetText.text_choices.count()]
-		context['closedSetText']['rows'].append(row)
-		context['closedSetText']['rowModuleTypes'].append(closedSetText.module_type)
+		context[ID]['rows'].append(row)
+		data = [closedSetText.module_type]
+		context[ID]['rowData'].append(data)
 
 def loadOpenSetData(context):
-	context['openSet'] = {}
-	context['openSet']['headers'] = ['Test Sound','Answer','Keywords']
-	context['openSet']['rows'] = []
-	context['openSet']['id'] = 'openset'
-	context['openSet']['colSize'] = int(12/len(context['openSet']['headers']))
-	context['openSet']['moduleTypes'] = OPEN_SET_TYPES
-	context['openSet']['rowModuleTypes'] = []
+	ID = 'openSet'
+	headerArr = ['Test Sound','Answer','Keywords']
+	dropDownHeaderArr = ['Module Types']
+	dropDownArr = []
+	dropDownArr.append(OPEN_SET_MODULE_TYPES)
+	loadTableData(context, ID, headerArr, dropDownHeaderArr, dropDownArr, [], [])
+
 	openSets = Open_Set_Module.objects.all();
 	for openSet in openSets:
 		filename = openSet.unknown_speech.speech_file.name.strip('cochlear/speech') if openSet.unknown_speech else openSet.unknown_sound.sound_file.name.strip('cochlear/sound')
 		row = [filename, openSet.answer, openSet.key_words]
-		context['openSet']['rows'].append(row)
-		context['openSet']['rowModuleTypes'].append(openSet.module_type)
+		context[ID]['rows'].append(row)
+		context[ID]['rowData'].append([openSet.module_type])
 
 def loadSpeakerIDData(context):
 	context['speakerid'] = {}
@@ -511,21 +609,12 @@ def loadSpeakerIDData(context):
 
 def loadDashboardData(context):
 	loadSpeechData(context)
+	loadSpeakerData(context)
+	loadSoundData(context)
+	loadSourceData(context)
 	loadClosedSetTextData(context)
 	loadOpenSetData(context)
 	loadSpeakerIDData(context)
-
-	#Speaker objects
-	context['speakerFileList'] = {}
-	context['speakerFileList']['headers'] = ['Speaker Name','Number of attached files']
-	context['speakerFileList']['rows'] = []
-	context['speakerFileList']['id'] = 'speakerfiles'
-	context['speakerFileList']['colSize'] = int(12/len(context['speakerFileList']['headers']))
-	speakerList = Speaker.objects.all();
-	for speaker in speakerList:
-		numOfFiles = Speech.objects.filter(speaker=speaker).count();
-		row = [speaker.name,numOfFiles]
-		context['speakerFileList']['rows'].append(row)
 
 def dashboard(request):
 	context = NavigationBar.generateAppContext(request,app="cochlear",title="index", navbarName='manager',activeLink="Manager Dashboard")

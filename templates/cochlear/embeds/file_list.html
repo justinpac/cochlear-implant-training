@@ -1,18 +1,44 @@
 {% load cochlear_extras %}
 
-{% for moduleType in data.moduleTypes %}
-{% if forloop.first %}
 <div id="moduleFilterDiv" class="panel panel-default">
-  <div class="panel-heading">Table Filters</div>
-  <div class="panel-body">
-{% endif %}
-<label class="radio-inline"><input type="radio" name="moduleTypeFilter_{{data.id}}" value="{{forloop.counter0}}">{{moduleType}}</label>
-{% if forloop.last %}
-<label class="radio-inline"><input type="radio" name="moduleTypeFilter_{{data.id}}" value="all">All</label>
+	<div class="panel-heading">Table Filters</div>
+	<div class="panel-body">
+		{% for dropDown in data.dropDowns %}
+		<div class="form-group drop-down">
+			<label for="{% get_obj_at_index data.dropDownHeaderIDs forloop.counter0 %}">{% get_obj_at_index data.dropDownHeaders forloop.counter0 %}</label>
+			<select class="form-control table-filter" data-table-id="{{data.id}}" id="{% get_obj_at_index data.dropDownHeaderIDs forloop.counter0 %}">
+				{% for item in dropDown %}
+				{% if forloop.first %}
+				<option value="all">All</option>
+				{% endif %}
+				<option value="{{forloop.counter0}}">{{item}}</option>
+				{% endfor %}
+			</select>
+		</div>
+		{% endfor %}
+
+		{% for subDrop in data.subDrops %}
+		<div class="drop-down form-group">
+			<label for="{% get_obj_at_index data.dropDownHeaderIDs forloop.counter0 %}">{% get_obj_at_index data.subDropHeaders forloop.counter0 %}</label>
+			<select class="form-control table-filter" data-table-id="{{data.id}}" id="{% get_obj_at_index data.dropDownHeaderIDs forloop.counter0 %}-placeholder"></select>
+			{% for list in subDrop %}
+			<select class="form-control table-filter sub-drop" data-table-id="{{data.id}}" id="{% get_obj_at_index data.dropDownHeaderIDs forloop.parentloop.counter0 %}-{{forloop.counter0}}">
+				{% for item in list %}
+				{% if forloop.first %}
+				<option value="all">All</option>
+				{% endif %}
+				<option value="{{forloop.counter0}}">{{item}}</option>
+				{% endfor %}
+			</select>
+			{% endfor %}
+		</div>
+		{% endfor %}
+
+		<input type="text" class="form-control table-search" id="{{data.id}}-search" placeholder="Search table">
+
+	</div>
 </div>
-</div>
-{% endif %}
-{% endfor %}
+
 <table class="item-table-header table" id="{{data.id}}_header">
     <thead>
       <tr>
@@ -26,11 +52,7 @@
 	<table class="item-table-items table" id="{{data.id}}_items">
 	    <tbody>
 	     {% for row in data.rows %}
-	     {% if data.rowModuleTypes %}
-	     <tr data-module-type="{% get_obj_at_index data.rowModuleTypes  forloop.counter0 %}">
-	     {% else %}
-	     <tr>
-	     {% endif %}
+	     <tr {% for id in data.dropDownHeaderIDs %} data-{{id}}="{% get_obj_at_index data.rowData  forloop.parentloop.counter0   forloop.counter0 %}" data-{{id}}-sub="{% get_obj_at_index data.rowSubData forloop.parentloop.counter0 forloop.counter0  %}"{% endfor %}>
 	    	{% for item in row %}
 	       	<td class="col-md-{{ data.colSize }} {{data.id}}_items_{{forloop.counter0}}">{{item}}</td>
 	        {% endfor %}
@@ -40,18 +62,62 @@
 	 </table>
 </div>
 
-{% if data.rowModuleTypes %}
 <script type="text/javascript">
 	$(document).ready(function() {
-		$("[name='moduleTypeFilter_{{data.id}}']").click(function() {
-			var moduleType = $(this).val()
-			if (moduleType == "all") {
-				$('td[class*="{{data.id}}_items_"]').parent('tr').show()
+		{% if data.dropDowns %}
+		$('[data-table-id="{{data.id}}"]').change( function() {
+			var tableID = $(this).attr('data-table-id');
+			$('td[class*="'+ tableID +'_items_"]').parent('tr').show();
+			$(this).closest('div.panel-body').find('select').each(function() {
+				if ($(this).find('option').length) { // is this select actually has any options
+					var filter = $(this).val();
+					var dropID = $(this).attr('id'); //which drop down was selected
+					//Hide all sub dropdowns
+					$('[id*="' + dropID + '-"][data-table-id="' + tableID + '"]').hide()
+					if (filter != "all") {
+						if ($(this).hasClass("sub-drop")) {
+								dropID = dropID.split('-')
+								dropID = dropID[dropID.length - 2];
+							$('td[class*="'+ tableID +'_items_"]').parent('tr').each(function() {
+								stringArr = $(this).attr('data-' + dropID + '-sub').replace(/\'/g,"\"");
+								subArr = JSON.parse(stringArr);
+								subFilter = subArr[$('#' + dropID).val()]
+								if (subFilter != filter) { $(this).hide(); }
+							});
+						} else { //if this is not a sub-drop
+							$('td[class*="'+ tableID +'_items_"]').parent('tr[data-' + dropID + ']').not('[data-' + dropID + '*="' + filter + '"]').hide();
+							$('#'+ dropID + '-' + filter + '[data-table-id="' + tableID + '"]').show().css('display','block');
+						}
+					} else {
+						$('[id*="' + dropID + '-placeholder"][data-table-id="' + tableID + '"]').show()
+					}
+				}
+			});
+			var searchQ = $('#{{data.id}}-search').val();
+			if (searchQ == "") {
+				$('#{{data.id}}_items>tbody>tr').removeClass("not-search-result");
+				$('#{{data.id}}_items>tbody>tr').removeClass("search-result");
 			} else {
-				$('td[class*="{{data.id}}_items_"]').parent('tr').hide()
-				$('td[class*="{{data.id}}_items_"]').parent('tr[data-module-type="' + moduleType + '"]').show();
+				$('#{{data.id}}_items>tbody>tr').removeClass("not-search-result");
+				$('#{{data.id}}_items>tbody>tr').removeClass("search-result");
+				$('#{{data.id}}_items>tbody>tr[style!="display: none;"]>td:contains("' + searchQ + '")').parent('tr').addClass("search-result");
+				$('#{{data.id}}_items>tbody>tr>td').parent('tr').not('[class*="search-result"]').addClass("not-search-result");
 			}
+		});
+		{% endif %}
+
+		$('#{{data.id}}-search').keyup(function(){
+			var searchQ = $(this).val();
+			if (searchQ == "") {
+				$('#{{data.id}}_items>tbody>tr').removeClass("not-search-result");
+				$('#{{data.id}}_items>tbody>tr').removeClass("search-result");
+			} else{
+				$('#{{data.id}}_items>tbody>tr').removeClass("not-search-result");
+				$('#{{data.id}}_items>tbody>tr').removeClass("search-result");
+				$('#{{data.id}}_items>tbody>tr[style!="display: none;"]>td:contains("' + searchQ + '")').parent('tr').addClass("search-result");
+				$('#{{data.id}}_items>tbody>tr>td').parent('tr').not('[class*="search-result"]').addClass("not-search-result");
+			};
+
 		});
 	});
 </script>
-{% endif %}

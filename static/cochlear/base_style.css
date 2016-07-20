@@ -18,6 +18,10 @@
 	margin-top: 20px;
 }
 
+#user-tools>a[href="/dashboard/"] {
+	display: none;
+}
+
 .page-title {
   text-align: center;
 }
@@ -29,6 +33,10 @@
 }
 .btn-secondary {
   color:black;
+}
+
+.dropdown-menu>li:hover {
+	cursor: pointer;
 }
 
 .item-explorer {
@@ -87,6 +95,32 @@
 	color: grey;
 }
 
+.search-result {
+	background-color: lightgoldenrodyellow;
+}
+
+.not-search-result {
+	display: none !important;
+}
+
+.table-filter {
+	width:175px;
+}
+
+.table-search {
+	width:200px;
+	display: inline-block;
+
+}
+
+.sub-drop {
+	display: none;
+}
+
+.drop-down {
+	display: inline-block;
+	margin-right :10px;
+}
 
 #helpButton {
 	cursor: pointer;

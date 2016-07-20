@@ -4,9 +4,16 @@ $(function(){
 		//First step is to extract the inner html values
 		var pureArray = []
 		var arrayDict = {}//TODO: This causes the rows to be duplicated when the column values are the same
+		var counter = 0;
 		for(var i=0;i<array.length;i++){
-			pureArray.push(array[i].innerHTML)
-			arrayDict[array[i].innerHTML] = array[i]
+			if (array[i].innerHTML in arrayDict) {
+				pureArray.push(array[i].innerHTML + counter)
+				arrayDict[array[i].innerHTML + counter] = array[i]
+				counter += 1;
+			} else {
+				pureArray.push(array[i].innerHTML)
+				arrayDict[array[i].innerHTML] = array[i]
+			}
 		}
 
 		//Now we sort the pure function

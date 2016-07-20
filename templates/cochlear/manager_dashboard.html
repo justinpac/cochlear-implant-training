@@ -55,7 +55,7 @@
 		<button type="button" class="btn btn-primary"> (Closed Set Text) Other </button> 
 	</a>
 
-	<center><h2>Speech & Speakers</h2></center>
+	<center><h2>Speech & Sound</h2></center>
 	<h3>Speech Files</h3>
 	<a href="#speechfiles_popup" type="button" class="btn btn-success addbtn" id="speechfiles_addbtn"><i class="fa fa-plus upload-new-icon" aria-hidden="true"></i>Add New</a>
 	{% include "cochlear/embeds/file_list.html" with data=speechFileList %}
@@ -63,6 +63,14 @@
 
 	<h3>Speakers</h3>
 	{% include "cochlear/embeds/file_list.html" with data=speakerFileList %}
+
+	<h3>Sound Files</h3>
+	<a href="#soundfiles_popup" type="button" class="btn btn-success addbtn" id="soundfiles_addbtn"><i class="fa fa-plus upload-new-icon" aria-hidden="true"></i>Add New</a>
+	{% include "cochlear/embeds/file_list.html" with data=soundFileList %}
+	{% include "cochlear/embeds/soundfiles_popup.html" %}
+
+	<h3>Sound Sources</h3>
+	{% include "cochlear/embeds/file_list.html" with data=sourceFileList %}
 
 	<center><h2>Training Modules</h2></center>
 	<h3>Closed Set Text</h3>
@@ -82,7 +90,7 @@
 	{% include "cochlear/embeds/file_list.html" with data=speakerid %}
 
 	<br>
-	
+
 	<script type="text/javascript" src="{% static 'cochlear/js/file_list.js' %}"></script>
 	<script type="text/javascript">
 	function RefreshData(){
@@ -90,7 +98,13 @@
 		function success(data){
 			//Put the data in for the sound files
 			function refreshList(name,id){
-				var soundFiles = data[name]['rows']
+				console.log("refreshing");
+				id = id.toLowerCase()
+				id = id.replace(" ","-")
+
+				
+				
+/*				var soundFiles = data[name]['rows']
 				itemList = $("#"+id+"_items")
 				itemList.empty()//clear it
 				//Add the new items 
@@ -104,10 +118,10 @@
 					child += "</tr>"
 				}
 				child += "</tbody>"
-				itemList.append(child)
+				itemList.append(child)*/
 			}
-			refreshList('speechFileList','speechfiles')
-			refreshList('speakerFileList','speakerfiles')
+			refreshList('speechFileList')
+			refreshList('speakerFileList')
 
 		}
 		function fail(msg){
