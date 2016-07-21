@@ -46,7 +46,7 @@
 	$('#soundfiles_addbtn').magnificPopup({type:'inline',disableOn:function(){return true},callbacks: {close:function(){
 		//Reset everything
 		console.log("Close")
-		RefreshData()
+		if ($('#soundDropzone>input#source_name_upload').val() != "" || $('#soundDropzone>input#source_id').val() != "-1") RefreshData();
 		$('#sound_page1').css("display","block");
 		var pages = ["page2","page3"]
 		for(var i=0;i<pages.length;i++) $('#sound_' + pages[i]).css("display","none");

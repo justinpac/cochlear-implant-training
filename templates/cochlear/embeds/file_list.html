@@ -83,6 +83,7 @@
 								subArr = JSON.parse(stringArr);
 								subFilter = subArr[$('#' + dropID).val()]
 								if (subFilter != filter) { $(this).hide(); }
+								console.log("subFilter: " + subFilter + ", filter: " + filter);
 							});
 						} else { //if this is not a sub-drop
 							$('td[class*="'+ tableID +'_items_"]').parent('tr[data-' + dropID + ']').not('[data-' + dropID + '*="' + filter + '"]').hide();

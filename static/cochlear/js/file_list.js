@@ -7,8 +7,8 @@ $(function(){
 		var counter = 0;
 		for(var i=0;i<array.length;i++){
 			if (array[i].innerHTML in arrayDict) {
-				pureArray.push(array[i].innerHTML + counter)
-				arrayDict[array[i].innerHTML + counter] = array[i]
+				pureArray.push(array[i].innerHTML +'_'+ counter)
+				arrayDict[array[i].innerHTML + '_' + counter] = array[i]
 				counter += 1;
 			} else {
 				pureArray.push(array[i].innerHTML)

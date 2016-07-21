@@ -95,16 +95,16 @@
 	<script type="text/javascript">
 	function RefreshData(){
 		//Refreshes the data. Called by each popup after it closes
-		function success(data){
+/*		function success(data){
 			//Put the data in for the sound files
 			function refreshList(name,id){
 				console.log("refreshing");
 				id = id.toLowerCase()
 				id = id.replace(" ","-")
 
-				
-				
-/*				var soundFiles = data[name]['rows']
+
+
+				var soundFiles = data[name]['rows']
 				itemList = $("#"+id+"_items")
 				itemList.empty()//clear it
 				//Add the new items 
@@ -118,7 +118,7 @@
 					child += "</tr>"
 				}
 				child += "</tbody>"
-				itemList.append(child)*/
+				itemList.append(child)
 			}
 			refreshList('speechFileList')
 			refreshList('speakerFileList')
@@ -127,7 +127,8 @@
 		function fail(msg){
 			console.log("Failed to refresh!",msg)
 		}
-		$.get('{% url "cochlear:getDashboardData" %}',success).fail(fail)
+		$.get('{% url "cochlear:getDashboardData" %}',success).fail(fail)*/
+		location.reload();
 	}
 	</script>
 </div>
