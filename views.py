@@ -733,6 +733,8 @@ def loadDashboardData(context):
 	loadClosedSetTextData(context)
 	loadOpenSetData(context)
 	loadSpeakerIDData(context)
+	context['csvOptions'] = [ 'All User Data', 'Speaker ID', '(Open Set) Meaningful Sentence',  '(Open Set) Anomalous Sentence',
+	  '(Open Set) Word','(Open Set) Environmental', '(Open Set) Other', '(Closed Set Text) Phoneme', '(Closed Set Text) Environmental', '(Closed Set Text) Other']
 
 def dashboard(request):
 	context = NavigationBar.generateAppContext(request,app="cochlear",title="index", navbarName='manager',activeLink="Manager Dashboard")
@@ -1075,185 +1077,137 @@ class Echo(object):
 		# Write the value by returning it, instead of storing in a buffer.
 		return value
 
-def getAllUserDataCSV(request):
+def getUserDataCSV(request,subset):
 	# A view that streams a large CSV file.
 	# Documentation: https://docs.djangoproject.com/en/1.8/howto/outputting-csv/
 	rows = []
-	appendTalkerID(rows)
-	rows.append([]) #skip a line in the csv file
+	subset = int(subset)
+	if subset == 0:
+		appendTalkerID(rows)
+		rows.append([]) #skip a line in the csv file
 
-	rows.append(['Meaningful (Open Set)'])
-	openSets = User_Open_Set_Module.objects.filter(open_set_module_order__open_set_module__module_type = 1, date_completed__isnull = False)
-	appendOpenSets(rows, openSets)
-	rows.append([])
-	
-	rows.append(['Anomalous (Open Set)'])
-	openSets = User_Open_Set_Module.objects.filter(open_set_module_order__open_set_module__module_type = 2, date_completed__isnull = False)
-	appendOpenSets(rows, openSets)
-	rows.append([])
+		rows.append(['Meaningful (Open Set)'])
+		openSets = User_Open_Set_Module.objects.filter(open_set_module_order__open_set_module__module_type = 1, date_completed__isnull = False)
+		appendOpenSets(rows, openSets)
+		rows.append([])
+		
+		rows.append(['Anomalous (Open Set)'])
+		openSets = User_Open_Set_Module.objects.filter(open_set_module_order__open_set_module__module_type = 2, date_completed__isnull = False)
+		appendOpenSets(rows, openSets)
+		rows.append([])
 
-	rows.append(['Word (Open Set)'])
-	openSets = User_Open_Set_Module.objects.filter(open_set_module_order__open_set_module__module_type = 3, date_completed__isnull = False)
-	appendOpenSets(rows, openSets)
-	rows.append([])
+		rows.append(['Word (Open Set)'])
+		openSets = User_Open_Set_Module.objects.filter(open_set_module_order__open_set_module__module_type = 3, date_completed__isnull = False)
+		appendOpenSets(rows, openSets)
+		rows.append([])
 
-	rows.append(['Environmental (Open Set)'])
-	openSets = User_Open_Set_Module.objects.filter(open_set_module_order__open_set_module__module_type = 4, date_completed__isnull = False)
-	appendOpenSets(rows, openSets)
-	rows.append([])
+		rows.append(['Environmental (Open Set)'])
+		openSets = User_Open_Set_Module.objects.filter(open_set_module_order__open_set_module__module_type = 4, date_completed__isnull = False)
+		appendOpenSets(rows, openSets)
+		rows.append([])
 
-	rows.append(['Other (Open Set)'])
-	openSets = User_Open_Set_Module.objects.filter(open_set_module_order__open_set_module__module_type = 0, date_completed__isnull = False)
-	appendOpenSets(rows, openSets)
+		rows.append(['Other (Open Set)'])
+		openSets = User_Open_Set_Module.objects.filter(open_set_module_order__open_set_module__module_type = 0, date_completed__isnull = False)
+		appendOpenSets(rows, openSets)
 
-	rows.append(['Phoneme (Closed Set Text)'])
-	closedSetTexts = User_Closed_Set_Text.objects.filter(closed_set_text_order__closed_set_text__module_type = 1, date_completed__isnull = False)
-	appendClosedSetTexts(rows, closedSetTexts)
+		rows.append(['Phoneme (Closed Set Text)'])
+		closedSetTexts = User_Closed_Set_Text.objects.filter(closed_set_text_order__closed_set_text__module_type = 1, date_completed__isnull = False)
+		appendClosedSetTexts(rows, closedSetTexts)
 
-	rows.append(['Environmental (Closed Set Text)'])
-	closedSetTexts = User_Closed_Set_Text.objects.filter(closed_set_text_order__closed_set_text__module_type = 2, date_completed__isnull = False)
-	appendClosedSetTexts(rows, closedSetTexts)
+		rows.append(['Environmental (Closed Set Text)'])
+		closedSetTexts = User_Closed_Set_Text.objects.filter(closed_set_text_order__closed_set_text__module_type = 2, date_completed__isnull = False)
+		appendClosedSetTexts(rows, closedSetTexts)
 
-	rows.append(['Other (Closed Set Text)'])
-	closedSetTexts = User_Closed_Set_Text.objects.filter(closed_set_text_order__closed_set_text__module_type = 0, date_completed__isnull = False)
-	appendClosedSetTexts(rows, closedSetTexts)
+		rows.append(['Other (Closed Set Text)'])
+		closedSetTexts = User_Closed_Set_Text.objects.filter(closed_set_text_order__closed_set_text__module_type = 0, date_completed__isnull = False)
+		appendClosedSetTexts(rows, closedSetTexts)
 
-	pseudo_buffer = Echo()
-	writer = csv.writer(pseudo_buffer)
-	response = StreamingHttpResponse((writer.writerow(row) for row in rows), content_type="text/csv")
-	filename = "CI_Training_All_User_Data_" + str(timezone.now()).split(' ')[0].replace('-','') + ".csv"
-	response['Content-Disposition'] = 'attachment; filename="' + filename + '"'
-	return response
+		pseudo_buffer = Echo()
+		writer = csv.writer(pseudo_buffer)
+		response = StreamingHttpResponse((writer.writerow(row) for row in rows), content_type="text/csv")
+		filename = "CI_Training_All_User_Data_" + str(timezone.now()).split(' ')[0].replace('-','') + ".csv"
 
-def talkerIDCSV(request):
-	# A view that streams a large CSV file.
-	# Documentation: https://docs.djangoproject.com/en/1.8/howto/outputting-csv/
-	rows = []
-	appendTalkerID(rows)
+	elif subset == 1:
+		appendTalkerID(rows)
+		pseudo_buffer = Echo()
+		writer = csv.writer(pseudo_buffer)
+		response = StreamingHttpResponse((writer.writerow(row) for row in rows), content_type="text/csv")
+		filename = "CI_Training_Speaker_ID_Data_" + str(timezone.now()).split(' ')[0].replace('-','') + ".csv"
 
-	pseudo_buffer = Echo()
-	writer = csv.writer(pseudo_buffer)
-	response = StreamingHttpResponse((writer.writerow(row) for row in rows), content_type="text/csv")
-	filename = "CI_Training_Speaker_ID_Data_" + str(timezone.now()).split(' ')[0].replace('-','') + ".csv"
-	response['Content-Disposition'] = 'attachment; filename="' + filename + '"'
-	return response
+	elif subset == 2:
+		rows.append(['Meaningful (Open Set)'])
+		openSets = User_Open_Set_Module.objects.filter(open_set_module_order__open_set_module__module_type = 1, date_completed__isnull = False)
+		appendOpenSets(rows, openSets)
 
-def otherCSV(request):
-	# A view that streams a large CSV file.
-	# Documentation: https://docs.djangoproject.com/en/1.8/howto/outputting-csv/
-	rows = []
-	rows.append(['Other (Open Set)'])
-	openSets = User_Open_Set_Module.objects.filter(open_set_module_order__open_set_module__module_type = 0, date_completed__isnull = False)
-	appendOpenSets(rows, openSets)
+		pseudo_buffer = Echo()
+		writer = csv.writer(pseudo_buffer)
+		response = StreamingHttpResponse((writer.writerow(row) for row in rows), content_type="text/csv")
+		filename = "CI_Training_OpenSet_Meaningful_Sentence_Data_" + str(timezone.now()).split(' ')[0].replace('-','') + ".csv"
 
-	pseudo_buffer = Echo()
-	writer = csv.writer(pseudo_buffer)
-	response = StreamingHttpResponse((writer.writerow(row) for row in rows), content_type="text/csv")
-	filename = "CI_Training_OpenSet_Other_Data_" + str(timezone.now()).split(' ')[0].replace('-','') + ".csv"
-	response['Content-Disposition'] = 'attachment; filename="' + filename + '"'
-	return response
+	elif subset == 3:
+		rows.append(['Anomalous (Open Set)'])
+		openSets = User_Open_Set_Module.objects.filter(open_set_module_order__open_set_module__module_type = 2, date_completed__isnull = False)
+		appendOpenSets(rows, openSets)
 
-def meaningfulCSV(request):
-	# A view that streams a large CSV file.
-	# Documentation: https://docs.djangoproject.com/en/1.8/howto/outputting-csv/
-	rows = []
-	rows.append(['Meaningful (Open Set)'])
-	openSets = User_Open_Set_Module.objects.filter(open_set_module_order__open_set_module__module_type = 1, date_completed__isnull = False)
-	appendOpenSets(rows, openSets)
+		pseudo_buffer = Echo()
+		writer = csv.writer(pseudo_buffer)
+		response = StreamingHttpResponse((writer.writerow(row) for row in rows), content_type="text/csv")
+		filename = "CI_Training_OpenSet_Anomalous_Sentence_Data_" + str(timezone.now()).split(' ')[0].replace('-','') + ".csv"
+	elif subset == 4:
+		rows.append(['Word (Open Set)'])
+		openSets = User_Open_Set_Module.objects.filter(open_set_module_order__open_set_module__module_type = 3, date_completed__isnull = False)
+		appendOpenSets(rows, openSets)
 
-	pseudo_buffer = Echo()
-	writer = csv.writer(pseudo_buffer)
-	response = StreamingHttpResponse((writer.writerow(row) for row in rows), content_type="text/csv")
-	filename = "CI_Training_OpenSet_Meaningful_Sentence_Data_" + str(timezone.now()).split(' ')[0].replace('-','') + ".csv"
-	response['Content-Disposition'] = 'attachment; filename="' + filename + '"'
-	return response
+		pseudo_buffer = Echo()
+		writer = csv.writer(pseudo_buffer)
+		response = StreamingHttpResponse((writer.writerow(row) for row in rows), content_type="text/csv")
+		filename = "CI_Training_OpenSet_Word_Data_" + str(timezone.now()).split(' ')[0].replace('-','') + ".csv"
+	elif subset == 5:
+		rows.append(['Environmental (Open Set)'])
+		openSets = User_Open_Set_Module.objects.filter(open_set_module_order__open_set_module__module_type = 4, date_completed__isnull = False)
+		appendOpenSets(rows, openSets)
+		
+		pseudo_buffer = Echo()
+		writer = csv.writer(pseudo_buffer)
+		response = StreamingHttpResponse((writer.writerow(row) for row in rows), content_type="text/csv")
+		filename = "CI_Training_OpenSet_Environmental_Data_" + str(timezone.now()).split(' ')[0].replace('-','') + ".csv"
+	elif subset == 6:
+		rows.append(['Other (Open Set)'])
+		openSets = User_Open_Set_Module.objects.filter(open_set_module_order__open_set_module__module_type = 0, date_completed__isnull = False)
+		appendOpenSets(rows, openSets)
 
-def anomalousCSV(request):
-	# A view that streams a large CSV file.
-	# Documentation: https://docs.djangoproject.com/en/1.8/howto/outputting-csv/
-	rows = []
-	rows.append(['Anomalous (Open Set)'])
-	openSets = User_Open_Set_Module.objects.filter(open_set_module_order__open_set_module__module_type = 2, date_completed__isnull = False)
-	appendOpenSets(rows, openSets)
+		pseudo_buffer = Echo()
+		writer = csv.writer(pseudo_buffer)
+		response = StreamingHttpResponse((writer.writerow(row) for row in rows), content_type="text/csv")
+		filename = "CI_Training_OpenSet_Other_Data_" + str(timezone.now()).split(' ')[0].replace('-','') + ".csv"
+		response['Content-Disposition'] = 'attachment; filename="' + filename + '"'
+	elif subset == 7:
+		rows.append(['Phoneme (Closed Set Text)'])
+		closedSetTexts = User_Closed_Set_Text.objects.filter(closed_set_text_order__closed_set_text__module_type = 1, date_completed__isnull = False)
+		appendClosedSetTexts(rows, closedSetTexts)
 
-	pseudo_buffer = Echo()
-	writer = csv.writer(pseudo_buffer)
-	response = StreamingHttpResponse((writer.writerow(row) for row in rows), content_type="text/csv")
-	filename = "CI_Training_OpenSet_Anomalous_Sentence_Data_" + str(timezone.now()).split(' ')[0].replace('-','') + ".csv"
-	response['Content-Disposition'] = 'attachment; filename="' + filename + '"'
-	return response
+		pseudo_buffer = Echo()
+		writer = csv.writer(pseudo_buffer)
+		response = StreamingHttpResponse((writer.writerow(row) for row in rows), content_type="text/csv")
+		filename = "CI_Training_ClosedSetText_Phoneme_Data_" + str(timezone.now()).split(' ')[0].replace('-','') + ".csv"
+	elif subset == 8:
+		rows.append(['Environmental (Closed Set Text)'])
+		closedSetTexts = User_Closed_Set_Text.objects.filter(closed_set_text_order__closed_set_text__module_type = 2, date_completed__isnull = False)
+		appendClosedSetTexts(rows, closedSetTexts)
 
-def wordCSV(request):
-	# A view that streams a large CSV file.
-	# Documentation: https://docs.djangoproject.com/en/1.8/howto/outputting-csv/
-	rows = []
-	rows.append(['Word (Open Set)'])
-	openSets = User_Open_Set_Module.objects.filter(open_set_module_order__open_set_module__module_type = 3, date_completed__isnull = False)
-	appendOpenSets(rows, openSets)
+		pseudo_buffer = Echo()
+		writer = csv.writer(pseudo_buffer)
+		response = StreamingHttpResponse((writer.writerow(row) for row in rows), content_type="text/csv")
+		filename = "CI_Training_ClosedSetText_Environmental_Data_" + str(timezone.now()).split(' ')[0].replace('-','') + ".csv"
+	elif subset == 9:
+		rows.append(['Other (Closed Set Text)'])
+		closedSetTexts = User_Closed_Set_Text.objects.filter(closed_set_text_order__closed_set_text__module_type = 0, date_completed__isnull = False)
+		appendClosedSetTexts(rows, closedSetTexts)
 
-	pseudo_buffer = Echo()
-	writer = csv.writer(pseudo_buffer)
-	response = StreamingHttpResponse((writer.writerow(row) for row in rows), content_type="text/csv")
-	filename = "CI_Training_OpenSet_Word_Data_" + str(timezone.now()).split(' ')[0].replace('-','') + ".csv"
-	response['Content-Disposition'] = 'attachment; filename="' + filename + '"'
-	return response
+		pseudo_buffer = Echo()
+		writer = csv.writer(pseudo_buffer)
+		response = StreamingHttpResponse((writer.writerow(row) for row in rows), content_type="text/csv")
+		filename = "CI_Training_ClosedSetText_Other_Data_" + str(timezone.now()).split(' ')[0].replace('-','') + ".csv"
 
-def environmentalCSV(request):
-	# A view that streams a large CSV file.
-	# Documentation: https://docs.djangoproject.com/en/1.8/howto/outputting-csv/
-	rows = []
-	rows.append(['Environmental (Open Set)'])
-	openSets = User_Open_Set_Module.objects.filter(open_set_module_order__open_set_module__module_type = 4, date_completed__isnull = False)
-	appendOpenSets(rows, openSets)
-
-	pseudo_buffer = Echo()
-	writer = csv.writer(pseudo_buffer)
-	response = StreamingHttpResponse((writer.writerow(row) for row in rows), content_type="text/csv")
-	filename = "CI_Training_OpenSet_Environmental_Data_" + str(timezone.now()).split(' ')[0].replace('-','') + ".csv"
-	response['Content-Disposition'] = 'attachment; filename="' + filename + '"'
-	return response
-
-def cstOtherCSV(request):
-	# A view that streams a large CSV file.
-	# Documentation: https://docs.djangoproject.com/en/1.8/howto/outputting-csv/
-	rows = []
-	rows.append(['Other (Closed Set Text)'])
-	closedSetTexts = User_Closed_Set_Text.objects.filter(closed_set_text_order__closed_set_text__module_type = 0, date_completed__isnull = False)
-	appendClosedSetTexts(rows, closedSetTexts)
-
-	pseudo_buffer = Echo()
-	writer = csv.writer(pseudo_buffer)
-	response = StreamingHttpResponse((writer.writerow(row) for row in rows), content_type="text/csv")
-	filename = "CI_Training_ClosedSetText_Other_Data_" + str(timezone.now()).split(' ')[0].replace('-','') + ".csv"
-	response['Content-Disposition'] = 'attachment; filename="' + filename + '"'
-	return response
-
-def cstPhonemeCSV(request):
-	# A view that streams a large CSV file.
-	# Documentation: https://docs.djangoproject.com/en/1.8/howto/outputting-csv/
-	rows = []
-	rows.append(['Phoneme (Closed Set Text)'])
-	closedSetTexts = User_Closed_Set_Text.objects.filter(closed_set_text_order__closed_set_text__module_type = 1, date_completed__isnull = False)
-	appendClosedSetTexts(rows, closedSetTexts)
-
-	pseudo_buffer = Echo()
-	writer = csv.writer(pseudo_buffer)
-	response = StreamingHttpResponse((writer.writerow(row) for row in rows), content_type="text/csv")
-	filename = "CI_Training_ClosedSetText_Phoneme_Data_" + str(timezone.now()).split(' ')[0].replace('-','') + ".csv"
-	response['Content-Disposition'] = 'attachment; filename="' + filename + '"'
-	return response
-
-def cstEnvironmentalCSV(request):
-	# A view that streams a large CSV file.
-	# Documentation: https://docs.djangoproject.com/en/1.8/howto/outputting-csv/
-	rows = []
-	rows.append(['Environmental (Closed Set Text)'])
-	closedSetTexts = User_Closed_Set_Text.objects.filter(closed_set_text_order__closed_set_text__module_type = 2, date_completed__isnull = False)
-	appendClosedSetTexts(rows, closedSetTexts)
-
-	pseudo_buffer = Echo()
-	writer = csv.writer(pseudo_buffer)
-	response = StreamingHttpResponse((writer.writerow(row) for row in rows), content_type="text/csv")
-	filename = "CI_Training_ClosedSetText_Environmental_Data_" + str(timezone.now()).split(' ')[0].replace('-','') + ".csv"
 	response['Content-Disposition'] = 'attachment; filename="' + filename + '"'
 	return response

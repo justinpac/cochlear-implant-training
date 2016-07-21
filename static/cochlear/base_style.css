@@ -122,6 +122,10 @@
 	margin-right :10px;
 }
 
+.inline {
+	display: inline-block;
+}
+
 #helpButton {
 	cursor: pointer;
 	float: right;

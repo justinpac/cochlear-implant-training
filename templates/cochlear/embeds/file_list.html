@@ -82,7 +82,6 @@
 							dropID = dropID[dropID.length - 2];
 						$('td[class*="'+ tableID +'_items_"]:visible').parent('tr').each(function() {
 							subFilter = $(this).attr('data-' + dropID + '-sub').split(',')[$('#' + dropID + '[data-table-id="' + tableID + '"]').val()]
-							console.log("subFilter: " + subFilter + ", filter: " + filter + " dropID val " + $('#' + dropID).val() +" dropID " + dropID);
 							if (!(subFilter.indexOf(filter) >= 0)) { $(this).hide(); }
 						});
 					} else { //if this is not a sub-drop

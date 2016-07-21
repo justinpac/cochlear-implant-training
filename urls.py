@@ -41,16 +41,6 @@ urlpatterns = patterns('cochlear',
     url(r'^getSoundSources/$','views.getSoundSources',name = 'getSoundSources'),
     url(r'^createSoundSource/$','views.createSoundSource', name = 'createSoundSource'),
     #CSV downloads
-    url(r'^getAllUserDataCSV/$','views.getAllUserDataCSV', name = 'getAllUserDataCSV'),
-    url(r'^talkerIDCSV/$','views.talkerIDCSV', name = 'talkerIDCSV'),
-    url(r'^otherCSV/$','views.otherCSV', name = 'otherCSV'),
-    url(r'^meaningfulCSV/$','views.meaningfulCSV', name = 'meaningfulCSV'),
-    url(r'^anomalousCSV/$','views.anomalousCSV', name = 'anomalousCSV'),
-    url(r'^wordCSV/$','views.wordCSV', name = 'wordCSV'),
-    url(r'^cstPhonemeCSV/$','views.cstPhonemeCSV', name = 'cstPhonemeCSV'),
-    url(r'^cstEnvironmentalCSV/$','views.cstEnvironmentalCSV', name = 'cstEnvironmentalCSV'),
-    url(r'^cstOtherCSV/$','views.cstOtherCSV', name = 'cstOtherCSV')
+    url(r'^getUserDataCSV/$','views.getUserDataCSV', name = 'getUserDataCSV'),
+    url(r'^getUserDataCSV/(?P<subset>[\d]+)/$','views.getUserDataCSV', name = 'getUserDataCSV'),
 )
-
-#if settings.DEBUG is True:
-#    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
