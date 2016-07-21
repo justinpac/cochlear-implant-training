@@ -481,7 +481,7 @@ def loadTableData(context, ID, headerArr, dropDownHeaderArr, dropDownArr, subDro
 	for i in range(len(context[ID]['dropDownHeaderIDs'])):
 		context[ID]['dropDownHeaderIDs'][i] = context[ID]['dropDownHeaderIDs'][i].replace(' ','-')
 		context[ID]['dropDownHeaderIDs'][i] = context[ID]['dropDownHeaderIDs'][i].lower()	
-		context[ID]['subDropHeaderIDs'] = list(context[ID]['subDropHeaders'])
+	context[ID]['subDropHeaderIDs'] = list(context[ID]['subDropHeaders'])
 	for i in range(len(context[ID]['subDropHeaderIDs'])):
 		context[ID]['subDropHeaderIDs'][i] = context[ID]['subDropHeaderIDs'][i].replace(' ','-')
 		context[ID]['subDropHeaderIDs'][i] = context[ID]['subDropHeaderIDs'][i].lower()
@@ -504,25 +504,35 @@ def loadSpeechData(context):
 
 	speechFiles = Speech.objects.all();
 	for speech in speechFiles:
-		rowSubData = [None] * len(context[ID]['dropDownHeaders'])
-		for i in range(len(rowSubData)):
-			rowSubData[i] = [''] * len(context[ID]['dropDowns'][i])
+		rowSubData = [''] * len(context[ID]['dropDownHeaders'])
 
 		module = ""
 		modules = ""
 		if Closed_Set_Text.objects.filter(unknown_speech=speech).exists():
 			module += "0"
 			modules += "CST "
-			for cst in Closed_Set_Text.objects.filter(unknown_speech=speech):
-				rowSubData[0][0] += str(cst.module_type)
-		elif Open_Set_Module.objects.filter(unknown_speech=speech).exists():
+			cst_speech = Closed_Set_Text.objects.filter(unknown_speech=speech)
+			if cst_speech:
+				for cst in cst_speech:
+					rowSubData[0] += str(cst.module_type)
+					rowSubData[0] += ','
+		else:
+			rowSubData[0] += 'N,'
+
+		if Open_Set_Module.objects.filter(unknown_speech=speech).exists():
 			module += "1"
 			modules += "OSM "
-			for osm in Open_Set_Module.objects.filter(unknown_speech=speech):
-				rowSubData[0][1] += str(osm.module_type)
-		elif Speaker_ID.objects.filter(Q(unknown_speech=speech) | Q(choices=speech)).exists():
+			osm_speech = Open_Set_Module.objects.filter(unknown_speech=speech)
+			if osm_speech:
+				for osm in osm_speech:
+					rowSubData[0] += str(osm.module_type)
+					rowSubData[0] += ','
+		else:
+			rowSubData[0] += 'N,'
+		if Speaker_ID.objects.filter(Q(unknown_speech=speech) | Q(choices=speech)).exists():
 			module += "2"
 			modules += "SID "
+		rowSubData[0] += 'N,'
 		if speech.speaker.gender.lower() == 'male':
 			gender = 0
 		elif speech.speaker.gender.lower() == 'female':
@@ -535,17 +545,57 @@ def loadSpeechData(context):
 		context[ID]['rowSubData'].append(rowSubData)
 
 def loadSpeakerData(context):
-	#Speaker objects
-	context['speakerFileList'] = {}
-	context['speakerFileList']['headers'] = ['Speaker Name','Number of attached files','Notes']
-	context['speakerFileList']['rows'] = []
-	context['speakerFileList']['id'] = 'speakerfiles'
-	context['speakerFileList']['colSize'] = int(12/len(context['speakerFileList']['headers']))
+	ID = 'speakerFileList'
+	headerArr = ['Speaker Name','Number of attached files','Gender','Modules','Notes']
+	dropDownHeaderArr = ['Module']
+	dropDownArr = []
+	dropDownArr.append(ALL_MODULE_TYPES)
+	subDropHeaderArr = ['Module Type']
+	subDropArr = []
+	subDropArr.append([CLOSED_SET_TEXT_TYPES,OPEN_SET_MODULE_TYPES,[]])
+	loadTableData(context, ID, headerArr, dropDownHeaderArr, dropDownArr, subDropHeaderArr, subDropArr)
+
 	speakerList = Speaker.objects.all();
 	for speaker in speakerList:
 		numOfFiles = Speech.objects.filter(speaker=speaker).count();
-		row = [speaker.name,numOfFiles,speaker.notes]
+		rowSubData = [''] * len(context[ID]['dropDownHeaders'])
+		module = ""
+		modules = ""
+		if Closed_Set_Text.objects.filter(unknown_speech__speaker=speaker).exists():
+			module += "0"
+			modules += "CST "
+			cst_speakers = Closed_Set_Text.objects.filter(unknown_speech__speaker=speaker)
+			if cst_speakers:
+				for cst in cst_speakers:
+					rowSubData[0] += str(cst.module_type)
+					rowSubData[0] += ','
+		else:
+			rowSubData[0] += 'N,'
+		if Open_Set_Module.objects.filter(unknown_speech__speaker=speaker).exists():
+			module += "1"
+			modules += "OSM "
+			osm_speakers = Open_Set_Module.objects.filter(unknown_speech__speaker=speaker)
+			if osm_speakers:
+				for osm in osm_speakers:
+					rowSubData[0] += str(osm.module_type)
+					rowSubData[0] +=','
+		else:
+			rowSubData[0] += 'N,'
+		if Speaker_ID.objects.filter(Q(unknown_speech__speaker=speaker) | Q(choices__speaker=speaker)).exists():
+			module += "2"
+			modules += "SID "
+		rowSubData[0] += 'N,'
+		if speaker.gender.lower() == 'male':
+			gender = 0
+		elif speaker.gender.lower() == 'female':
+			gender = 1
+		else:
+			gender = 2
+		
+		row = [speaker.name,numOfFiles,speaker.gender,modules,speaker.notes]
 		context['speakerFileList']['rows'].append(row)
+		context[ID]['rowData'].append([module,gender])
+		context[ID]['rowSubData'].append(rowSubData)
 
 def loadSoundData(context):
 	ID = 'soundFileList'
@@ -558,40 +608,81 @@ def loadSoundData(context):
 	subDropArr.append([CLOSED_SET_TEXT_TYPES,OPEN_SET_MODULE_TYPES])
 	loadTableData(context, ID, headerArr, dropDownHeaderArr, dropDownArr, subDropHeaderArr, subDropArr)
 
-	soundFiles = Sound.objects.all();
-	for sound in soundFiles:
-		rowSubData = [None] * len(context[ID]['dropDownHeaders'])
-		for i in range(len(rowSubData)):
-			rowSubData[i] = [''] * len(context[ID]['dropDowns'][i])
+	sourceFiles = Sound.objects.all();
+	for sound in sourceFiles:
+		rowSubData = [''] * len(context[ID]['dropDownHeaders'])
 		
 		module = ""
 		modules = ""
 		if Closed_Set_Text.objects.filter(unknown_sound=sound).exists():
 			module += "0"
 			modules +="CST "
-			for cst in Closed_Set_Text.objects.filter(unknown_sound=sound):
-				rowSubData[0][0] += str(cst.module_type)
-		elif Open_Set_Module.objects.filter(unknown_sound=sound).exists():
+			cst_sounds = Closed_Set_Text.objects.filter(unknown_sound=sound)
+			if cst_sounds:
+				for cst in cst_sounds:
+					rowSubData[0] += str(cst.module_type)
+					rowSubData[0] += ','
+		else:
+			rowSubData[0] += 'N,'
+
+		if Open_Set_Module.objects.filter(unknown_sound=sound).exists():
 			module += "1"
 			modules += "OSM"
-			for osm in Open_Set_Module.objects.filter(unknown_sound=sound):
-				rowSubData[0][1] += str(osm.module_type)
+			osm_sounds = Open_Set_Module.objects.filter(unknown_sound=sound)
+			if osm_sounds:
+				for osm in osm_sounds:
+					rowSubData[0] += str(osm.module_type)
+					rowSubData[0] += ','
+		else:
+			rowSubData[0] += 'N,'
 		row = [sound.sound_file.name.strip('cochlear/sound/'),sound.source.name, modules]
 		context[ID]['rows'].append(row)
 		context[ID]['rowData'].append([module])
 		context[ID]['rowSubData'].append(rowSubData)
 
 def loadSourceData(context):
-	context['sourceFileList'] = {}
-	context['sourceFileList']['headers'] = ['Source Name','Number of attached files','Notes']
-	context['sourceFileList']['rows'] = []
-	context['sourceFileList']['id'] = 'sourcefiles'
-	context['sourceFileList']['colSize'] = int(12/len(context['sourceFileList']['headers']))
-	sourceList = Sound_Source.objects.all();
-	for source in sourceList:
+	ID = 'sourceFileList'
+	headerArr = ['Source Name','Number of attached files','Modules','Notes']
+	dropDownHeaderArr = ['Module']
+	dropDownArr = []
+	dropDownArr.append(['Closed Set Text','Open Set'])
+	subDropHeaderArr = ['Module Type']
+	subDropArr = []
+	subDropArr.append([CLOSED_SET_TEXT_TYPES,OPEN_SET_MODULE_TYPES])
+	loadTableData(context, ID, headerArr, dropDownHeaderArr, dropDownArr, subDropHeaderArr, subDropArr)
+
+	sourceFiles = Sound_Source.objects.all();
+	for source in sourceFiles:
+		rowSubData = [''] * len(context[ID]['dropDownHeaders'])
+		
+		module = ""
+		modules = ""
+		if Closed_Set_Text.objects.filter(unknown_sound__source=source).exists():
+			module += "0"
+			modules +="CST "
+			cst_sources = Closed_Set_Text.objects.filter(unknown_sound__source=source)
+			if cst_sources:
+				for cst in cst_sources:
+					rowSubData[0] += str(cst.module_type)
+					rowSubData[0] += ','
+		else:
+			rowSubData[0] += 'N,'
+
+		if Open_Set_Module.objects.filter(unknown_sound__source=source).exists():
+			module += "1"
+			modules += "OSM"
+			osm_sources = Open_Set_Module.objects.filter(unknown_sound__source=source)
+			if osm_sources:
+				for osm in osm_sources:
+					rowSubData[0] += str(osm.module_type)
+					rowSubData[0] += ','
+		else:
+			rowSubData[0] += 'N,'
 		numOfFiles = Sound.objects.filter(source=source).count();
-		row = [source.name,numOfFiles,source.notes]
-		context['sourceFileList']['rows'].append(row)
+		row = [source.name,numOfFiles, modules,source.notes]
+		context[ID]['rows'].append(row)
+		context[ID]['rowData'].append([module])
+		context[ID]['rowSubData'].append(rowSubData)
 
 def loadClosedSetTextData(context):
 	ID = 'closedSetText'
@@ -625,15 +716,14 @@ def loadOpenSetData(context):
 		context[ID]['rowData'].append([openSet.module_type])
 
 def loadSpeakerIDData(context):
-	context['speakerid'] = {}
-	context['speakerid']['headers'] = ['Test Sound','# of choices']
-	context['speakerid']['rows'] = []
-	context['speakerid']['id'] = 'speakerid'
-	context['speakerid']['colSize'] = int(12/len(context['speakerid']['headers']))
+	ID = 'speakerid'
+	headerArr = ['Test Sound','# of choices']
+	loadTableData(context, ID, headerArr, [], [], [], [])
+
 	questions = Speaker_ID.objects.all();
 	for q in questions:
 		row = [q.unknown_speech.speech_file.name.strip('cochlear/speech/'),q.choices.count()]
-		context['speakerid']['rows'].append(row)
+		context[ID]['rows'].append(row)
 
 def loadDashboardData(context):
 	loadSpeechData(context)
@@ -710,8 +800,8 @@ def refreshClosedSetTextAdd(request):
 		context['speechFileList']['Names'].append(str(speech))
 	context['soundFileList'] = {}
 	context['soundFileList']['Names'] = []
-	soundFiles = Sound.objects.all()
-	for sound in soundFiles:
+	sourceFiles = Sound.objects.all()
+	for sound in sourceFiles:
 		context['soundFileList']['Names'].append(str(sound))
 	data = json.dumps(context)
 	return HttpResponse(data, content_type='application/json')

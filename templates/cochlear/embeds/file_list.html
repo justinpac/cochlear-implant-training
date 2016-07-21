@@ -65,33 +65,32 @@
 <script type="text/javascript">
 	$(document).ready(function() {
 		{% if data.dropDowns %}
+
+		//TODO: this is in bad need of optimization
 		$('[data-table-id="{{data.id}}"]').change( function() {
+			t0 = performance.now();
 			var tableID = $(this).attr('data-table-id');
 			$('td[class*="'+ tableID +'_items_"]').parent('tr').show();
-			$(this).closest('div.panel-body').find('select').each(function() {
-				if ($(this).find('option').length) { // is this select actually has any options
-					var filter = $(this).val();
-					var dropID = $(this).attr('id'); //which drop down was selected
-					//Hide all sub dropdowns
-					$('[id*="' + dropID + '-"][data-table-id="' + tableID + '"]').hide()
-					if (filter != "all") {
-						if ($(this).hasClass("sub-drop")) {
-								dropID = dropID.split('-')
-								dropID = dropID[dropID.length - 2];
-							$('td[class*="'+ tableID +'_items_"]').parent('tr').each(function() {
-								stringArr = $(this).attr('data-' + dropID + '-sub').replace(/\'/g,"\"");
-								subArr = JSON.parse(stringArr);
-								subFilter = subArr[$('#' + dropID).val()]
-								if (subFilter != filter) { $(this).hide(); }
-								console.log("subFilter: " + subFilter + ", filter: " + filter);
-							});
-						} else { //if this is not a sub-drop
-							$('td[class*="'+ tableID +'_items_"]').parent('tr[data-' + dropID + ']').not('[data-' + dropID + '*="' + filter + '"]').hide();
-							$('#'+ dropID + '-' + filter + '[data-table-id="' + tableID + '"]').show().css('display','block');
-						}
-					} else {
-						$('[id*="' + dropID + '-placeholder"][data-table-id="' + tableID + '"]').show()
+			$(this).closest('div.panel-body').find('select:visible').each(function() {
+				var filter = $(this).val();
+				var dropID = $(this).attr('id'); //which drop down was selected
+				//Hide all sub dropdowns
+				$('[id*="' + dropID + '-"][data-table-id="' + tableID + '"]').hide()
+				if (filter != "all") {
+					if ($(this).hasClass("sub-drop")) {
+							dropID = dropID.split('-')
+							dropID = dropID[dropID.length - 2];
+						$('td[class*="'+ tableID +'_items_"]:visible').parent('tr').each(function() {
+							subFilter = $(this).attr('data-' + dropID + '-sub').split(',')[$('#' + dropID + '[data-table-id="' + tableID + '"]').val()]
+							console.log("subFilter: " + subFilter + ", filter: " + filter + " dropID val " + $('#' + dropID).val() +" dropID " + dropID);
+							if (!(subFilter.indexOf(filter) >= 0)) { $(this).hide(); }
+						});
+					} else { //if this is not a sub-drop
+						$('td[class*="'+ tableID +'_items_"]:visible').parent('tr[data-' + dropID + ']').not('[data-' + dropID + '*="' + filter + '"]').hide();
+						$('#'+ dropID + '-' + filter + '[data-table-id="' + tableID + '"]').show().css('display','block');
 					}
+				} else {
+					$('[id*="' + dropID + '-placeholder"][data-table-id="' + tableID + '"]').show()
 				}
 			});
 			var searchQ = $('#{{data.id}}-search').val();
@@ -104,10 +103,40 @@
 				$('#{{data.id}}_items>tbody>tr[style!="display: none;"]>td:contains("' + searchQ + '")').parent('tr').addClass("search-result");
 				$('#{{data.id}}_items>tbody>tr>td').parent('tr').not('[class*="search-result"]').addClass("not-search-result");
 			}
+			t1 = performance.now();
+			console.log("time to filter: " + (t1 - t0));
 		});
 		{% endif %}
 
+		
+		//setup before functions
+		var typingTimer;                //timer identifier
+		var doneTypingInterval = 750;  //time in ms
+
+		//on keyup, start the countdown
 		$('#{{data.id}}-search').keyup(function(){
+		    clearTimeout(typingTimer);
+		    typingTimer = setTimeout(doneTyping, doneTypingInterval);
+		});
+
+		//user is "finished typing," do something
+		function doneTyping () {
+		    console.log("done typing");
+		    var searchQ = $('#{{data.id}}-search').val();
+			if (searchQ == "") {
+				$('#{{data.id}}_items>tbody>tr').removeClass("not-search-result");
+				$('#{{data.id}}_items>tbody>tr').removeClass("search-result");
+			} else{
+				$('#{{data.id}}_items>tbody>tr').removeClass("not-search-result");
+				$('#{{data.id}}_items>tbody>tr').removeClass("search-result");
+				$('#{{data.id}}_items>tbody>tr[style!="display: none;"]>td:contains("' + searchQ + '")').parent('tr').addClass("search-result");
+				$('#{{data.id}}_items>tbody>tr>td').parent('tr').not('[class*="search-result"]').addClass("not-search-result");
+			};
+		}
+
+
+
+/*		$('#{{data.id}}-search').keyup(function(){
 			var searchQ = $(this).val();
 			if (searchQ == "") {
 				$('#{{data.id}}_items>tbody>tr').removeClass("not-search-result");
@@ -119,6 +148,6 @@
 				$('#{{data.id}}_items>tbody>tr>td').parent('tr').not('[class*="search-result"]').addClass("not-search-result");
 			};
 
-		});
+		});*/
 	});
 </script>
