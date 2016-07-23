@@ -16,6 +16,9 @@
 <!-- include once per page where Dropzone is used -->
 <script src="{% static 'cochlear/js/dropzone.js' %}"></script>
 <link href="{% static 'cochlear/dropzone.css' %}" rel="stylesheet">
+<!-- Include once per page where clusterize is used -->
+<link href="{% static 'cochlear/clusterize/clusterize.css' %}" rel="stylesheet">
+<script src="{% static 'cochlear/clusterize/clusterize.min.js' %}"></script>
 
 <div class ="container">
 
@@ -116,14 +119,40 @@ function validateForm() {
 		}
 		return -1;
 	}
+	function validateSpeechChoices() {
+		for (var i =1; i<= moduleNum; i++) {
+			var matchFound = false;
+			$('[name="speechChoice_' + i + '"]').each(function(j, inp) {
+				var existingSpeech = $(inp).val();
+				if ($.trim(existingSpeech) == "") {
+					return true; // skip this iteration of the .each
+				}
+				if (matchFound) {
+					matchFound = false; // the input for the last iteration good, let's reset matchFound for the next one
+				} else if (j >= 1) { //stop if we didn't find a match on the last iteration
+					return false; //stop the .each loop
+				}
+				$('#speech_choices').children('option').each(function(i, choice) {
+					if (existingSpeech == $(choice).val()) {
+						matchFound = true;
+						return false; //stop the .each loop
+					}
+				});
+			});
+			if (!(matchFound)) {
+				return i;
+			}
+		}
+		return -1;
+	}
 
 	var validateUnknownSpeechResult = validateSpeech('unknownSpeech');
-	var validateSpeechChoiceResult = validateSpeech('speechChoice');
+	var validateSpeechChoiceResult = validateSpeechChoices();
 
 	if ( validateUnknownSpeechResult != -1 ) {
 		return "Please provide a valid speech file for the unknown speaker in module " + validateUnknownSpeechResult + ". To ensure the selection is valid, choose a file from the drop down of the input box.";
 	} else if (validateSpeechChoiceResult != -1) {
-		return "Please provide a valid speech file for the correct choice in module " + validateSpeechChoiceResult + ". To ensure the selection is valid, choose a file from the drop down of the input box.";
+		return "Please provide valid speech choice files in module " + validateSpeechChoiceResult + ". To ensure the selection is valid, choose a file from the drop down of the input box.";
 	} else {
 		return "validated";
 	}
@@ -157,6 +186,7 @@ $(document).ready(function() {
 	$("#modulesForm").submit(function(event){
 		// TODO: check for invalid form submission
 		validation = validateForm()
+		console.log(validation);
 		if (validation == "validated") {
 			// do nothing
 		} else {
