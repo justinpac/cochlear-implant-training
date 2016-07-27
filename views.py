@@ -1006,9 +1006,18 @@ def appendOpenSets(rows, openSets):
 		openSetRow.append(moduleDate)
 		openSetRow.append(moduleTime)
 		module = openSet.open_set_module_order.open_set_module
-		speakerName = module.unknown_speech.speaker.name
-		openSetRow.append('NA' if (speakerName == None) else speakerName)
-		openSetRow.append(module.unknown_speech.speech_file.name.strip('cochlear/speech/'))
+		if module.unknown_speech:
+			testSoundSource = module.unknown_speech.speaker.name
+			openSetRow.append(testSoundSource)
+			openSetRow.append(module.unknown_speech.speech_file.name.strip('cochlear/speech/'))
+		elif module.unknown_sound:
+			testSoundSource = module.unknown_sound.source.name
+			openSetRow.append(testSoundSource)
+			openSetRow.append(module.unknown_sound.sound_file.name.strip('cochlear/sound/'))
+		else:
+			testSoundSource = 'NA'
+			openSetRow.append(testSoundSource)
+			openSetRow.append('NA')
 		openSetRow.append(module.answer)
 		openSetRow.append(module.key_words)
 		openSetRow.append(openSet.user_response)
