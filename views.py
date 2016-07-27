@@ -1,7 +1,8 @@
 from django.shortcuts import render,redirect
 from django.http import HttpResponse
 import json, datetime, logging
-from django.db.models import Q, Max
+from django.db.models import Q, Max, Sum
+from django.db.models.functions import Lower, Substr
 
 # We need this to generate the navbar
 from hipercore.helpers import NavigationBar
@@ -71,8 +72,22 @@ def index(request):
 
 def history(request):
 	context = NavigationBar.generateAppContext(request,app="cochlear",title="history", navbarName=0)
+	userObj = User_Attrib.objects.get(username = request.user.username)
+	user_sessions = User_Session.objects.filter(user = userObj)
+	context['username'] = userObj.username
+	context['sessions_completed'] = user_sessions.count()
+	context['modules_completed'] = user_sessions.aggregate(Sum('modules_completed'))['modules_completed__sum']
+	ID = 'userSessions'
+	context[ID] = {}
+	context[ID]['headers'] = ['Week','Day','Date Completed','Total Modules']
+	stdID = ID
+	stdID = stdID.lower()
+	stdID = stdID.replace(" ","-")
+	context[ID]['id'] = stdID
+	context[ID]['colSize'] = int(12/len(context[ID]['headers']))
 
 	return render(request,'cochlear/history.html',context)
+
 def sessionEndPage(request):
 	context = NavigationBar.generateAppContext(request,app="cochlear",title="sessionEndPage", navbarName=0)
 	return render(request,'cochlear/sessionEndPage.html',context)
@@ -247,6 +262,16 @@ def getNextSession(userObj):
 ##################
 ## Ajax methods ##
 ##################
+
+def loadUserStat(request):
+	user_sessions = User_Session.objects.filter(date_completed__isnull = False)
+	rows = []
+	for user_session in user_sessions:
+		row = [str(user_session.session.week), str(user_session.session.day),str(user_session.date_completed).split(' ')[0],str(user_session.modules_completed)]
+		rows.append(row)
+	data = json.dumps(rows)
+	return HttpResponse(data, content_type='application/json')
+
 
 def openSetCompleted(request):
 	userList = User_Attrib.objects.filter(username=request.user.username)
@@ -492,7 +517,7 @@ def loadTableData(context, ID, headerArr, dropDownHeaderArr, dropDownArr, subDro
 
 def loadSpeechData(context):
 	ID = 'speechFileList'
-	headerArr = ['Filename','Speaker Name','Speaker Gender','Modules']
+	headerArr = ['Filename','Speaker Name','Speaker Gender']
 	dropDownHeaderArr = ['Module','Gender']
 	dropDownArr = []
 	dropDownArr.append(ALL_MODULE_TYPES)
@@ -543,6 +568,41 @@ def loadSpeechData(context):
 		context[ID]['rows'].append(row)
 		context[ID]['rowData'].append([module, gender])
 		context[ID]['rowSubData'].append(rowSubData)
+
+def loadSpeechDatatable(request):
+	dataObj = {}
+	dataObj['data'] =[]
+	ID = 'speechFileList'
+	maxObj = int(request.GET['length']) # maximum number of records the table can display
+	searchQ = request.GET['search[value]'] # global search
+	objCount = 0
+	speechFiles = Speech.objects.filter(Q(speaker__name__icontains=searchQ) | Q(speaker__gender__icontains=searchQ) | Q(speech_file__icontains=searchQ));
+	dataObj['recordsFiltered'] = speechFiles.count()
+	dataObj['recordsTotal'] = Speech.objects.count()
+
+	#sort by column
+	columnToSort = int(request.GET['order[0][column]'])
+	sortReverse = False if request.GET['order[0][dir]'] == 'asc' else True
+	colArr=['speech_file','speaker__name','speaker__gender']
+	sortField = colArr[columnToSort]
+	if sortReverse:
+		speechFiles = speechFiles.order_by(Lower(sortField).desc())
+	else:
+		speechFiles = speechFiles.order_by(Lower(sortField))
+
+	# start at an index based on the page number we're at
+	speechFiles = speechFiles[int(request.GET['start']):]
+
+	# append the appropiate number of rows
+	for speech in speechFiles:
+		row = [speech.speech_file.name.strip('cochlear/speech/'),speech.speaker.name, speech.speaker.gender]
+		dataObj['data'].append(row)
+		objCount += 1
+		if (objCount == maxObj):
+			break
+
+	response = json.dumps(dataObj) 
+	return HttpResponse(response, content_type='application/json')
 
 def loadSpeakerData(context):
 	ID = 'speakerFileList'
@@ -1006,9 +1066,18 @@ def appendOpenSets(rows, openSets):
 		openSetRow.append(moduleDate)
 		openSetRow.append(moduleTime)
 		module = openSet.open_set_module_order.open_set_module
-		speakerName = module.unknown_speech.speaker.name
-		openSetRow.append('NA' if (speakerName == None) else speakerName)
-		openSetRow.append(module.unknown_speech.speech_file.name.strip('cochlear/speech/'))
+		if module.unknown_speech:
+			testSoundSource = module.unknown_speech.speaker.name
+			openSetRow.append(testSoundSource)
+			openSetRow.append(module.unknown_speech.speech_file.name.strip('cochlear/speech/'))
+		elif module.unknown_sound:
+			testSoundSource = module.unknown_sound.source.name
+			openSetRow.append(testSoundSource)
+			openSetRow.append(module.unknown_sound.sound_file.name.strip('cochlear/sound/'))
+		else:
+			testSoundSource = 'NA'
+			openSetRow.append(testSoundSource)
+			openSetRow.append('NA')
 		openSetRow.append(module.answer)
 		openSetRow.append(module.key_words)
 		openSetRow.append(openSet.user_response)

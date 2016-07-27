@@ -15,6 +15,12 @@
 <!-- include once per page where Dropzone is used -->
 <script src="{% static 'cochlear/js/dropzone.js' %}"></script>
 <link href="{% static 'cochlear/dropzone.css' %}" rel="stylesheet">
+<!-- Include once per page where clusterize is used -->
+<link href="{% static 'cochlear/clusterize/clusterize.css' %}" rel="stylesheet">
+<script src="{% static 'cochlear/clusterize/clusterize.min.js' %}"></script>
+<!-- Datatables plugin. include once per page where it is used -->
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/bs/dt-1.10.12/r-2.1.0/datatables.min.css"/>
+<script type="text/javascript" src="https://cdn.datatables.net/v/bs/dt-1.10.12/r-2.1.0/datatables.min.js"></script>
 
 <div class="container"><!-- This is a bootstrap class -->
 	<h3> {{welcome_msg}}, {{name}}! </h3>
@@ -36,9 +42,9 @@
 	<center><h2>Speech & Sound</h2></center>
 	<h3>Speech Files</h3>
 	<a href="#speechfiles_popup" type="button" class="btn btn-success addbtn" id="speechfiles_addbtn"><i class="fa fa-plus upload-new-icon" aria-hidden="true"></i>Add New</a>
-	{% include "cochlear/embeds/file_list.html" with data=speechFileList %}
+	{% include "cochlear/embeds/big_table.html" with data=speechFileList %}
 	{% include "cochlear/embeds/speechfiles_popup.html" %}
-
+	{% comment %}
 	<h3>Speakers</h3>
 	{% include "cochlear/embeds/file_list.html" with data=speakerFileList %}
 
@@ -66,7 +72,7 @@
 	<p>An unknown speaker that must be identified after listening to a set of known speakers.</p>
 	<a href="{% url 'cochlear:speakeridAdd' %}" type="button" class="btn btn-success addbtn"><i class="fa fa-plus upload-new-icon" aria-hidden="true"></i>Add New</a>
 	{% include "cochlear/embeds/file_list.html" with data=speakerid %}
-
+	{% endcomment %}
 	<br>
 
 	<script type="text/javascript" src="{% static 'cochlear/js/file_list.js' %}"></script>

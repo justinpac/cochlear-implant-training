@@ -27,6 +27,8 @@ urlpatterns = patterns('cochlear',
     url(r'^dashboard/refreshspeakeridAdd/$','views.refreshspeakeridAdd', name = 'refreshspeakeridAdd'),
     url(r'^analytics/$','views.analytics', name = 'analytics'),
     #ajax methods
+    url(r'^loadUserStat/$','views.loadUserStat',name = 'loadUserStat'),
+    url(r'^loadSpeechDatatable/$','views.loadSpeechDatatable',name = 'loadSpeechDatatable'),
     url(r'^openSetCompleted/$','views.openSetCompleted', name = 'openSetCompleted'),
     url(r'^openSetAnswerKey/$','views.openSetAnswerKey', name = 'openSetAnswerKey'),
     url(r'^isCorrectClosedSetText/$','views.isCorrectClosedSetText', name = 'isCorrectClosedSetText'),
