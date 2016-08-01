@@ -81,6 +81,15 @@ def trainingEndPage(request):
 	context = NavigationBar.generateAppContext(request,app="cochlear",title="trainingEndPage", navbarName=0)
 	return render(request,'cochlear/trainingEndPage.html',context)
 
+##################
+## Pubilc Pages ##
+##################
+
+def posterdemo(request):
+	context = NavigationBar.generateAppContext(request, app='cochlear', title="poseterdemo", navbarName=0)
+	context['demoSpeech'] = Public_Sound.objects.get(file = 'cochlear/public/sound/ps.wav').file.url
+	return render(request,'cochlear/posterdemo.html',context)
+
 ######################
 ## Training Modules ##
 ######################

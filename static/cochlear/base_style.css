@@ -2,22 +2,6 @@
 	display: none !important;
 }
 
-#hipercic-banner {
-	padding: 10px;
-}
-
-#hipercic-banner h2 {
-	font-size: 52px;
-
-}
-
-#hipercic-banner a {
-	margin-left: 20px;
-}
-#hipercic-banner ul {
-	margin-top: 20px;
-}
-
 #user-tools>a[href="/dashboard/"] {
 	display: none;
 }

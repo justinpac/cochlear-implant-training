@@ -43,4 +43,5 @@ urlpatterns = patterns('cochlear',
     #CSV downloads
     url(r'^getUserDataCSV/$','views.getUserDataCSV', name = 'getUserDataCSV'),
     url(r'^getUserDataCSV/(?P<subset>[\d]+)/$','views.getUserDataCSV', name = 'getUserDataCSV'),
+    url(r'^public/posterdemo/$', 'views.posterdemo', name = 'posterdemo'),
 )

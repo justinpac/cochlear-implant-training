@@ -1,0 +1,17 @@
+{% extends "cochlear_base.html" %}
+
+{% block cochlear-content %}
+
+{% load staticfiles %}
+<!-- Load our stylesheet -->
+<link href="{% static 'cochlear/posterdemo.css' %}" rel="stylesheet">
+
+<div class = "container">
+	<center>
+	  <audio id="demoPlayer" controls>
+	  	<source src="{{demoSpeech}}" type="audio/wav">
+	  </audio>
+	</center>
+</div>
+
+{% endblock %}
