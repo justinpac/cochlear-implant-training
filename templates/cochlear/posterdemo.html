@@ -8,10 +8,15 @@
 
 <div class = "container">
 	<center>
-	  <audio id="demoPlayer" controls>
-	  	<source src="{{demoSpeech}}" type="audio/mpeg">
-	  </audio>
+	 <button id="demoPlayer" class="btn btn-primary" onclick="playdemo()">Play Again</button>
 	</center>
 </div>
+
+<script type="text/javascript">
+	function playdemo() {
+		var audio = new Audio("{{demoSpeech}}");
+		audio.play();
+	}
+</script>
 
 {% endblock %}
