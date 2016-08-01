@@ -7,16 +7,8 @@
 <link href="{% static 'cochlear/posterdemo.css' %}" rel="stylesheet">
 
 <div class = "container">
-  <audio id="demoSound">
-  	<source src="{{demoSpeech}}" type="audio/wav">
+  <audio id="demoSound" controls>
+  	<source src="{{demoSpeech}}" type="audio/mpeg">
   </audio>
-  <video id="demoVid" src="{{demoSpeech}}"></video>
-  <button id="demoBtn" class="btn btn-primary">Play Sound</button>
 </div>
-<script type="text/javascript">
-	var audio = document.getElementById('demoVid');
-	$('#demoBtn').click(function(){
-		audio.play();
-	});
-</script>
-{% endblock %}
+{% endblock%}
