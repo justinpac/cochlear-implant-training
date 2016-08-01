@@ -8,15 +8,15 @@
 
 <div class = "container">
 	<center>
-	 <button id="demoPlayer" class="btn btn-primary" onclick="playdemo()">Play Again</button>
+	 <button id="demoPlayer" class="btn btn-primary">Play Again</button>
 	</center>
 </div>
 
 <script type="text/javascript">
-	function playdemo() {
+	$('#demoPlayer').click(function() {
 		var audio = new Audio("{{demoSpeech}}");
 		audio.play();
-	}
+	});
 </script>
 
 {% endblock %}
