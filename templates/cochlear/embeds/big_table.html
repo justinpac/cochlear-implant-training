@@ -4,7 +4,7 @@
 	{% for dropDown in data.dropDowns %}
 	<div class="form-group drop-down">
 		<label for="{% get_obj_at_index data.dropDownHeaderIDs forloop.counter0 %}">{% get_obj_at_index data.dropDownHeaders forloop.counter0 %}</label>
-		<select class="form-control table-filter" data-table-id="{{data.id}}" id="{% get_obj_at_index data.dropDownHeaderIDs forloop.counter0 %}">
+		<select class="form-control table-filter drop" data-table-id="{{data.id}}" id="{% get_obj_at_index data.dropDownHeaderIDs forloop.counter0 %}">
 			{% for item in dropDown %}
 			{% if forloop.first %}
 			<option value="all">All</option>
@@ -55,21 +55,34 @@
 
 	$(document).ready( function () {
 
-    	$('#{{data.id}}').DataTable({
+    	var {{data.id}}_table  = $('#{{data.id}}').DataTable({
     		serverSide: true,
     		procesing: true,
     		responsive: true,
     		ajax: {
-    			url: '{% url "cochlear:loadSpeechDatatable" %}',
+    			url: '{% url data.ajaxurl %}',
     			data: function ( d ) {
             		d.CSRFToken = '{{csrf_token}}';
+            		d.dropdowns = [];
+	            	$('#{{data.id}}_dropdowns').find('select:visible').each(function() {
+	            		var filter = $(this).val();
+						if ($(this).hasClass('drop') && filter !='all') {
+							dropObj ={}
+							dropObj.dropID = $(this).attr('id');
+							dropObj.filter = filter;
+							var subfilter = $('[id*="' + dropObj.dropID + '-"][data-table-id="{{data.id}}"]:visible').val();
+							dropObj.subfilter = subfilter ? subfilter : 'all' ;
+							d.dropdowns.push(dropObj);
+						}
+					});
+					d.dropdowns = JSON.stringify(d.dropdowns);
+					console.log(d.dropdowns);
         		}
     		}
     	});
 
 
     	$('[data-table-id="{{data.id}}"]').change( function() {
-			t0 = performance.now();
 			var tableID = $(this).attr('data-table-id');
 			$(this).closest('#{{data.id}}_dropdowns').find('select:visible').each(function() {
 				var filter = $(this).val();
@@ -77,18 +90,14 @@
 				//Hide all sub dropdowns
 				$('[id*="' + dropID + '-"][data-table-id="' + tableID + '"]').hide()
 				if (filter != "all") {
-					if ($(this).hasClass("sub-drop")) {
-
-					} else { //if this is not a sub-drop
+					if (!($(this).hasClass("sub-drop"))) {
 						$('#'+ dropID + '-' + filter + '[data-table-id="' + tableID + '"]').show().css('display','block');
 					}
 				} else {
 					$('[id*="' + dropID + '-placeholder"][data-table-id="' + tableID + '"]').show()
 				}
 			});
-
-			t1 = performance.now();
-			console.log("time to filter: " + (t1 - t0));
+			{{data.id}}_table.ajax.reload();
 		});
 
 	});

@@ -44,6 +44,16 @@
 	<a href="#speechfiles_popup" type="button" class="btn btn-success addbtn" id="speechfiles_addbtn"><i class="fa fa-plus upload-new-icon" aria-hidden="true"></i>Add New</a>
 	{% include "cochlear/embeds/big_table.html" with data=speechFileList %}
 	{% include "cochlear/embeds/speechfiles_popup.html" %}
+
+	<h3>Speakers</h3>
+	{% include "cochlear/embeds/big_table.html" with data=speakerFileList %}
+
+	<h3>Sound Files</h3>
+	<a href="#soundfiles_popup" type="button" class="btn btn-success addbtn" id="soundfiles_addbtn"><i class="fa fa-plus upload-new-icon" aria-hidden="true"></i>Add New</a>
+	{% include "cochlear/embeds/big_table.html" with data=soundFileList %}
+	{% include "cochlear/embeds/soundfiles_popup.html" %}
+
+
 	{% comment %}
 	<h3>Speakers</h3>
 	{% include "cochlear/embeds/file_list.html" with data=speakerFileList %}

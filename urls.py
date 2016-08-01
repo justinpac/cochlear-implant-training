@@ -29,6 +29,8 @@ urlpatterns = patterns('cochlear',
     #ajax methods
     url(r'^loadUserStat/$','views.loadUserStat',name = 'loadUserStat'),
     url(r'^loadSpeechDatatable/$','views.loadSpeechDatatable',name = 'loadSpeechDatatable'),
+    url(r'^loadSpeakerDatatable/$','views.loadSpeakerDatatable',name = 'loadSpeakerDatatable'),
+    url(r'^loadSoundDatatable/$','views.loadSoundDatatable',name = 'loadSoundDatatable'),
     url(r'^openSetCompleted/$','views.openSetCompleted', name = 'openSetCompleted'),
     url(r'^openSetAnswerKey/$','views.openSetAnswerKey', name = 'openSetAnswerKey'),
     url(r'^isCorrectClosedSetText/$','views.isCorrectClosedSetText', name = 'isCorrectClosedSetText'),
@@ -45,4 +47,6 @@ urlpatterns = patterns('cochlear',
     #CSV downloads
     url(r'^getUserDataCSV/$','views.getUserDataCSV', name = 'getUserDataCSV'),
     url(r'^getUserDataCSV/(?P<subset>[\d]+)/$','views.getUserDataCSV', name = 'getUserDataCSV'),
+    #public
+    url(r'^public/posterdemo/$','views.posterdemo', name = 'posterdemo'),
 )

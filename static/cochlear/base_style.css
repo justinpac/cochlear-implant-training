@@ -129,7 +129,11 @@
 div.form-group select.table-filter {
 	width:175px;
 	display: block;
-	margin-bottom: 10px;
+	height: 30px;
+	margin-bottom: -5px;
+}
+.drop-down label {
+	font-weight: normal;
 }
 
 .table-search {
