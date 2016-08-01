@@ -1,6 +1,13 @@
 from django.db import models
 from django.contrib import admin
 
+# public sound files
+class Public_Sound(models.Model):
+	file = models.FileField(upload_to='cochlear/public/sound')
+
+	def __str__(self):
+		return self.file.name.strip('cochlear/public/sound/')
+
 # Information about the user
 class User_Attrib(models.Model):
 	username = models.CharField(max_length = 50, unique = True)
