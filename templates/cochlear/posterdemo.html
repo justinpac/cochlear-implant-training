@@ -7,8 +7,6 @@
 <link href="{% static 'cochlear/posterdemo.css' %}" rel="stylesheet">
 
 <div class = "container">
-  <audio id="demoSound" controls>
-  	<source src="{{demoSpeech}}" type="audio/mpeg">
-  </audio>
+	<a href="{{demoSpeech}}" download><button class="btn btn-success btn-lg"> Download </button></a>
 </div>
 {% endblock%}
