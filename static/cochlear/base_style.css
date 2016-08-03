@@ -43,6 +43,29 @@
   	overflow: hidden;
 }
 
+.stat-body {
+	border-bottom: #ECECEC solid 4px;
+	border-left: #ECECEC solid 4px;
+	border-right: #ECECEC solid 4px;
+}
+
+.stat-body>table>tbody>tr>td {
+	max-width: 0;
+	text-overflow: ellipsis;
+
+  	/* Required for text-overflow to do anything */
+  	white-space: nowrap;
+  	overflow: hidden;
+}
+
+.stat-header {
+	margin-bottom: 0px;
+	background: #ECECEC;
+}
+.stat-header>thead>tr>th {
+	border-bottom: none;
+}
+
 .item-table-header {
 	margin-bottom: 0px;
 	background: #ECECEC;
@@ -87,8 +110,14 @@
 	display: none !important;
 }
 
-.table-filter {
+div.form-group select.table-filter {
 	width:175px;
+	display: block;
+	height: 30px;
+	margin-bottom: -5px;
+}
+.drop-down label {
+	font-weight: normal;
 }
 
 .table-search {
@@ -97,7 +126,7 @@
 
 }
 
-.sub-drop {
+div.form-group select.sub-drop {
 	display: none;
 }
 

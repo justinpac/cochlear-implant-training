@@ -1,0 +1,11 @@
+#history-header {
+	margin-bottom: 15px;
+}
+.stat-label {
+	font-style: italic;
+}
+.stat {
+	font-weight: bold;
+	position: absolute;
+	right: 65%;
+}

@@ -1,0 +1,110 @@
+{% load cochlear_extras %}
+
+
+<div id="moduleFilterDiv" class="panel panel-default">
+	<div class="panel-heading">Table Filters</div>
+	<div class="panel-body">
+		{% for dropDown in data.dropDowns %}
+		<div class="form-group drop-down">
+			<label for="{% get_obj_at_index data.dropDownHeaderIDs forloop.counter0 %}">{% get_obj_at_index data.dropDownHeaders forloop.counter0 %}</label>
+			<select class="form-control table-filter" data-table-id="{{data.id}}" id="{% get_obj_at_index data.dropDownHeaderIDs forloop.counter0 %}">
+				{% for item in dropDown %}
+				{% if forloop.first %}
+				<option value="all">All</option>
+				{% endif %}
+				<option value="{{forloop.counter0}}">{{item}}</option>
+				{% endfor %}
+			</select>
+		</div>
+		{% endfor %}
+
+		<input type="text" class="form-control table-search" id="{{data.id}}-search" placeholder="Search table">
+
+	</div>
+</div>
+<div class="clusterize">
+	<table class="stat-body table" id="{{data.id}}_header">
+	    <thead>
+	      <tr>
+	      {% for header in data.headers %}
+	      	<th class="col-md-{{ data.colSize }}">{{header}}</th>
+	      {% endfor %}
+	      </tr>
+	    </thead>
+	</table>
+	<div id="scrollArea" class="stat-body clusterize-scroll">
+		<table class="item-table-items table" id="{{data.id}}_items">
+		    <tbody id ="contentArea" clas="clusterize-content">
+		        <tr class="clusterize-no-data">
+		          <td>Loading data…</td>
+		        </tr>
+		    </tbody>
+		 </table>
+	</div>
+</div>
+
+<script type="text/javascript">
+ 	//init clustierize plugin for data table
+ 	function fail(data) {
+ 		console.log(data);
+ 	}
+
+ 	// all row data
+	var trows = [];
+	// object used to interact with table - from clusterize.js
+	var clusterize;
+
+	//Fetch suitable rows
+	var filterRows = function(rows) {
+	  var results = [];
+	  for(var i = 0, ii = rows.length; i < ii; i++) {
+	    if(rows[i].active) results.push(rows[i].markup)
+	  }
+	  return results;
+	}
+
+	$(document).ready(function() {
+		function statLoaded(data) {
+
+		 	for (row in data) {
+		 		var rowStr = '<tr>';
+		 		var rowobj = {}
+		 		rowobj.values = data[row];
+		 		for (item in data[row]) {
+		 			rowStr +='<td>' + data[row][item] + '</td>';
+		 		}
+		 		rowStr += '</tr>';
+		 		rowobj.markup = rowStr;
+		 		rowobj.active = true;
+		 		trows.push(rowobj)
+		 	}
+
+			/*
+			* Init clusterize.js
+			*/
+			clusterize = new Clusterize({
+			  rows: filterRows(trows),
+			  scrollId: 'scrollArea',
+			  contentId: 'contentArea'
+			});
+		}
+		$.get('{% url "cochlear:loadUserStat" %}',statLoaded).fail(fail);
+
+
+		/*
+		* Attach listener to search input tag and filter list on change
+		*/
+		$('#{{data.id}}-search').keyup(function(){
+		  for(var i = 0, ii = trows.length; i < ii; i++) {
+		    var suitable = false;
+		    for(var j = 0, jj = trows[i].values.length; j < jj; j++) {
+		      	if(trows[i].values[j].toString().indexOf($(this).val()) + 1) {
+			        suitable = true;
+		    	}
+		    }
+		    trows[i].active = suitable;
+		  }
+		  clusterize.update(filterRows(trows));
+		});
+	});
+</script>

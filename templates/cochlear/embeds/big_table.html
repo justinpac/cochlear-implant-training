@@ -1,0 +1,104 @@
+{% load cochlear_extras %}
+
+<div id="{{data.id}}_dropdowns">
+	{% for dropDown in data.dropDowns %}
+	<div class="form-group drop-down">
+		<label for="{% get_obj_at_index data.dropDownHeaderIDs forloop.counter0 %}">{% get_obj_at_index data.dropDownHeaders forloop.counter0 %}</label>
+		<select class="form-control table-filter drop" data-table-id="{{data.id}}" id="{% get_obj_at_index data.dropDownHeaderIDs forloop.counter0 %}">
+			{% for item in dropDown %}
+			{% if forloop.first %}
+			<option value="all">All</option>
+			{% endif %}
+			<option value="{{forloop.counter0}}">{{item}}</option>
+			{% endfor %}
+		</select>
+	</div>
+	{% endfor %}
+
+	{% for subDrop in data.subDrops %}
+	<div class="drop-down form-group">
+		<label for="{% get_obj_at_index data.dropDownHeaderIDs forloop.counter0 %}">{% get_obj_at_index data.subDropHeaders forloop.counter0 %}</label>
+		<select class="form-control table-filter" data-table-id="{{data.id}}" id="{% get_obj_at_index data.dropDownHeaderIDs forloop.counter0 %}-placeholder"></select>
+		{% for list in subDrop %}
+		<select class="form-control table-filter sub-drop" data-table-id="{{data.id}}" id="{% get_obj_at_index data.dropDownHeaderIDs forloop.parentloop.counter0 %}-{{forloop.counter0}}">
+			{% for item in list %}
+			{% if forloop.first %}
+			<option value="all">All</option>
+			{% endif %}
+			<option value="{{forloop.counter0}}">{{item}}</option>
+			{% endfor %}
+		</select>
+		{% endfor %}
+	</div>
+	{% endfor %}
+</div>
+
+<table id="{{data.id}}" class="table table-striped table-bordered" cellspacing="0" width="100%">
+    <thead>
+      <tr>
+      {% for header in data.headers %}
+      	<th>{{header}}</th>
+      {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>Loading data…</td>
+        </tr>
+    </tbody>
+</table>
+<script type="text/javascript">
+	
+	function fail(data) {
+		console.log(data);
+	}
+
+	$(document).ready( function () {
+
+    	var {{data.id}}_table  = $('#{{data.id}}').DataTable({
+    		serverSide: true,
+    		procesing: true,
+    		responsive: true,
+    		ajax: {
+    			url: '{% url data.ajaxurl %}',
+    			data: function ( d ) {
+            		d.CSRFToken = '{{csrf_token}}';
+            		d.dropdowns = [];
+	            	$('#{{data.id}}_dropdowns').find('select:visible').each(function() {
+	            		var filter = $(this).val();
+						if ($(this).hasClass('drop') && filter !='all') {
+							dropObj ={}
+							dropObj.dropID = $(this).attr('id');
+							dropObj.filter = filter;
+							var subfilter = $('[id*="' + dropObj.dropID + '-"][data-table-id="{{data.id}}"]:visible').val();
+							dropObj.subfilter = subfilter ? subfilter : 'all' ;
+							d.dropdowns.push(dropObj);
+						}
+					});
+					d.dropdowns = JSON.stringify(d.dropdowns);
+        		}
+    		}
+    	});
+
+
+    	$('[data-table-id="{{data.id}}"]').change( function() {
+			var tableID = $(this).attr('data-table-id');
+			$(this).closest('#{{data.id}}_dropdowns').find('select:visible').each(function() {
+				var filter = $(this).val();
+				var dropID = $(this).attr('id'); //which drop down was selected
+				//Hide all sub dropdowns
+				$('[id*="' + dropID + '-"][data-table-id="' + tableID + '"]').hide()
+				if (filter != "all") {
+					if (!($(this).hasClass("sub-drop"))) {
+						$('#'+ dropID + '-' + filter + '[data-table-id="' + tableID + '"]').show().css('display','block');
+					}
+				} else {
+					$('[id*="' + dropID + '-placeholder"][data-table-id="' + tableID + '"]').show()
+				}
+			});
+			{{data.id}}_table.ajax.reload();
+		});
+
+	});
+
+</script>

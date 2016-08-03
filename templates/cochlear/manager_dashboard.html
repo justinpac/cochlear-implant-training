@@ -15,6 +15,9 @@
 <!-- include once per page where Dropzone is used -->
 <script src="{% static 'cochlear/js/dropzone.js' %}"></script>
 <link href="{% static 'cochlear/dropzone.css' %}" rel="stylesheet">
+<!-- Datatables plugin. include once per page where it is used -->
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/bs/dt-1.10.12/r-2.1.0/datatables.min.css"/>
+<script type="text/javascript" src="https://cdn.datatables.net/v/bs/dt-1.10.12/r-2.1.0/datatables.min.js"></script>
 
 <div class="container"><!-- This is a bootstrap class -->
 	<h3> {{welcome_msg}}, {{name}}! </h3>
@@ -36,76 +39,42 @@
 	<center><h2>Speech & Sound</h2></center>
 	<h3>Speech Files</h3>
 	<a href="#speechfiles_popup" type="button" class="btn btn-success addbtn" id="speechfiles_addbtn"><i class="fa fa-plus upload-new-icon" aria-hidden="true"></i>Add New</a>
-	{% include "cochlear/embeds/file_list.html" with data=speechFileList %}
+	{% include "cochlear/embeds/big_table.html" with data=speechFileList %}
 	{% include "cochlear/embeds/speechfiles_popup.html" %}
 
 	<h3>Speakers</h3>
-	{% include "cochlear/embeds/file_list.html" with data=speakerFileList %}
+	{% include "cochlear/embeds/big_table.html" with data=speakerFileList %}
 
 	<h3>Sound Files</h3>
 	<a href="#soundfiles_popup" type="button" class="btn btn-success addbtn" id="soundfiles_addbtn"><i class="fa fa-plus upload-new-icon" aria-hidden="true"></i>Add New</a>
-	{% include "cochlear/embeds/file_list.html" with data=soundFileList %}
+	{% include "cochlear/embeds/big_table.html" with data=soundFileList %}
 	{% include "cochlear/embeds/soundfiles_popup.html" %}
 
 	<h3>Sound Sources</h3>
-	{% include "cochlear/embeds/file_list.html" with data=sourceFileList %}
+	{% include "cochlear/embeds/big_table.html" with data=sourceFileList %}
 
 	<center><h2>Training Modules</h2></center>
 	<h3>Closed Set Text</h3>
 	<p>A test sound with closed set, text-based responses.</p>
 	<a href="{% url 'cochlear:closedsettextAdd' %}" type="button" class="btn btn-success addbtn"><i class="fa fa-plus upload-new-icon" aria-hidden="true"></i>Add New</a>
-	{% include "cochlear/embeds/file_list.html" with data=closedSetText %}
-	
+	{% include "cochlear/embeds/big_table.html" with data=closedSetText %}
+
 	<h3>Open Set</h3>
 	<p>A test sound with an open-set response.</p>
 	<a href="{% url 'cochlear:opensetAdd' %}" type="button" class="btn btn-success addbtn"><i class="fa fa-plus upload-new-icon" aria-hidden="true"></i>Add New</a>
-	{% include "cochlear/embeds/file_list.html" with data=openSet %}
-
+	{% include "cochlear/embeds/big_table.html" with data=openSet %}
 
 	<h3>Speaker Identification</h3>
 	<p>An unknown speaker that must be identified after listening to a set of known speakers.</p>
 	<a href="{% url 'cochlear:speakeridAdd' %}" type="button" class="btn btn-success addbtn"><i class="fa fa-plus upload-new-icon" aria-hidden="true"></i>Add New</a>
-	{% include "cochlear/embeds/file_list.html" with data=speakerid %}
+	{% include "cochlear/embeds/big_table.html" with data=speakerid %}
 
 	<br>
 
 	<script type="text/javascript" src="{% static 'cochlear/js/file_list.js' %}"></script>
 	<script type="text/javascript">
 	function RefreshData(){
-		//Refreshes the data. Called by each popup after it closes
-/*		function success(data){
-			//Put the data in for the sound files
-			function refreshList(name,id){
-				console.log("refreshing");
-				id = id.toLowerCase()
-				id = id.replace(" ","-")
-
-
-
-				var soundFiles = data[name]['rows']
-				itemList = $("#"+id+"_items")
-				itemList.empty()//clear it
-				//Add the new items 
-				var child = "<tbody>"
-				for(var i=0;i<soundFiles.length;i++){
-					var row = soundFiles[i]
-					child += "<tr>"
-					for(var j=0;j<soundFiles[i].length;j++){
-						child += '<td class="col-md-'+data[name]['colSize']+ ' '+id+'_items_'+String(j)+'">'+String(soundFiles[i][j])+'</td>'
-					}
-					child += "</tr>"
-				}
-				child += "</tbody>"
-				itemList.append(child)
-			}
-			refreshList('speechFileList')
-			refreshList('speakerFileList')
-
-		}
-		function fail(msg){
-			console.log("Failed to refresh!",msg)
-		}
-		$.get('{% url "cochlear:getDashboardData" %}',success).fail(fail)*/
+		//Refreshes the page. Called by each popup after it closes
 		location.reload();
 	}
 	function fail(data) {
