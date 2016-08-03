@@ -31,6 +31,10 @@ urlpatterns = patterns('cochlear',
     url(r'^loadSpeechDatatable/$','views.loadSpeechDatatable',name = 'loadSpeechDatatable'),
     url(r'^loadSpeakerDatatable/$','views.loadSpeakerDatatable',name = 'loadSpeakerDatatable'),
     url(r'^loadSoundDatatable/$','views.loadSoundDatatable',name = 'loadSoundDatatable'),
+    url(r'^loadSourceDatatable/$','views.loadSourceDatatable',name = 'loadSourceDatatable'),
+    url(r'^loadCSTDatatable/$','views.loadCSTDatatable',name = 'loadCSTDatatable'),
+    url(r'^loadOSMDatatable/$','views.loadOSMDatatable',name = 'loadOSMDatatable'),
+    url(r'^loadSIDDatatable/$','views.loadSIDDatatable',name = 'loadSIDDatatable'),
     url(r'^openSetCompleted/$','views.openSetCompleted', name = 'openSetCompleted'),
     url(r'^openSetAnswerKey/$','views.openSetAnswerKey', name = 'openSetAnswerKey'),
     url(r'^isCorrectClosedSetText/$','views.isCorrectClosedSetText', name = 'isCorrectClosedSetText'),
@@ -47,6 +51,4 @@ urlpatterns = patterns('cochlear',
     #CSV downloads
     url(r'^getUserDataCSV/$','views.getUserDataCSV', name = 'getUserDataCSV'),
     url(r'^getUserDataCSV/(?P<subset>[\d]+)/$','views.getUserDataCSV', name = 'getUserDataCSV'),
-    #public
-    url(r'^public/posterdemo/$','views.posterdemo', name = 'posterdemo'),
 )

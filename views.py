@@ -1,8 +1,8 @@
 from django.shortcuts import render,redirect
 from django.http import HttpResponse
 import json, datetime, logging
-from django.db.models import Q, Max, Sum
-from django.db.models.functions import Lower, Substr
+from django.db.models import Q, Max, Sum, Count
+from django.db.models.functions import Lower, Substr, Coalesce
 
 # We need this to generate the navbar
 from hipercore.helpers import NavigationBar
@@ -534,7 +534,7 @@ def loadSpeechDatatable(request):
 	objCount = 0
 	
 	#Query based on the search parameter
-	speechFiles = Speech.objects.filter(Q(speaker__name__icontains=searchQ) | Q(speaker__gender__icontains=searchQ) | Q(speech_file__icontains=searchQ));
+	speechFiles = Speech.objects.annotate(speech_file_name = Substr('speech_file',17)).filter(Q(speaker__name__icontains=searchQ) | Q(speaker__gender__icontains=searchQ) | Q(speech_file_name__icontains=searchQ));
 	
 	# Filter based on drop down selection
 	dropDownArr = json.loads(request.GET['dropdowns'])
@@ -581,7 +581,7 @@ def loadSpeechDatatable(request):
 
 	# append the appropiate number of rows
 	for speech in speechFiles:
-		row = [speech.speech_file.name.strip('cochlear/speech/'),speech.speaker.name, speech.speaker.gender]
+		row = [speech.speech_file_name,speech.speaker.name, speech.speaker.gender]
 		dataObj['data'].append(row)
 		objCount += 1
 		if (objCount == maxObj):
@@ -688,7 +688,7 @@ def loadSoundDatatable(request):
 	objCount = 0
 	
 	#Query based on the search parameter
-	soundFiles = Sound.objects.filter(Q(sound_file__icontains=searchQ) | Q(source__name__icontains=searchQ));
+	soundFiles = Sound.objects.annotate(sound_file_name = Substr('sound_file', 16)).filter(Q(sound_file_name__icontains=searchQ) | Q(source__name__icontains=searchQ));
 	
 	# Filter based on drop-down selection
 	dropDownArr = json.loads(request.GET['dropdowns'])
@@ -724,7 +724,7 @@ def loadSoundDatatable(request):
 
 	# append the appropiate number of rows
 	for sound in soundFiles:
-		row = [sound.sound_file.name.strip('cochlear/sound/'),sound.source.name]
+		row = [sound.sound_file_name,sound.source.name]
 		dataObj['data'].append(row)
 		objCount += 1
 		if (objCount == maxObj):
@@ -735,7 +735,7 @@ def loadSoundDatatable(request):
 
 def loadSourceData(context):
 	ID = 'sourceFileList'
-	headerArr = ['Source Name','Number of attached files','Modules','Notes']
+	headerArr = ['Source Name','Notes']
 	dropDownHeaderArr = ['Module']
 	dropDownArr = []
 	dropDownArr.append(['Closed Set Text','Open Set'])
@@ -743,6 +743,61 @@ def loadSourceData(context):
 	subDropArr = []
 	subDropArr.append([CLOSED_SET_TEXT_TYPES,OPEN_SET_MODULE_TYPES])
 	loadTableData(context, ID, headerArr, dropDownHeaderArr, dropDownArr, subDropHeaderArr, subDropArr)
+	context[ID]['ajaxurl'] = 'cochlear:loadSourceDatatable'
+
+def loadSourceDatatable(request):
+	dataObj = {}
+	dataObj['data'] =[]
+	ID = 'sourceFileList'
+	maxObj = int(request.GET['length']) # maximum number of records the table can display
+	searchQ = request.GET['search[value]'] # global search
+	objCount = 0
+	
+	#Query based on the search parameter
+	sourceList = Sound_Source.objects.filter(Q(name__icontains=searchQ) | Q(notes__icontains=searchQ));
+	
+	# Filter based on drop-down selection
+	dropDownArr = json.loads(request.GET['dropdowns'])
+	for dropDown in dropDownArr:
+		if dropDown['dropID'] == 'module':
+			dropFilter = int(dropDown['filter'])
+			if dropFilter == 0:
+				if dropDown['subfilter'] != 'all':
+					sourceList = sourceList.filter(id__in=Closed_Set_Text.objects.filter(module_type=int(dropDown['subfilter'])).values_list('unknown_sound__source__pk', flat=True))
+				else:
+					sourceList = sourceList.filter(id__in=Closed_Set_Text.objects.values_list('unknown_sound__source__pk', flat=True))
+			elif dropFilter == 1:
+				if dropDown['subfilter'] != 'all':
+					sourceList = sourceList.filter(id__in=Open_Set_Module.objects.filter(module_type=int(dropDown['subfilter'])).values_list('unknown_sound__source__pk', flat=True))
+				else:
+					sourceList = sourceList.filter(id__in=Open_Set_Module.objects.values_list('unknown_sound__source__pk', flat=True))
+
+	dataObj['recordsFiltered'] = sourceList.count()
+	dataObj['recordsTotal'] = Sound_Source.objects.count()
+
+	#sort by column
+	columnToSort = int(request.GET['order[0][column]'])
+	sortReverse = False if request.GET['order[0][dir]'] == 'asc' else True
+	colArr = ['name','notes']
+	sortField = colArr[columnToSort]
+	if sortReverse:
+		sourceList = sourceList.order_by(Lower(sortField).desc())
+	else:
+		sourceList = sourceList.order_by(Lower(sortField))
+
+	# start at an index based on the page number we're at
+	sourceList = sourceList[int(request.GET['start']):]
+
+	# append the appropiate number of rows
+	for source in sourceList:
+		row = [source.name, source.notes]
+		dataObj['data'].append(row)
+		objCount += 1
+		if (objCount == maxObj):
+			break
+
+	response = json.dumps(dataObj) 
+	return HttpResponse(response, content_type='application/json')
 
 def loadClosedSetTextData(context):
 	ID = 'closedSetText'
@@ -751,6 +806,58 @@ def loadClosedSetTextData(context):
 	dropDownArr = []
 	dropDownArr.append(CLOSED_SET_TEXT_TYPES)
 	loadTableData(context, ID, headerArr, dropDownHeaderArr, dropDownArr, [], [])
+	context[ID]['ajaxurl'] = 'cochlear:loadCSTDatatable'
+
+def loadCSTDatatable(request):
+	dataObj = {}
+	dataObj['data'] =[]
+	ID = 'closedSetText'
+	maxObj = int(request.GET['length']) # maximum number of records the table can display
+	searchQ = request.GET['search[value]'] # global search
+	objCount = 0
+	
+	#Query based on the search parameter
+	cstList = Closed_Set_Text.objects.annotate(unknown_sound_file = Substr('unknown_sound__sound_file',16), unknown_speech_file = Substr('unknown_speech__speech_file', 17)).filter(
+		Q(unknown_speech_file__icontains=searchQ) | Q(unknown_sound_file__icontains=searchQ))
+	
+	# Filter based on drop-down selection
+	dropDownArr = json.loads(request.GET['dropdowns'])
+	for dropDown in dropDownArr:
+		if dropDown['dropID'] == 'module-types':
+			dropFilter = int(dropDown['filter'])
+			if dropFilter != 'all':
+				cstList = cstList.filter(module_type=dropFilter)
+
+	dataObj['recordsFiltered'] = cstList.count()
+	dataObj['recordsTotal'] = Closed_Set_Text.objects.count()
+
+	#sort by column
+	columnToSort = int(request.GET['order[0][column]'])
+	sortReverse = False if request.GET['order[0][dir]'] == 'asc' else True
+	if sortReverse:
+		if columnToSort == 0:
+			cstList = cstList.annotate(test_sound=Coalesce('unknown_sound__sound_file','unknown_speech__speech_file')).order_by(Lower('test_sound').desc())
+		else:
+			cstList = cstList.annotate(choices_count=Count('text_choices')).order_by('-choices_count')
+	else:
+		if columnToSort == 0:
+			cstList = cstList.annotate(test_sound=Coalesce('unknown_sound__sound_file','unknown_speech__speech_file')).order_by(Lower('test_sound'))
+		else:
+			cstList = cstList.annotate(choices_count=Count('text_choices')).order_by('choices_count')
+
+	# start at an index based on the page number we're at
+	cstList = cstList[int(request.GET['start']):]
+
+	# append the appropiate number of rows
+	for cst in cstList:
+		row = [cst.unknown_sound_file if cst.unknown_sound else cst.unknown_speech_file, cst.text_choices.count()]
+		dataObj['data'].append(row)
+		objCount += 1
+		if (objCount == maxObj):
+			break
+
+	response = json.dumps(dataObj) 
+	return HttpResponse(response, content_type='application/json')
 
 def loadOpenSetData(context):
 	ID = 'openSet'
@@ -759,11 +866,108 @@ def loadOpenSetData(context):
 	dropDownArr = []
 	dropDownArr.append(OPEN_SET_MODULE_TYPES)
 	loadTableData(context, ID, headerArr, dropDownHeaderArr, dropDownArr, [], [])
+	context[ID]['ajaxurl'] = 'cochlear:loadOSMDatatable'
+
+def loadOSMDatatable(request):
+	dataObj = {}
+	dataObj['data'] =[]
+	ID = 'openSet'
+	maxObj = int(request.GET['length']) # maximum number of records the table can display
+	searchQ = request.GET['search[value]'] # global search
+	objCount = 0
+	
+	#Query based on the search parameter
+	osmList =Open_Set_Module.objects.annotate(unknown_sound_file = Substr('unknown_sound__sound_file',16), unknown_speech_file = Substr('unknown_speech__speech_file', 17)).filter(
+		Q(unknown_speech_file__icontains=searchQ) | Q(unknown_sound_file__icontains=searchQ) | Q(answer__icontains=searchQ) | Q(key_words__icontains=searchQ))
+	
+	# Filter based on drop-down selection
+	dropDownArr = json.loads(request.GET['dropdowns'])
+	for dropDown in dropDownArr:
+		if dropDown['dropID'] == 'module-types':
+			dropFilter = int(dropDown['filter'])
+			if dropFilter != 'all':
+				osmList = osmList.filter(module_type=dropFilter)
+
+	dataObj['recordsFiltered'] = osmList.count()
+	dataObj['recordsTotal'] = Open_Set_Module.objects.count()
+
+	#sort by column
+	columnToSort = int(request.GET['order[0][column]'])
+	sortReverse = False if request.GET['order[0][dir]'] == 'asc' else True
+	colArr = ['plaeholder','answer','key_words']
+	sortField = colArr[columnToSort]
+	if sortReverse:
+		if columnToSort == 0:
+			osmList = osmList.annotate(test_sound=Coalesce('unknown_sound__sound_file','unknown_speech__speech_file')).order_by(Lower('test_sound').desc())
+		else:
+			osmList = osmList.order_by(Lower(sortField).desc())
+	else:
+		if columnToSort == 0:
+			osmList = osmList.annotate(test_sound=Coalesce('unknown_sound__sound_file','unknown_speech__speech_file')).order_by(Lower('test_sound'))
+		else:
+			osmList = osmList.order_by(Lower(sortField))
+
+	# start at an index based on the page number we're at
+	osmList = osmList[int(request.GET['start']):]
+
+	# append the appropiate number of rows
+	for osm in osmList:
+		row = [osm.unknown_sound_file if osm.unknown_sound else osm.unknown_speech_file, osm.answer, osm.key_words]
+		dataObj['data'].append(row)
+		objCount += 1
+		if (objCount == maxObj):
+			break
+
+	response = json.dumps(dataObj) 
+	return HttpResponse(response, content_type='application/json')
 
 def loadSpeakerIDData(context):
 	ID = 'speakerid'
 	headerArr = ['Test Sound','# of choices']
 	loadTableData(context, ID, headerArr, [], [], [], [])
+	context[ID]['ajaxurl'] = 'cochlear:loadSIDDatatable'
+
+def loadSIDDatatable(request):
+	dataObj = {}
+	dataObj['data'] =[]
+	ID = 'speakerid'
+	maxObj = int(request.GET['length']) # maximum number of records the table can display
+	searchQ = request.GET['search[value]'] # global search
+	objCount = 0
+	
+	#Query based on the search parameter
+	sidList = Speaker_ID.objects.annotate(unknown_speech_file = Substr('unknown_speech__speech_file', 17)).filter(Q(unknown_speech_file__icontains=searchQ))
+
+	dataObj['recordsFiltered'] = sidList.count()
+	dataObj['recordsTotal'] = Closed_Set_Text.objects.count()
+
+	#sort by column
+	columnToSort = int(request.GET['order[0][column]'])
+	sortReverse = False if request.GET['order[0][dir]'] == 'asc' else True
+	if sortReverse:
+		if columnToSort == 0:
+			sidList = sidList.order_by(Lower('unknown_speech_file').desc())
+		else:
+			sidList = sidList.annotate(choices_count=Count('choices')).order_by('-choices_count')
+	else:
+		if columnToSort == 0:
+			sidList = sidList.order_by(Lower('unknown_speech_file'))
+		else:
+			sidList = sidList.annotate(choices_count=Count('choices')).order_by('choices_count')
+
+	# start at an index based on the page number we're at
+	sidList = sidList[int(request.GET['start']):]
+
+	# append the appropiate number of rows
+	for sid in sidList:
+		row = [sid.unknown_speech_file, sid.choices.count()]
+		dataObj['data'].append(row)
+		objCount += 1
+		if (objCount == maxObj):
+			break
+
+	response = json.dumps(dataObj) 
+	return HttpResponse(response, content_type='application/json')
 
 def loadDashboardData(context):
 	loadSpeechData(context)
