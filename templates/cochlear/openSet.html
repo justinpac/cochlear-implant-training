@@ -113,6 +113,22 @@ var calcAccuracy = function(answer, keyWords,correctAnswer) {
             return {percentCorrect:0, gradedAnswer:correctAnswer};
         }
     }
+    // environmental sounds are graded as all or nothing
+    if({{module_type}} == 4) {
+        var altWords = keyWords.split("/");
+        var altWordFound = false;
+        for (var i = 0, imax = altWords.length; i < imax; i++) {
+            var altWord = altWords[i];
+            if (altWord.toLowerCase() == answer.toLowerCase() && userWord != "") {
+                altWordFound = true;
+            }
+        }
+        if(altWordFound) {
+            return {percentCorrect:100, gradedAnswer:correctAnswer};
+        } else {
+            return {percentCorrect:0, gradedAnswer:correctAnswer};
+        }
+    }
     for (var k = 0, kmax = keyWordsArr.length; k < kmax; k++) {
         var altWords = keyWordsArr[k].split("/");
         var altWordFound = false;
@@ -188,7 +204,7 @@ $( document ).ready(function() {
                 var accuracy = calcAccuracy(answer,keyWords, correctAnswer);
 
     			if (accuracy.percentCorrect < MIN_CORRECT_ACCURACY) {
-                    if (keyWords == ''){
+                    if (keyWords == '' || {{module_type}} == 4){
                         $("#incorrectHeader").html("<p>Not quite!</p>")
                     } else {
                         $("#incorrectHeader").html("<p>Your response contained " + accuracy.percentCorrect + "% of the keywords for this question</p>");
@@ -198,7 +214,7 @@ $( document ).ready(function() {
                         $('#next').slideDown("swing");
                     });
     			} else {
-                    if(keyWords == '') {
+                    if(keyWords == '' || {{module_type}} == 4) {
                         $("#correctHeader").html("<p>Correct!</p>")
                     } else {
                         $("#correctHeader").html("<p>Great job! Your response contained " + accuracy.percentCorrect + "% of the keywords for this question</p>");
