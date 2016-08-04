@@ -61,7 +61,6 @@ def index(request):
 	#Indicate if there is an active session
 	active_session = User_Session.objects.filter(user=userList[0], date_completed=None)
 	nextSession = getNextSession(userList[0])
-	print(str(nextSession))
 	if not nextSession: # There are no more sessions for the user to complete
 		context['sessionFlag'] = 0
 	elif not active_session: # The user may start a new session
@@ -147,7 +146,7 @@ def openSet(request, open_set_module, repeatFlag, order_id):
 	return render(request,'cochlear/openSet.html',context)
 
 #################################
-## Training Module "Gap" Pages ##
+## Training Module "Gap" Page ##
 #################################
 
 def speakerGap(request, speaker_module, repeatFlag, order_id):
@@ -157,15 +156,17 @@ def speakerGap(request, speaker_module, repeatFlag, order_id):
 	context['order_id'] = order_id
 	return render(request,'cochlear/speakerGap.html',context)
 
-def closedSetTextGap(request, closed_set_text, repeatFlag, order_id):
+def closedSetTextGap(request, closed_set_text, repeatFlag, order_id, module_type):
 	context = NavigationBar.generateAppContext(request,app="cochlear",title="closedSetTextGap", navbarName=0)
+	context['module_type'] = module_type
 	context['closed_set_text'] = closed_set_text
 	context['repeatFlag'] = repeatFlag
 	context['order_id'] = order_id
 	return render(request,'cochlear/closedSetTextGap.html',context)
 
-def openSetGap(request, open_set_module, repeatFlag, order_id):
+def openSetGap(request, open_set_module, repeatFlag, order_id, module_type):
 	context = NavigationBar.generateAppContext(request,app="cochlear",title="openSetGap", navbarName=0)
+	context['module_type'] = module_type
 	context['open_set_module'] = open_set_module
 	context['repeatFlag'] = repeatFlag
 	context['order_id'] = order_id
@@ -211,17 +212,19 @@ def goToModule(session, moduleNum, userObj):
 		if not module:
 			module = session.closed_set_texts.filter(closed_set_text_order__order = moduleNum)
 			order_id = Closed_Set_Text_Order.objects.get(session = session, order = moduleNum).id
-			if user_session.first_closed_set_text:
-				user_session.first_closed_set_text = False
+			module_type = module.first().module_type
+			if bool(int(user_session.first_closed_set_text[module_type])):
+				user_session.first_closed_set_text = user_session.first_closed_set_text[:module_type] + "0" + user_session.first_closed_set_text[(module_type + 1):]
 				user_session.save()
-				return redirect('cochlear:closedSetTextGap', closed_set_text = module.first().id, repeatFlag = 0, order_id = order_id)
+				return redirect('cochlear:closedSetTextGap', closed_set_text = module.first().id, repeatFlag = 0, order_id = order_id, module_type = module_type)
 			return redirect('cochlear:closedSetText', closed_set_text = module.first().id, repeatFlag = 0, order_id = order_id)
 
 		order_id = Open_Set_Module_Order.objects.get(session = session, order = moduleNum).id
-		if user_session.first_open_set_module:
-			user_session.first_open_set_module = False
+		module_type = module.first().module_type
+		if bool(int(user_session.first_open_set_module[module_type])):
+			user_session.first_open_set_module = user_session.first_open_set_module[:module_type] + "0" + user_session.first_open_set_module[(module_type + 1):]
 			user_session.save()
-			return redirect('cochlear:openSetGap', open_set_module=module.first().id, repeatFlag = 0, order_id = order_id)
+			return redirect('cochlear:openSetGap', open_set_module=module.first().id, repeatFlag = 0, order_id = order_id,module_type = module_type)
 		return redirect('cochlear:openSet', open_set_module=module.first().id, repeatFlag = 0, order_id = order_id)
 
 	order_id = Speaker_ID_Order.objects.get(session = session, order = moduleNum).id
@@ -244,9 +247,6 @@ def getNextSession(userObj):
 	maxWeekComplete = user_sessions.aggregate(Max('session__week'))['session__week__max']
 	user_sessions_cur_week = user_sessions.filter(session__week = maxWeekComplete)
 	maxDayComplete = user_sessions_cur_week.aggregate(Max('session__day'))['session__day__max']
-
-	print(maxWeekComplete)
-	print(maxDayComplete)
 
 	# Get the next session the user needs to complete
 	nextSession = Session.objects.filter(Q(speaker_ids__isnull=False) | Q(open_set_modules__isnull=False) | Q(closed_set_texts__isnull=False), week = (maxWeekComplete), day = (maxDayComplete + 1)).distinct()

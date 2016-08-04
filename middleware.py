@@ -7,7 +7,7 @@ import cochlear.util
 
 APP_NAME = "cochlear"
 
-ManagerOnlyPages = ['dashboard','settings']
+ManagerOnlyPages = ['manager/']
 
 class PermissionsCheck:
 	#Makes sure each user can only access the pages they have permission for

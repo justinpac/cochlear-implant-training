@@ -10,12 +10,15 @@
 <script src="{% static 'cochlear/clusterize/clusterize.min.js' %}"></script>
 
 <div class = "container">
+ <h1>The training history page is coming soon!</h1>
+{% comment %}
   <h1 id="history-header">Training History For  {{username}}</h1>
   <h4><span class="stat-label">Total Sessions completed</span><span class="stat"> {{sessions_completed}} </span></h4>
   <h4><span class="stat-label">Total Modules completed</span><span class="stat"> {{modules_completed}}</span></h4>
 
   {% include 'cochlear/embeds/stat_table.html' with data=userSessions %}
   <br>
+ {% endcomment %}
 </div>
 
 {% endblock %}

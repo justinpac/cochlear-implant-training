@@ -29,7 +29,7 @@
       <div class="col-md-12" style="text-align:center">
         <button id = "ready" type = "button" class="btn btn-secondary btn-lg"> Ready </button>
       </div>
-      <div id ="next" class="col-md-12" style="display:none;"">
+      <div id ="next" class="col-md-12" style="display:none;">
       <a href = "{% url 'cochlear:goToNextModule' %}">
         <button type = "button" class="btn btn-secondary btn-lg">
             <span class="glyphicon glyphicon-circle-arrow-right" aria-hidden="true" style="color:black"></span> Proceed To The Next Training Module
@@ -50,6 +50,8 @@
 <script src="{% static 'js/jquery.cookie.js' %}"></script>
 <script src="{% static 'js/CSRF.js' %}"></script>
 <script type="text/javascript">
+//max number of times an audio file can be played
+MAX_AUDIO_REPLAY = 5
 
 // an integer (0 or 1) indicating if the training module was answered correctly
 var answered_correctly;
@@ -59,13 +61,20 @@ var questionUnanswered = true;
 // Create arrays of ID's on which I want to perform the same operations on
 var choiceIDs = [];
 var responseIDs = [];
+//peloaded audio
 var speechAudio = [];
+//number of times each audio file has been played
+audioPlayed = [];
+
+//add an element for the test sound
 speechAudio.push(new Audio("{{unknown_speech.speech_file.url}}"))
+audioPlayed.push(0);
 // Populate these arrays and preload the audio
 {% for speech in speaker_choices %}
   choiceIDs.push("choice_{{speech.id}}");
   responseIDs.push("response_{{speech.id}}");
   speechAudio.push(new Audio("{{speech.speech_file.url}}"));
+  audioPlayed.push(0);
 {% endfor %}
 
 //display database error on console output
@@ -113,13 +122,23 @@ function checkAnswer(choice_id) {
 
 //Play audio for a speaker
 function play_speaker(index) {
-  speechAudio[index].play();
+  if (audioPlayed[index] < MAX_AUDIO_REPLAY) {
+    speechAudio[index].play();
+    audioPlayed[index] += 1;
+    if (audioPlayed[index] == MAX_AUDIO_REPLAY) {
+      $('[onclick="play_speaker(' + index + ')"]').mouseenter(function(){
+          $(this).css("cursor", "not-allowed");
+      }).mouseleave(function(){
+          $(this).css("cursor","default");
+      });
+    }
+  }
 }
 
 // Display unknown speaker and possible answer choices
 $( document ).ready(function() {
     // enable the bootstrap popover
-    var dashboardHelp = 'This is a Speaker identification training module. Listen to the speakers by clicking on their respective buttons. Try your best to memorize each speaker\'s voice, then click "Ready." Listen to the unknown speaker, then select who you think the unknown speaker is. When you are finished, you may proceed to the next training module, or you may repeat this one. Click ? to close this message.'
+    var dashboardHelp = 'This is a Speaker identification training module. Listen to the speakers by clicking on their respective buttons. You can listen to each speaker a maximum of five times. Try your best to memorize each speaker\'s voice, then click "Ready." Listen to the unknown speaker, then select who you think the unknown speaker is. When you are finished, you may proceed to the next training module, or you may repeat this one. Click ? to close this message.'
     $('body').popover({title:"Help: Speaker Identification", content:dashboardHelp, selector:"#helpButton", placement:"left", trigger: "click"});
 
     $("#ready").click(function(event){

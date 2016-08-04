@@ -51,6 +51,7 @@
 		<div class="myrow">
 			<button id="submitForm" class="btn btn-primary">create all modules</button>
 			<button id="addModule" type="button" class="btn btn-secondary"><i class="fa fa-plus" aria-hidden="true"></i> add module</button>
+			<button id="copyModule" type="button" class="btn btn-secondary"><i class="fa fa-files-o" aria-hidden="true"></i> copy module 1</button>
 		</div>
 	</form>
 </div>
@@ -169,6 +170,24 @@ $(document).ready(function() {
 		$newModule.find("#speechChoices_1").children().slice(6).remove();
 		//remove input values
 		$newModule.find(".inpBox").val("");
+		// change the naming so that it is unique for each module
+		$newModule.attr('id',"module_" + moduleNum);
+		$newModule.find(".module-header").html("Module " + moduleNum);
+		$newModule.find("input[name$='_1']").each(function() {
+			$(this).attr("name", $(this).attr("name").slice(0,-1) + moduleNum);
+		});
+		$newModule.find("[id$='_1']").each(function(){
+			$(this).attr('id', $(this).attr("id").slice(0,-1) + moduleNum);
+		});
+
+		$("#modules").append($newModule);
+		clickifyModule(moduleNum);
+	});
+
+	$('#copyModule').click(function(){
+		moduleNum += 1;
+		// Get a copy of the code for a module
+		var $newModule = $("#module_1").clone(true);
 		// change the naming so that it is unique for each module
 		$newModule.attr('id',"module_" + moduleNum);
 		$newModule.find(".module-header").html("Module " + moduleNum);

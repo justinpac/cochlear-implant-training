@@ -6,8 +6,17 @@
 
 <div class = "container">
   <div style="text-align:center">
-    <h1>Closed Set Training</h1>
-   	<p style="font-size:18px">You are about to start a closed set training module. In this module, you will listen to an unknown sound. This unknown sound could be speech, such as a phoneme, or it could be an environmental sound, such as a river or car horn. Once you have listened to the sound, select the button labeled with what you think the unknown sound is.</p>
+    {% if module_type == "0" %}
+    <h1>Closed Set Training (Other)</h1>
+   	<p style="font-size:18px">You are about to start a closed set training module. In this module, you will listen to an unknown sound. This unknown sound could be speech, such as a phoneme, or it could be an environmental sound, such as a river or car horn. Once you are ready, select the button labeled with the sound that you hear.</p>
+    {% elif module_type == "1" %}
+    <h1>Closed Set Training (Phoneme)</h1>
+    <p style="font-size:18px">You are about to start a closed set training module for phonemes, which are perceptually distinct units of sound. In this module, you will listen to a single phoneme.  When you are ready, select the button labeled with the phoneme that you hear.</p>
+    {% elif module_type == "2" %}
+    <h1>Closed Set Training (Environmental)</h1>
+    <p style="font-size:18px">You are about to start a closed set training module for environmental sounds. In this module, you will listen to an environmental sound, souch as a river or car horn. Once you are ready, select the button labeled with the sound that you hear.</p>
+    {% endif %}
+
     <br/>
     <a href = "{% url 'cochlear:closedSetText' closed_set_text=closed_set_text repeatFlag=repeatFlag order_id=order_id %}" >
       <button type = "button" class="btn btn-primary btn-lg" style="margin-bottom:20px;">

@@ -23,7 +23,7 @@
             </button>
         </div>
       {% endfor %}
-      <div id ="next" class="col-md-12" style="display:none;"">
+      <div id ="next" class="col-md-12" style="display:none;">
       <a href = "{% url 'cochlear:goToNextModule' %}">
         <button type = "button" class="btn btn-secondary btn-lg">
             <span class="glyphicon glyphicon-circle-arrow-right" aria-hidden="true" style="color:black"></span> Proceed To The Next Training Module
@@ -45,10 +45,14 @@
 <script src="{% static 'js/CSRF.js' %}"></script>
 <script type="text/javascript">
 
+var MAX_AUDIO_REPLAY = 5;
+
 // an integer (0 or 1) indicating if the training module was answered correctly
 var answered_correctly;
 //Switches to false once question is answered in order to disable button functionality
 var questionUnanswered = true;
+//number of times test sound has been played
+var audioPlayed = 0;
 
 //display database error on console output
 function addFail(failMessage) {
@@ -87,8 +91,19 @@ $( document ).ready(function() {
   $('body').popover({title:"Help: Closed Set Training", content:dashboardHelp, selector:"#helpButton", placement:"left", trigger: "click"});
 
   var audio = new Audio("{{unknown_sound}}");
+  var audio = new Audio("{{unknown_sound}}");
   $("#testSound").click(function(event){
-    audio.play();
+      if (audioPlayed < MAX_AUDIO_REPLAY) {
+      audio.play();
+          audioPlayed += 1;
+          if (audioPlayed == MAX_AUDIO_REPLAY) {
+            $('#testSound').mouseenter(function(){
+                $(this).css("cursor", "not-allowed");
+            }).mouseleave(function(){
+                $(this).css("cursor","default");
+            });
+          }
+        }
   });
 
 });

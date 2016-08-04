@@ -68,8 +68,10 @@
 <script type="text/javascript">
 
 var MIN_CORRECT_ACCURACY = 70;
+var MAX_AUDIO_REPLAY = 5; //max number of times the user can replay the test sound
 
 var questionUnanswered = true;
+var audioPlayed = 0;
 
 
 String.prototype.replaceWholeWord  = function(orig, replacement) {
@@ -95,95 +97,52 @@ function addFail(failMessage) {
   console.log(failMessage.responseText);
 }
 
-// Measures the number of insertion, substitiution, deletion, and transposition operations necessary to match the given strings
-// Taken from this post: http://stackoverflow.com/a/11958496
-// This is an implementation of the Damerau–Levenshtein distance algorithm: https://en.wikipedia.org/wiki/Damerau%E2%80%93Levenshtein_distance
-var levDist = function(s, t) {
-    var d = []; //2d matrix
-
-    // Step 1
-    var n = s.length;
-    var m = t.length;
-
-    if (n == 0) return m;
-    if (m == 0) return n;
-
-    //Create an array of arrays in javascript (a descending loop is quicker)
-    for (var i = n; i >= 0; i--) d[i] = [];
-
-    // Step 2
-    for (var i = n; i >= 0; i--) d[i][0] = i;
-    for (var j = m; j >= 0; j--) d[0][j] = j;
-
-    // Step 3
-    for (var i = 1; i <= n; i++) {
-        var s_i = s.charAt(i - 1);
-
-        // Step 4
-        for (var j = 1; j <= m; j++) {
-
-            //Check the jagged ld total so far
-            if (i == j && d[i][j] > 4) return n;
-
-            var t_j = t.charAt(j - 1);
-            var cost = (s_i == t_j) ? 0 : 1; // Step 5
-
-            //Calculate the minimum
-            var mi = d[i - 1][j] + 1;
-            var b = d[i][j - 1] + 1;
-            var c = d[i - 1][j - 1] + cost;
-
-            if (b < mi) mi = b;
-            if (c < mi) mi = c;
-
-            d[i][j] = mi; // Step 6
-
-            //Damerau transposition
-            if (i > 1 && j > 1 && s_i == t.charAt(j - 2) && s.charAt(i - 2) == t_j) {
-                d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + cost);
-            }
-        }
-    }
-
-    // Step 7
-    return d[n][m];
-}
-
 // Calculate how many of the user's words match the key words provided in an open set training module
 // maxLevDistCorrect is the maximum Levenshtein distance between a user's entered word and a key word for the word to be counted as correct
 var calcAccuracy = function(answer, keyWords,correctAnswer) {
     var maxLevDistCorrect = 1; 
-    var keyWordsArr = keyWords.split(" ");
+    var keyWordsArr = keyWords.split("_");
     var totalKeyWords = keyWordsArr.length;
     var userWords = answer.split(" ");
     var numCorrect = 0;
+    //handle the case in which no key words were provided
     if(keyWords == '') {
-        if(levDist(answer.toLowerCase(),correctAnswer.toLowerCase()) <= 2) {
+        if(answer.toLowerCase() == correctAnswer.toLowerCase()) {
             return {percentCorrect:100, gradedAnswer:correctAnswer};
         } else {
             return {percentCorrect:0, gradedAnswer:correctAnswer};
         }
     }
-    for (k in keyWordsArr) {
-        //Check if a given key word or any of its alternates are maxLevDistCorrect away from the user's entered words
+    for (var k = 0, kmax = keyWordsArr.length; k < kmax; k++) {
         var altWords = keyWordsArr[k].split("/");
         var altWordFound = false;
-        for (i in altWords) {
-            for (j in userWords) {
-                if (levDist(altWords[i].toLowerCase(),userWords[j].toLowerCase()) <= maxLevDistCorrect && userWords[j] != "") {
-                    altWordFound = true;
-                    // Color code the correct answer based on user accuracy. 
-                    // Replace incorrect key words with red in HTML and replace correct key words with green text in html
-                    var correctAnswer = correctAnswer.replace('>' + altWords[i] + '<', '><span style="color:green;font-weight:bold">' + altWords[i] + '</span><');
-                    var correctAnswer = correctAnswer.replaceWholeWord(altWords[i], '<span style="color:green;font-weight:bold">' + altWords[i] + '</span>');
-                } else if (!(altWordFound)){
-                    var correctAnswer = correctAnswer.replace('>' + altWords[i] + '<', '><span style="color:red;font-weight:bold">' + altWords[i] + '</span><');
-                    var correctAnswer = correctAnswer.replaceWholeWord(altWords[i], '<span style="color:red;font-weight:bold">' + altWords[i] + '</span>');
+        for (var i = 0, imax = altWords.length; i < imax; i++) {
+            var altWord = altWords[i];
+            var wordsInAlt = altWord.split(" ").length;
+            for (var j = 0, jmax = userWords.length; j < jmax; j++) {
+                var userWord = userWords[j];
+                for (var l = 1; l < wordsInAlt; l++) {
+                    userWord += " " + userWords[j + l];
                 }
+                if (altWord.toLowerCase() == userWord.toLowerCase() && userWord != "") {
+                    altWordFound = true;
+                }
+            }   
+        }
+        for (var i = 0, imax = altWords.length; i < imax; i++) {
+            var altWord = altWords[i];
+            // Color code the correct answer based on user accuracy. 
+            // Replace incorrect key words with red in HTML and replace correct key words with green text in html
+            if (altWordFound) {
+                var correctAnswer = correctAnswer.replace('>' + altWord + '<', '><span style="color:green;font-weight:bold">' + altWord + '</span><');
+                var correctAnswer = correctAnswer.replaceWholeWord(altWord, '<span style="color:green;font-weight:bold">' + altWord + '</span>');
+            } else {
+                var correctAnswer = correctAnswer.replace('>' + altWord + '<', '><span style="color:red;font-weight:bold">' + altWord + '</span><');
+                var correctAnswer = correctAnswer.replaceWholeWord(altWord, '<span style="color:red;font-weight:bold">' + altWord + '</span>');
             }
         }
+        // If one of the alternate words was found, increment the number found to be correct
         numCorrect += altWordFound ? 1 : 0
-        console.log(altWordFound);
     }
 
     var perCorrect = Math.round( (numCorrect/totalKeyWords) * 100);
@@ -195,23 +154,23 @@ $( document ).ready(function() {
     // enable the bootstrap popover
     $('#helpButton').show()
     {% if module_type == 1 %}
-    var dashboardHelp = 'This is a meaningful sentence training module. Listen to the sentence, then type what you hear. Do not use punctuation or capitalization. When you are ready for your response to be evaluated, click "Submit." Once you are finished, you may proceed to the next training module, or you may repeat this one. Click ? to close this message.'
+    var dashboardHelp = 'This is a meaningful sentence training module. Listen to the sentence (five times at most), then type what you hear. Do not use punctuation or capitalization. When you are ready for your response to be evaluated, click "Submit." Once you are finished, you may proceed to the next training module, or you may repeat this one. Click ? to close this message.'
     $('body').popover({title:"Help: Meaningful Sentence Training", content:dashboardHelp, selector:"#helpButton", placement:"left", trigger: "click"});
     
     {% elif module_type == 2 %}
-    var dashboardHelp = 'This is an anomalous sentence training module. Listen to the sentence, then type what you hear. Do not use punctuation or capitalization. When you are ready for your response to be evaluated, click "Submit." Once you are finished, you may proceed to the next training module, or you may repeat this one. Click ? to close this message.'
+    var dashboardHelp = 'This is an anomalous sentence training module. Listen to the sentence (five times at most), then type what you hear. Do not use punctuation or capitalization. When you are ready for your response to be evaluated, click "Submit." Once you are finished, you may proceed to the next training module, or you may repeat this one. Click ? to close this message.'
     $('body').popover({title:"Help: Anomalous Sentence Training", content:dashboardHelp, selector:"#helpButton", placement:"left", trigger: "click"});
     
     {% elif module_type == 3 %}
-    var dashboardHelp = 'This is a word training module. Listen to the word, then type what you hear. Do not use punctuation or capitalization. When you are ready for your response to be evaluated, click "Submit." Once you are finished, you may proceed to the next training module, or you may repeat this one. Click ? to close this message.'
+    var dashboardHelp = 'This is a word training module. Listen to the word (five times at most), then type what you hear. Do not use punctuation or capitalization. When you are ready for your response to be evaluated, click "Submit." Once you are finished, you may proceed to the next training module, or you may repeat this one. Click ? to close this message.'
     $('body').popover({title:"Help: Word Training", content:dashboardHelp, selector:"#helpButton", placement:"left", trigger: "click"});
     
     {% elif module_type == 4 %}
-    var dashboardHelp = 'This is an environmental sound training module.Identify the unknown sound, then type your answer in the box next to the submit button. Do not use punctuation or capitalization. When you are ready for your response to be evaluated, click "Submit." Once you are finished, you may proceed to the next training module, or you may repeat this one. Click ? to close this message.'
+    var dashboardHelp = 'This is an environmental sound training module.Identify the unknown sound (you may listen to it at most five times), then type your answer in the box next to the submit button. Do not use punctuation or capitalization. When you are ready for your response to be evaluated, click "Submit." Once you are finished, you may proceed to the next training module, or you may repeat this one. Click ? to close this message.'
     $('body').popover({title:"Help: Environmental Sounds", content:dashboardHelp, selector:"#helpButton", placement:"left", trigger: "click"});
     
     {% else %}
-    var dashboardHelp = 'This is an open response training module. Identify the unknown sound, then type your answer in the box next to the submit button. Do not use punctuation or capitalization. When you are ready for your response to be evaluated, click "Submit." Once you are finished, you may proceed to the next training module, or you may repeat this one. Click ? to close this message.'
+    var dashboardHelp = 'This is an open response training module. Identify the unknown sound (you may listen to it at most five times), then type your answer in the box next to the submit button. Do not use punctuation or capitalization. When you are ready for your response to be evaluated, click "Submit." Once you are finished, you may proceed to the next training module, or you may repeat this one. Click ? to close this message.'
     $('body').popover({title:"Help: Open Response", content:dashboardHelp, selector:"#helpButton", placement:"left", trigger: "click"});
     {% endif %}
 
@@ -258,7 +217,17 @@ $( document ).ready(function() {
   
   var audio = new Audio("{{unknown_sound}}");
 	$("#testSound").click(function(event){
-		audio.play();
+        if (audioPlayed < MAX_AUDIO_REPLAY) {
+		  audio.play();
+          audioPlayed += 1;
+          if (audioPlayed == MAX_AUDIO_REPLAY) {
+            $('#testSound').mouseenter(function(){
+                $(this).css("cursor", "not-allowed");
+            }).mouseleave(function(){
+                $(this).css("cursor","default");
+            });
+          }
+        }
 	});
 
 });

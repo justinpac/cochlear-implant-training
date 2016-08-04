@@ -6,8 +6,28 @@
 
 <div class = "container">
   <div style="text-align:center">
-    <h1>Open Set Training</h1>
-   	<p style="font-size:18px">You are about to start an open set training module. In this module, you will listen to an unknown sound. This unknown sound could be speech, such as a word or a sentence, or it could be an environmental sound, such as a river or car horn. Identify the unknown sound, then type your answer in the box next to the submit button. Do not use punctuation or capitalization. When you are ready for your response to be evaluated, click "Submit."</p>
+    {% if module_type == "0" %}
+    <h1>Open Set Training (Other)</h1>
+    <p style="font-size:18px">You are about to start an open set training module. In this module, you will listen to an unknown sound. This unknown sound could be speech, such as a word or a sentence, or it could be an environmental sound, such as a river or car horn. Identify the unknown sound, then type your answer in the box next to the submit button. Do not use punctuation or capitalization. When you are ready for your response to be evaluated, click "Submit."</p>
+
+    {% elif module_type == "1" %}
+    <h1>Open Set Training (Meaningful Sentence)</h1>
+    <p style="font-size:18px">You are about to start an open set training module for meaningful sentences. In this module, you will listen to a single sentence. Type your what you hear in the box next to the submit button. Do not use punctuation or capitalization. When you are ready for your response to be evaluated, click "Submit."</p>
+
+    {% elif module_type == "2" %}
+    <h1>Open Set Training (Anomalous Sentence)</h1>
+    <p style="font-size:18px">You are about to start an open set training module for anomalous sentences. In this module, you will listen to a single sentence that is grammatically correct but contextually nonsensical. Type your what you hear in the box next to the submit button. Do not use punctuation or capitalization. When you are ready for your response to be evaluated, click "Submit."</p>
+
+    {% elif module_type == "3" %}
+    <h1>Open Set Training (Word)</h1>
+    <p style="font-size:18px">You are about to start an open set training module for words. In this module, you will listen to a single word. Type what you hear in the box next to the submit button. Do not use punctuation or capitalization. When you are ready for your response to be evaluated, click "Submit."</p>
+
+    {% elif module_type == "4" %}
+    <h1>Open Set Training (Environmental)</h1>
+    <p style="font-size:18px">You are about to start an open set training module for environmental sounds. In this module, you will listen to an environmental sound, such as a river or car horn. Identify the unknown sound, then type your answer in the box next to the submit button. Do not use punctuation or capitalization. When you are ready for your response to be evaluated, click "Submit."</p>
+
+    {% endif %}
+    
     <br/>
     <a href = "{% url 'cochlear:openSet' open_set_module=open_set_module repeatFlag=repeatFlag order_id=order_id %}" >
       <button type = "button" class="btn btn-primary btn-lg" style="margin-bottom:20px;">

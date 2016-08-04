@@ -107,7 +107,7 @@ function clickifyModule(indx) {
 		$('#addSoundDiv_' + indx).show();
 		$('#addSoundBtn_' + indx).css("border","2px solid #555555");
 	});
-	keyWordsInfo = 'Enter each word separated by spaces. Group together alternate words and separate them by forward slashes. For example, "birch canoe slid/hid/bid down smooth planks". The user is allowed one typo (insertion, deletion, or substitution) when evaluating each keyword.'
+	keyWordsInfo = 'Enter each keyword separated by underscores. Group together alternate words and separate them by forward slashes. For example, "birch_canoe_slid/hid/bid_down_smooth_planks/pluck ranks". The user is allowed one typo (insertion, deletion, or substitution) when evaluating each keyword.'
 	var popoverSettings = {title:"Keywords", title:'Keywords', content:keyWordsInfo, placement:"right", trigger: "click"};
 	$("#keywordsInfo_" + indx).popover(popoverSettings);
 }

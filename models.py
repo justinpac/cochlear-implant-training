@@ -37,8 +37,8 @@ class User_Session(models.Model):
 	date_completed = models.DateTimeField('date_completed', blank = True, null = True)
 	modules_completed = models.PositiveSmallIntegerField(default=0)
 	first_speaker_id = models.BooleanField(default = True)
-	first_open_set_module = models.BooleanField(default = True)
-	first_closed_set_text = models.BooleanField(default = True)
+	first_open_set_module = models.CharField(max_length=15, default="11111", help_text='A string of integers. The index represents module type, and each integer is a 0 or 1 indicating if this user has not yet completed a module of that type.')
+	first_closed_set_text = models.CharField(max_length=15, default="111", help_text='A string of integers. The index represents module type, and each integer is a 0 or 1 indicating if this user has not yet completed a module of that type.')
 
 	def __str__(self):
 		return "User: " + self.user.username + ", Session: " + str(self.session)+ ", DateCompleted: " + str(self.date_completed)
@@ -233,11 +233,12 @@ class Open_Set_Module(models.Model):
 	unknown_sound = models.ForeignKey('Sound', on_delete = models.CASCADE, blank = True, null = True, help_text = "The unknown sound to be identified. Pick one sound or speech.")
 	answer = models.TextField()
 	module_type = models.PositiveSmallIntegerField(help_text="0 = other, 1 = meaningful sentence training, 2 = anomalous sentence training, 3 = word training, 4 = environmental sound training")
-	key_words = models.TextField(blank=True, help_text='''The keywords of this answer (used to determine accuracy). Enter each word separated by spaces. Group together alternate words and separate them by forward slashes. 
-		For example, "birch canoe slid/hid/bid down smooth planks". The user is allow one typo (insertion, deletion, or substitution) when evaluating each keyword.''')
+	key_words = models.TextField(blank=True, help_text='''The keywords of this answer (used to determine accuracy). Enter each keyword separated by underscores. Group together alternate words and separate them by forward slashes. 
+		For example, "birch_canoe_slid/hid/bid_down_smooth_planks/pluck ranks". The user is allow one typo (insertion, deletion, or substitution) when evaluating each keyword.''')
 
 	def __str__(self):
-		return self.answer
+		module_types = ["other", "meaningful", "anomalous", "word", "environmental"]
+		return "(" + module_types[self.module_type] + ") " + self.answer
 
 	class Meta:
 		# admin panel display name
