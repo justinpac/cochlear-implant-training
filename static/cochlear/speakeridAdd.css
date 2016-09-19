@@ -10,6 +10,10 @@ p {
 	font-size:14px;
 }
 
+select {
+	max-width: 347px;
+}
+
 .addbtn {
 	margin-bottom: 5px;
 }

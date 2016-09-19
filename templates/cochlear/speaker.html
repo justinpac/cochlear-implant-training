@@ -34,12 +34,14 @@
         <button type = "button" class="btn btn-secondary btn-lg">
             <span class="glyphicon glyphicon-circle-arrow-right" aria-hidden="true" style="color:black"></span> Proceed To The Next Training Module
         </button>
+        {% if thisisatest == 0 %}
         </br>
         <a href = "{% url 'cochlear:speaker' speaker_module=speaker_module_id repeatFlag=1 order_id=order_id %}" >
           <button type = "button" class="btn btn-secondary btn-lg" >
               <span class="glyphicon glyphicon-repeat" aria-hidden="true"></span> Repeat This Question
           </button>
         </a>
+        {% endif %}
       </div>
     </div>
   </div>
@@ -57,6 +59,8 @@ MAX_AUDIO_REPLAY = 5
 var answered_correctly;
 //Switches to false once question is answered in order to disable button functionality
 var questionUnanswered = true;
+// 1 or 0 indicating if this is a test
+var thisisatest = {{thisisatest}};
 
 // Create arrays of ID's on which I want to perform the same operations on
 var choiceIDs = [];
@@ -64,7 +68,8 @@ var responseIDs = [];
 //peloaded audio
 var speechAudio = [];
 //number of times each audio file has been played
-audioPlayed = [];
+var audioPlayed = [];
+
 
 //add an element for the test sound
 speechAudio.push(new Audio("{{unknown_speech.speech_file.url}}"))
@@ -105,10 +110,12 @@ function checkAnswer(choice_id) {
       iscorrect = data[0].iscorrect;
       // The speech id of the user's answer to this training module
       answered_correctly =  (String(iscorrect) == 'true') ? 1 : 0;
-      if(answered_correctly){
-        $("#correct_" + choice_id).show("fast","linear").css("display", "inline-block");;
-      } else {
-        $("#incorrect_" + choice_id).show("fast","linear").css("display", "inline-block");
+      if (!(thisisatest)) {
+        if(answered_correctly){
+          $("#correct_" + choice_id).show("fast","linear").css("display", "inline-block");;
+        } else {
+          $("#incorrect_" + choice_id).show("fast","linear").css("display", "inline-block");
+        }
       }
 
       questionUnanswered = false;
@@ -146,12 +153,12 @@ $( document ).ready(function() {
       $("#ready").hide("swing").promise().done(function() {
 
         for(var i = 0; i <responseIDs.length; i++){
-          $("#" + responseIDs[i]).show("swing");
+          $("[id='" + responseIDs[i] + "']").show("swing");
         }
         //pause for number of milliseconds indicated in second argument of function, then execute code in callback
         setTimeout(function(){
           for(var i = 0; i < choiceIDs.length; i++){
-            $("#" + choiceIDs[i]).hide("swing");
+            $("[id='" + choiceIDs[i] + "'").hide("swing");
           }
         }, 400);
       });

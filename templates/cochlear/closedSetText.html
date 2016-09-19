@@ -28,12 +28,14 @@
         <button type = "button" class="btn btn-secondary btn-lg">
             <span class="glyphicon glyphicon-circle-arrow-right" aria-hidden="true" style="color:black"></span> Proceed To The Next Training Module
         </button>
+        {% if thisisatest == 0 %}
         </br>
         <a href = "{% url 'cochlear:closedSetText' closed_set_text=closed_set_text_id repeatFlag=1 order_id=order_id %}" >
           <button type = "button" class="btn btn-secondary btn-lg" >
               <span class="glyphicon glyphicon-repeat" aria-hidden="true"></span> Repeat This Question
           </button>
         </a>
+        {% endif %}
       </div>
     </div>
   </div>
@@ -53,6 +55,8 @@ var answered_correctly;
 var questionUnanswered = true;
 //number of times test sound has been played
 var audioPlayed = 0;
+// indicates if this is a test
+var thisisatest = {{thisisatest}};
 
 //display database error on console output
 function addFail(failMessage) {
@@ -68,10 +72,12 @@ function checkAnswer(choice_id) {
       iscorrect = data[0].iscorrect;
       // The text_choice id of the user's answer to this training module
       answered_correctly =  (String(iscorrect) == 'true') ? 1 : 0;
-      if(answered_correctly){
-        $("#correct_" + choice_id).show("fast","linear").css("display", "inline-block");
-      } else {
-        $("#incorrect_" + choice_id).show("fast","linear").css("display", "inline-block");
+      if (!(thisisatest)) {
+        if(answered_correctly) {
+          $("#correct_" + choice_id).show("fast","linear").css("display", "inline-block");
+        } else {
+          $("#incorrect_" + choice_id).show("fast","linear").css("display", "inline-block");
+        }
       }
 
       questionUnanswered = false;

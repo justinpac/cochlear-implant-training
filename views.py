@@ -110,6 +110,7 @@ def speaker(request, speaker_module, repeatFlag, order_id):
 	context['user_attrib_id'] = userObj.id
 	context['repeatFlag'] = repeatFlag
 	context['order_id'] = order_id
+	context['thisisatest'] = 1 if userObj.progression == 0 else 0 # If the user hasn't completed their testing, we are assuming this is a test
 
 	return render(request,'cochlear/speaker.html',context)
 
@@ -125,13 +126,14 @@ def closedSetText(request, closed_set_text, repeatFlag, order_id):
 	context['user_attrib_id'] = userObj.id
 	context['repeatFlag'] = repeatFlag
 	context['order_id'] = order_id
+	context['thisisatest'] = 1 if userObj.progression == 0 else 0 # If the user hasn't completed their testing, we are assuming this is a test
 
 	return render(request,'cochlear/closedSetText.html',context)
 
 #Render a generic page for a closed-set module
 def openSet(request, open_set_module, repeatFlag, order_id):
 	context = NavigationBar.generateAppContext(request,app="cochlear",title="openSet", navbarName=0)
-	user_attrib = User_Attrib.objects.get(username=request.user.username)
+	userObj = User_Attrib.objects.get(username=request.user.username)
 	module = Open_Set_Module.objects.get(id=open_set_module)
 	if module.unknown_speech:
 		context['unknown_sound'] = module.unknown_speech.speech_file.url
@@ -141,7 +143,8 @@ def openSet(request, open_set_module, repeatFlag, order_id):
 	context['repeatFlag'] = repeatFlag
 	context['order_id'] = order_id
 	context['open_set_module_id'] = open_set_module
-	context['user_attrib_id'] = user_attrib.id
+	context['user_attrib_id'] = userObj.id
+	context['thisisatest'] = 1 if userObj.progression == 0 else 0 # If the user hasn't completed their testing, we are assuming this is a test
 
 	return render(request,'cochlear/openSet.html',context)
 
@@ -194,12 +197,28 @@ def goToNextModule(request):
 	if not user_session:
 		return redirect('cochlear:sessionEndPage')
 	user_session = user_session.first()
-	if user_session.modules_completed == user_session.session.countModules():
+	if user_session.modules_completed == user_session.session.countModules(): # If the session is complete
 		user_session.date_completed = timezone.now()
 		user_session.save()
+		activeSequence = User_Sequence.objects.get(user = userObj, date_started__isnull = False, date_completed__isnull = True)
+		activeSequence.sessions_completed += 1
+		activeSequence.save()
+		checkIfSequenceComplete(userObj)
 		return redirect('cochlear:sessionEndPage')
 	nextModule = user_session.modules_completed + 1
 	return goToModule(user_session.session, nextModule, userObj)
+
+# Check if the user's active (already started) sequence has been completed
+# If so, mark the date that it was completed
+def checkIfSequenceComplete(userObj):
+	activeSequence = User_Sequence.objects.get(user = userObj, date_started__isnull = False, date_completed__isnull = True)
+	if activeSequence.sessions_completed == activeSequence.sequence.sessions.count(): # If this sequence is complete
+		activeSequence.date_completed = timezone.now() # mark this sequence as complete with a timestamp
+		activeSequence.save()
+		if activeSequence.sequence.category == 0 or activeSequence.sequence.category == 1 and userObj.progression < 2: # This was either a test or week one sequence, so the user has progressed by completing it
+			userObj.progression += 1
+			userObj.save()
+
 
 # Get a module in a particular session based on its order in sequence (moduleNum)
 # This is in a separate function because it will be used in multiple contexts and
@@ -236,28 +255,48 @@ def goToModule(session, moduleNum, userObj):
 
 #Takes in a user_attrib object and returns the next session the user needs to complete
 def getNextSession(userObj):
-	user_sessions = User_Session.objects.filter(user = userObj, date_completed__isnull = False) # get the sessions that the user has completed
-	#If the user has not completed any sessions, then they are on the session for week 1, day 1
-	if not user_sessions:
-		checkWeekProg(userObj)
-		week1Day1 = Session.objects.get(week = 1, day = 1)
-		return week1Day1
+	if userObj.progression == 0: # This is a new user
+		userSequences = User_Sequence.objects.filter(user = userObj, date_completed__isnull = True, sequence__category = 0)
+	elif userObj.progression == 1: # This user gone through inital testing
+		userSequences = User_Sequence.objects.filter(user = userObj, date_completed__isnull = True, sequence__category = 1)
+	elif userObj.progression == 2: # This user has gone through week one and is therfore calibrated
+		userSequences = User_Sequence.objects.filter(user = userObj, date_completed__isnull = True, sequence__category = 0)
 
-	#Get the max session day and week that the user has completed
-	maxWeekComplete = user_sessions.aggregate(Max('session__week'))['session__week__max']
-	user_sessions_cur_week = user_sessions.filter(session__week = maxWeekComplete)
-	maxDayComplete = user_sessions_cur_week.aggregate(Max('session__day'))['session__day__max']
+	if not userSequences: #TODO: generate a new sequence if this user has been calibrated
+		return None
+	
+	userSequence = userSequences.earliest('date_assigned')
+	if not userSequence.sequence.sessions:
+		return None
+	
+	sessionOrder = Session_Order.objects.get(sequence = userSequence.sequence, order = userSequence.sessions_completed + 1)
+	
+	if sessionOrder.session.countModules() == 0: # If there are no models contained in this session
+		return None
+	
+	userSequence.date_started = timezone.now()
+	userSequence.save()
+	return sessionOrder.session
 
-	# Get the next session the user needs to complete
-	nextSession = Session.objects.filter(Q(speaker_ids__isnull=False) | Q(open_set_modules__isnull=False) | Q(closed_set_texts__isnull=False), week = (maxWeekComplete), day = (maxDayComplete + 1)).distinct()
-	if not nextSession: 
-		# Either the next session is on a new week or there are no sessions left for the user to complete
-		nextSession = Session.objects.filter(Q(speaker_ids__isnull=False) | Q(open_set_modules__isnull=False) | Q(closed_set_texts__isnull=False), week = (maxWeekComplete + 1), day = 1).distinct()
-		if not nextSession:
-			# We want this date to change the next time there is actually another session to complete, so no call to checkWeekProg
-			return None
-	return nextSession.first()
-
+# Create user-specific objects for a given session
+# We create user module data at the start of a session in case there is any data we
+# want to gather as a module is being completed (time to complete a module, for example).
+def createUserSessionData(sessionObj, userObj):
+	activeSequence = User_Sequence.objects.get(user = userObj, date_started__isnull = False, date_completed__isnull = True)
+	newSession = User_Session(session = sessionObj, user = userObj, date_completed = None, modules_completed = 0, user_sequence = activeSequence)
+	newSession.save()
+	speaker_id_orders = Speaker_ID_Order.objects.filter(session = sessionObj)
+	for speaker_id_order in speaker_id_orders:
+		temp = User_Speaker_ID(user_attrib = userObj, speaker_id_order = speaker_id_order, repeat = False, user_session = newSession)
+		temp.save()
+	open_set_module_orders = Open_Set_Module_Order.objects.filter(session = sessionObj)
+	for open_set_module_order in open_set_module_orders:
+		temp = User_Open_Set_Module(user_attrib = userObj, open_set_module_order = open_set_module_order, repeat = False, user_session = newSession)
+		temp.save()
+	closed_set_text_orders = Closed_Set_Text_Order.objects.filter(session = sessionObj)
+	for closed_set_text_order in closed_set_text_orders:
+		temp = User_Closed_Set_Text(user_attrib = userObj, closed_set_text_order = closed_set_text_order, repeat = False, user_session = newSession)
+		temp.save()
 
 ##################
 ## Ajax methods ##
@@ -284,7 +323,7 @@ def openSetCompleted(request):
 
 	if(not isRepeat):
 		# If this module is not being repeated, then we want to edit the existing User_Open Set_Train record
-		moduleHist = User_Open_Set_Module.objects.get(open_set_module_order = open_set_module_order, user_attrib = user, repeat = False)
+		moduleHist = User_Open_Set_Module.objects.get(open_set_module_order = open_set_module_order, user_attrib = user, repeat = False, date_completed__isnull=True)
 		if (moduleHist.date_completed == None):
 			# Indicate the user has completed another module within the session. Tracked in User_Session and User_Open_Set_Module
 			user_session = User_Session.objects.get(user=user.id, date_completed=None)
@@ -293,10 +332,12 @@ def openSetCompleted(request):
 			moduleHist.date_completed = timezone.now()
 			moduleHist.user_response = user_response
 			moduleHist.percent_correct = percentCorrect
+			moduleHist.user_session = user_session
 	else:
 		# if this module IS being repeated, then create a new User_Open_Set_Module
-		moduleHist = User_Open_Module_Train(open_set_module_order = open_set_module_order, user_attrib = user, repeat = True, 
-			date_completed = timezone.now(), user_response = user_response, percent_correct=percentCorrect)
+		user_session = User_Session.objects.get(user=user, date_completed=None) if User_Session.objects.filter(user=user, date_completed=None) else None
+		moduleHist = User_Open_Set_Module(open_set_module_order = open_set_module_order, user_attrib = user, repeat = True, 
+			date_completed = timezone.now(), user_response = user_response, percent_correct=percentCorrect, user_session=user_session)
 	
 	moduleHist.save()
 	return HttpResponse("Success")
@@ -328,7 +369,7 @@ def closedSetTextCompleted(request):
 
 	if(not isRepeat):
 		# If this module is not being repeated, then we want to edit the existing User_Closed Set_Text record
-		moduleHist = User_Closed_Set_Text.objects.get(closed_set_text_order = closed_set_text_order, user_attrib = user, repeat = False)
+		moduleHist = User_Closed_Set_Text.objects.get(closed_set_text_order = closed_set_text_order, user_attrib = user, repeat = False, date_completed__isnull=True)
 		if(moduleHist.date_completed == None):
 			# Indicate the user has completed another module within the session. Tracked in User_Session and User_Closed_Set_Text
 			user_session = User_Session.objects.get(user=user.id, date_completed=None)
@@ -337,10 +378,12 @@ def closedSetTextCompleted(request):
 			moduleHist.date_completed = timezone.now()
 			moduleHist.user_response = user_response
 			moduleHist.correct = answered_correctly
+			moduleHist.user_session = user_session
 	else:
 		# if this module IS being repeated, then create a new User_Speaker_ID
+		user_session = User_Session.objects.get(user=user, date_completed=None) if User_Session.objects.filter(user=user, date_completed=None) else None
 		moduleHist = User_Closed_Set_Text(closed_set_text_order = closed_set_text_order, user_attrib = user, repeat = True, date_completed = timezone.now(), 
-			user_response = user_response, correct = answered_correctly)
+			user_response = user_response, correct = answered_correctly, user_session = user_session)
 
 	moduleHist.save()
 	return HttpResponse("Success")
@@ -365,7 +408,7 @@ def speakerCompleted(request):
 
 	if(not isRepeat):
 		# If this module is not being repeated, then we want to edit the existing User_Closed Set_Train record
-		moduleHist = User_Speaker_ID.objects.get(speaker_id_order = speaker_id_order, user_attrib = user, repeat = False)
+		moduleHist = User_Speaker_ID.objects.get(speaker_id_order = speaker_id_order, user_attrib = user, repeat = False, date_completed__isnull=True)
 		if(moduleHist.date_completed == None):
 			# Indicate the user has completed another module within the session. Tracked in User_Session and User_Speaker_ID
 			user_session = User_Session.objects.get(user=user.id, date_completed=None)
@@ -374,10 +417,13 @@ def speakerCompleted(request):
 			moduleHist.date_completed = timezone.now()
 			moduleHist.user_response = user_response
 			moduleHist.correct = answered_correctly
+			moduleHist.user_session = user_session
+
 	else:
 		# if this module IS being repeated, then create a new User_Speaker_ID
+		user_session = User_Session.objects.get(user=user, date_completed=None) if User_Session.objects.filter(user=user, date_completed=None) else None
 		moduleHist = User_Speaker_ID(speaker_id_order = speaker_id_order, user_attrib = user, repeat = True, date_completed = timezone.now(), 
-			user_response = user_response, correct = answered_correctly)
+			user_response = user_response, correct = answered_correctly, user_session = user_session)
 
 	moduleHist.save()
 	return HttpResponse("Success")
@@ -801,7 +847,7 @@ def loadSourceDatatable(request):
 
 def loadClosedSetTextData(context):
 	ID = 'closedSetText'
-	headerArr = ['Test Sound','# of choices']
+	headerArr = ['Test Sound','# of choices','Difficulty']
 	dropDownHeaderArr = ['Module Types']
 	dropDownArr = []
 	dropDownArr.append(CLOSED_SET_TEXT_TYPES)
@@ -837,20 +883,23 @@ def loadCSTDatatable(request):
 	if sortReverse:
 		if columnToSort == 0:
 			cstList = cstList.annotate(test_sound=Coalesce('unknown_sound__sound_file','unknown_speech__speech_file')).order_by(Lower('test_sound').desc())
-		else:
+		elif columnToSort == 1 :
 			cstList = cstList.annotate(choices_count=Count('text_choices')).order_by('-choices_count')
+		else:
+			cstList = cstList.order_by('-difficulty')
 	else:
 		if columnToSort == 0:
 			cstList = cstList.annotate(test_sound=Coalesce('unknown_sound__sound_file','unknown_speech__speech_file')).order_by(Lower('test_sound'))
-		else:
+		elif columnToSort == 1:
 			cstList = cstList.annotate(choices_count=Count('text_choices')).order_by('choices_count')
-
+		else:
+			cstList = cstList.order_by('difficulty')
 	# start at an index based on the page number we're at
 	cstList = cstList[int(request.GET['start']):]
 
 	# append the appropiate number of rows
 	for cst in cstList:
-		row = [cst.unknown_sound_file if cst.unknown_sound else cst.unknown_speech_file, cst.text_choices.count()]
+		row = [cst.unknown_sound_file if cst.unknown_sound else cst.unknown_speech_file, cst.text_choices.count(),cst.difficulty]
 		dataObj['data'].append(row)
 		objCount += 1
 		if (objCount == maxObj):
@@ -861,7 +910,7 @@ def loadCSTDatatable(request):
 
 def loadOpenSetData(context):
 	ID = 'openSet'
-	headerArr = ['Test Sound','Answer','Keywords']
+	headerArr = ['Test Sound','Answer','Keywords','Difficulty']
 	dropDownHeaderArr = ['Module Types']
 	dropDownArr = []
 	dropDownArr.append(OPEN_SET_MODULE_TYPES)
@@ -894,25 +943,30 @@ def loadOSMDatatable(request):
 	#sort by column
 	columnToSort = int(request.GET['order[0][column]'])
 	sortReverse = False if request.GET['order[0][dir]'] == 'asc' else True
-	colArr = ['plaeholder','answer','key_words']
+	colArr = ['plaeholder','answer','key_words','difficulty']
 	sortField = colArr[columnToSort]
 	if sortReverse:
 		if columnToSort == 0:
 			osmList = osmList.annotate(test_sound=Coalesce('unknown_sound__sound_file','unknown_speech__speech_file')).order_by(Lower('test_sound').desc())
-		else:
+		elif columnToSort == 1 or columnToSort == 2:
 			osmList = osmList.order_by(Lower(sortField).desc())
+		else:
+			osmList = osmList.order_by('-' + sortField)
 	else:
 		if columnToSort == 0:
 			osmList = osmList.annotate(test_sound=Coalesce('unknown_sound__sound_file','unknown_speech__speech_file')).order_by(Lower('test_sound'))
-		else:
+		elif columnToSort == 1 or columnToSort == 2:
 			osmList = osmList.order_by(Lower(sortField))
+		else:
+			osmList = osmList.order_by(sortField)
+
 
 	# start at an index based on the page number we're at
 	osmList = osmList[int(request.GET['start']):]
 
 	# append the appropiate number of rows
 	for osm in osmList:
-		row = [osm.unknown_sound_file if osm.unknown_sound else osm.unknown_speech_file, osm.answer, osm.key_words]
+		row = [osm.unknown_sound_file if osm.unknown_sound else osm.unknown_speech_file, osm.answer, osm.key_words, osm.difficulty]
 		dataObj['data'].append(row)
 		objCount += 1
 		if (objCount == maxObj):
@@ -923,7 +977,7 @@ def loadOSMDatatable(request):
 
 def loadSpeakerIDData(context):
 	ID = 'speakerid'
-	headerArr = ['Test Sound','# of choices']
+	headerArr = ['Test Sound','# of choices','Difficulty']
 	loadTableData(context, ID, headerArr, [], [], [], [])
 	context[ID]['ajaxurl'] = 'cochlear:loadSIDDatatable'
 
@@ -947,20 +1001,24 @@ def loadSIDDatatable(request):
 	if sortReverse:
 		if columnToSort == 0:
 			sidList = sidList.order_by(Lower('unknown_speech_file').desc())
-		else:
+		elif columnToSort == 1:
 			sidList = sidList.annotate(choices_count=Count('choices')).order_by('-choices_count')
+		else:
+			sidList = sidList.order_by('-difficulty')
 	else:
 		if columnToSort == 0:
 			sidList = sidList.order_by(Lower('unknown_speech_file'))
-		else:
+		elif columnToSort == 1:
 			sidList = sidList.annotate(choices_count=Count('choices')).order_by('choices_count')
+		else:
+			sidList = sidList.order_by('difficulty')
 
 	# start at an index based on the page number we're at
 	sidList = sidList[int(request.GET['start']):]
 
 	# append the appropiate number of rows
 	for sid in sidList:
-		row = [sid.unknown_speech_file, sid.choices.count()]
+		row = [sid.unknown_speech_file, sid.choices.count(), sid.difficulty]
 		dataObj['data'].append(row)
 		objCount += 1
 		if (objCount == maxObj):
@@ -1001,6 +1059,8 @@ def closedsettextAdd(request):
 			newCST = Closed_Set_Text()
 			# indicate the type of closed set text
 			newCST.module_type = int(request.POST['moduleType_' + str(mn)])
+			# indicate difficulty
+			newCST.difficulty = int(request.POST['moduleDifficulty_' + str(mn)])
 			# save so that we can edit the many to many field
 			newCST.save()
 			# Add a test sound or speech
@@ -1059,6 +1119,8 @@ def opensetAdd(request):
 			newOSM = Open_Set_Module()
 			# indicate the type of closed set text
 			newOSM.module_type = int(request.POST['moduleType_' + str(mn)])
+			# Indicate difficulty
+			newOSM.difficulty = int(request.POST['moduleType_' + str(mn)])
 			# save so that we can edit the many to many field
 			newOSM.save()
 			# Add a test sound or speech
@@ -1094,6 +1156,8 @@ def speakeridAdd(request):
 			testSpeechFile = ('cochlear/speech/' + speechFile)
 			testSpeech = Speech.objects.get(speech_file=testSpeechFile)
 			newSID.unknown_speech = testSpeech
+			#indicate difficulty
+			newSID.difficulty = int(request.POST['moduleDifficulty_' + str(mn)])
 			#save so we can add to manytomany field
 			newSID.save()
 			# Add text choices
@@ -1142,25 +1206,6 @@ def checkWeekProg(userObj):
 			userObj.current_week_start_date = timezone.now()
 			userObj.save()
 
-# Create user-specific objects for a given session
-# We create user module data at the start of a session in case there is any data we
-# want to gather as a module is being completed (time to complete a module, for example).
-def createUserSessionData(sessionObj, userObj):
-	newSession = User_Session(session = sessionObj, user = userObj, date_completed = None, modules_completed = 0)
-	newSession.save()
-	speaker_id_orders = Speaker_ID_Order.objects.filter(session = sessionObj)
-	for speaker_id_order in speaker_id_orders:
-		temp = User_Speaker_ID(user_attrib = userObj, speaker_id_order = speaker_id_order, repeat = False)
-		temp.save()
-	open_set_module_orders = Open_Set_Module_Order.objects.filter(session = sessionObj)
-	for open_set_module_order in open_set_module_orders:
-		temp = User_Open_Set_Module(user_attrib = userObj, open_set_module_order = open_set_module_order, repeat = False)
-		temp.save()
-	closed_set_text_orders = Closed_Set_Text_Order.objects.filter(session = sessionObj)
-	for closed_set_text_order in closed_set_text_orders:
-		temp = User_Closed_Set_Text(user_attrib = userObj, closed_set_text_order = closed_set_text_order, repeat = False)
-		temp.save()
-
 ###################
 ## CSV downloads ##
 ###################
@@ -1168,7 +1213,7 @@ def createUserSessionData(sessionObj, userObj):
 def appendTalkerID(rows):
 	# Add Rows for the Talker Identification training module 
 	rows.append(['Speaker Identification'])
-	talkerIDHeaders = ['User','Session Week','Session Day', 'Repeat', 'Session Completed (Date)','Session Completed (Time)', 
+	talkerIDHeaders = ['User','Session', 'Repeat', 'Session Completed (Date)','Session Completed (Time)', 
 		'Module Completed (Date)','Module Completed (Time)', 'Talker Identification ID', 'Test Sound Speaker', 'Test Sound File', 
 		'Choices Speakers','Choices Files', 'User Response (Speaker)','User Response (File)', 'Correct']
 	rows.append(talkerIDHeaders)
@@ -1176,9 +1221,9 @@ def appendTalkerID(rows):
 	for talkerID in talkerIDs:
 		talkerIDRow = []
 		talkerIDRow.append(talkerID.user_attrib.username)
-		talkerIDRow.append(talkerID.speaker_id_order.session.week)
-		talkerIDRow.append(talkerID.speaker_id_order.session.day)
-		talkerIDRow.append(("yes" if talkerID.repeat else "no"))
+		talkerIDRow.append(talkerID.user_session.user_sequence.sequence if talkerID.user_session.user_sequence.sequence else '')
+		talkerIDRow.append(talkerID.user_session.session if talkerID.user_session.session else '')
+		talkerIDRow.append("yes" if talkerID.repeat else "no")
 		session = talkerID.speaker_id_order.session
 		user = talkerID.user_attrib
 		sessionDateTime = User_Session.objects.get(user = user, session = session).date_completed
@@ -1223,15 +1268,15 @@ def appendTalkerID(rows):
 		rows.append(talkerIDRow)
 
 def appendOpenSets(rows, openSets):
-	openSetHeaders = ['User','Session Week','Session Day', 'Repeat', 'Session Completed (Date)','Session Completed (Time)', 
+	openSetHeaders = ['User','Session', 'Repeat', 'Session Completed (Date)','Session Completed (Time)', 
 	'Module Completed (Date)','Module Completed (Time)', 'Test Sound (Speaker)', 'Test Sound (File)', 'Correct Answer', 'Key Words','User Response','Percent Correct']
 	rows.append(openSetHeaders)
 	for openSet in openSets:
 		openSetRow = []
 		openSetRow.append(openSet.user_attrib.username)
-		openSetRow.append(openSet.open_set_module_order.session.week)
-		openSetRow.append(openSet.open_set_module_order.session.day)
-		openSetRow.append(("yes" if openSet.repeat else "no"))
+		openSetRow.append("yes" if openSet.repeat else "no")
+		openSetRow.append(openSet.user_session.user_sequence.sequence if openSet.user_session.user_sequence.sequence else '')
+		openSetRow.append(openSet.user_session.session if openSet.user_session.session else '')
 		session = openSet.open_set_module_order.session
 		user = openSet.user_attrib
 		sessionDateTime = User_Session.objects.get(user = user, session = session).date_completed
@@ -1270,19 +1315,17 @@ def appendOpenSets(rows, openSets):
 
 def appendClosedSetTexts(rows, closedSetTexts):
 	# Add Rows for the Talker Identification training module 
-	closedSetTextHeaders = ['User','Session Week','Session Day', 'Repeat', 'Session Completed (Date)','Session Completed (Time)', 
+	closedSetTextHeaders = ['User','Sequence','Session', 'Repeat', 'Session Completed (Date)','Session Completed (Time)', 
 		'Module Completed (Date)','Module Completed (Time)', 'Closed Set Text ID', 'Test Sound Source', 'Test Sound File', 
 		'Choices', 'User Response', 'Correct']
 	rows.append(closedSetTextHeaders)
 	for closedSetText in closedSetTexts:
 		closedSetTextRow = []
 		closedSetTextRow.append(closedSetText.user_attrib.username)
-		closedSetTextRow.append(closedSetText.closed_set_text_order.session.week)
-		closedSetTextRow.append(closedSetText.closed_set_text_order.session.day)
-		closedSetTextRow.append(("yes" if closedSetText.repeat else "no"))
-		session = closedSetText.closed_set_text_order.session
-		user = closedSetText.user_attrib
-		sessionDateTime = User_Session.objects.get(user = user, session = session).date_completed
+		closedSetTextRow.append(closedSetText.user_session.user_sequence.sequence if closedSetText.user_session.user_sequence.sequence else '')
+		closedSetTextRow.append(closedSetText.user_session.session if closedSetText.user_session.session else '')
+		closedSetTextRow.append("yes" if closedSetText.repeat else "no")
+		sessionDateTime = closedSetText.user_session.date_completed
 		if sessionDateTime == None:
 			closedSetTextRow.append('NA')
 			closedSetTextRow.append('NA')

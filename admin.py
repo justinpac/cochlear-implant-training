@@ -5,6 +5,7 @@ from cochlear.models import *
 
 admin.site.register(User_Attrib)
 admin.site.register(User_Session)
+admin.site.register(User_Sequence)
 
 admin.site.register(Speaker)
 admin.site.register(Speech)
