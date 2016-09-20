@@ -1213,7 +1213,7 @@ def checkWeekProg(userObj):
 def appendTalkerID(rows):
 	# Add Rows for the Talker Identification training module 
 	rows.append(['Speaker Identification'])
-	talkerIDHeaders = ['User','Session', 'Repeat', 'Session Completed (Date)','Session Completed (Time)', 
+	talkerIDHeaders = ['User','Sequence','Session', 'Repeat', 'Session Completed (Date)','Session Completed (Time)', 
 		'Module Completed (Date)','Module Completed (Time)', 'Talker Identification ID', 'Test Sound Speaker', 'Test Sound File', 
 		'Choices Speakers','Choices Files', 'User Response (Speaker)','User Response (File)', 'Correct']
 	rows.append(talkerIDHeaders)
@@ -1272,19 +1272,19 @@ def appendTalkerID(rows):
 		rows.append(talkerIDRow)
 
 def appendOpenSets(rows, openSets):
-	openSetHeaders = ['User','Session', 'Repeat', 'Session Completed (Date)','Session Completed (Time)', 
+	openSetHeaders = ['User','Sequence','Session', 'Repeat', 'Session Completed (Date)','Session Completed (Time)', 
 	'Module Completed (Date)','Module Completed (Time)', 'Test Sound (Speaker)', 'Test Sound (File)', 'Correct Answer', 'Key Words','User Response','Percent Correct']
 	rows.append(openSetHeaders)
 	for openSet in openSets:
 		openSetRow = []
 		openSetRow.append(openSet.user_attrib.username)
-		openSetRow.append("yes" if openSet.repeat else "no")
 		try:
 			openSetRow.append(openSet.user_session.user_sequence.sequence)
 			openSetRow.append(openSet.user_session.session)
 		except:
 			openSetRow.append('')
 			openSetRow.append('')
+		openSetRow.append("yes" if openSet.repeat else "no")
 		session = openSet.open_set_module_order.session
 		user = openSet.user_attrib
 		sessionDateTime = User_Session.objects.get(user = user, session = session).date_completed
