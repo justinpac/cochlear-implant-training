@@ -42,7 +42,7 @@ class Session(models.Model):
 class User_Session(models.Model):
 	user = models.ForeignKey('User_Attrib', on_delete=models.CASCADE)
 	session = models.ForeignKey('Session',on_delete=models.SET_NULL, blank = True, null=True)
-	user_sequence = models.ForeignKey('User_Sequence', on_delete=models.CASCADE)
+	user_sequence = models.ForeignKey('User_Sequence', on_delete=models.CASCADE, blank = True, null=True)
 	date_completed = models.DateTimeField('date_completed', blank = True, null = True)
 	modules_completed = models.PositiveSmallIntegerField(default=0)
 	first_speaker_id = models.BooleanField(default = True)
