@@ -1221,8 +1221,12 @@ def appendTalkerID(rows):
 	for talkerID in talkerIDs:
 		talkerIDRow = []
 		talkerIDRow.append(talkerID.user_attrib.username)
-		talkerIDRow.append(talkerID.user_session.user_sequence.sequence if talkerID.user_session.user_sequence.sequence else '')
-		talkerIDRow.append(talkerID.user_session.session if talkerID.user_session.session else '')
+		try:
+			talkerIDRow.append(talkerID.user_session.user_sequence.sequence)
+			talkerIDRow.append(talkerID.user_session.session)
+		except:
+			openSetRow.append('')
+			openSetRow.append('')
 		talkerIDRow.append("yes" if talkerID.repeat else "no")
 		session = talkerID.speaker_id_order.session
 		user = talkerID.user_attrib
@@ -1275,8 +1279,12 @@ def appendOpenSets(rows, openSets):
 		openSetRow = []
 		openSetRow.append(openSet.user_attrib.username)
 		openSetRow.append("yes" if openSet.repeat else "no")
-		openSetRow.append(openSet.user_session.user_sequence.sequence if openSet.user_session.user_sequence.sequence else '')
-		openSetRow.append(openSet.user_session.session if openSet.user_session.session else '')
+		try:
+			openSetRow.append(openSet.user_session.user_sequence.sequence)
+			openSetRow.append(openSet.user_session.session)
+		except:
+			openSetRow.append('')
+			openSetRow.append('')
 		session = openSet.open_set_module_order.session
 		user = openSet.user_attrib
 		sessionDateTime = User_Session.objects.get(user = user, session = session).date_completed
@@ -1322,8 +1330,12 @@ def appendClosedSetTexts(rows, closedSetTexts):
 	for closedSetText in closedSetTexts:
 		closedSetTextRow = []
 		closedSetTextRow.append(closedSetText.user_attrib.username)
-		closedSetTextRow.append(closedSetText.user_session.user_sequence.sequence if closedSetText.user_session.user_sequence.sequence else '')
-		closedSetTextRow.append(closedSetText.user_session.session if closedSetText.user_session.session else '')
+		try:
+			closedSetTextRow.append(closedSetText.user_session.user_sequence.sequence)
+			closedSetTextRow.append(closedSetText.user_session.session)
+		except:
+			openSetRow.append('')
+			openSetRow.append('')
 		closedSetTextRow.append("yes" if closedSetText.repeat else "no")
 		sessionDateTime = closedSetText.user_session.date_completed
 		if sessionDateTime == None:
