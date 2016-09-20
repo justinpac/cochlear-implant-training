@@ -1225,8 +1225,8 @@ def appendTalkerID(rows):
 			talkerIDRow.append(talkerID.user_session.user_sequence.sequence)
 			talkerIDRow.append(talkerID.user_session.session)
 		except:
-			openSetRow.append('')
-			openSetRow.append('')
+			talkerIDRow.append('')
+			talkerIDRow.append('')
 		talkerIDRow.append("yes" if talkerID.repeat else "no")
 		session = talkerID.speaker_id_order.session
 		user = talkerID.user_attrib
@@ -1334,8 +1334,8 @@ def appendClosedSetTexts(rows, closedSetTexts):
 			closedSetTextRow.append(closedSetText.user_session.user_sequence.sequence)
 			closedSetTextRow.append(closedSetText.user_session.session)
 		except:
-			openSetRow.append('')
-			openSetRow.append('')
+			closedSetTextRow.append('')
+			closedSetTextRow.append('')
 		closedSetTextRow.append("yes" if closedSetText.repeat else "no")
 		sessionDateTime = closedSetText.user_session.date_completed
 		if sessionDateTime == None:
