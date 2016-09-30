@@ -314,7 +314,7 @@ class User_Open_Set_Module(models.Model):
 	repeat = models.BooleanField(help_text = "Was this completed while the user was repeating the training module?") # Indicates if this instance was generated while the user was repeating the training module
 	date_completed = models.DateTimeField(blank = True, null = True)
 	user_response = models.TextField(blank = True, null = True)
-	percent_correct = models.PositiveSmallIntegerField()
+	percent_correct = models.PositiveSmallIntegerField(blank = True, null = True)
 
 	def __str__(self):
 		return "User: " + str(self.user_attrib) + ", " + str(self.open_set_module_order)
