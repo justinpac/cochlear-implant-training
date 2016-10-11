@@ -88,7 +88,7 @@ class User_Sequence(models.Model):
 		verbose_name = "sequence assignment"
 
 	def __str__(self):
-		return "User: "  + self.user.username + ", Sequence: " + self.sequence.name
+		return "User: "  + self.user.username + ", Sequence: " + (self.sequence.name if self.sequence else "No Sequence Selected")
 
 # Speaker associated with potentially many speech files
 class Speaker(models.Model):
