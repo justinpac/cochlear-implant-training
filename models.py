@@ -283,7 +283,8 @@ class Open_Set_Module(models.Model):
 
 	def __str__(self):
 		module_types = ["other", "meaningful", "anomalous", "word", "environmental"]
-		return "(" + module_types[self.module_type] + ") " + self.answer
+		test_sound = self.unknown_speech if self.unknown_speech else self.unknown_sound
+		return "(" + module_types[self.module_type] + ") " + str(test_sound)
 
 	class Meta:
 		# admin panel display name
