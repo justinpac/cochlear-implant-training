@@ -33,3 +33,7 @@ button {
   display:none;
   color:red;
 }
+
+#ready {
+  display: none;
+}

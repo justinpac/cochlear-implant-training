@@ -27,18 +27,18 @@
         </div>
       {% endfor %}
       <div class="col-md-12" style="text-align:center">
-        <button id = "ready" type = "button" class="btn btn-secondary btn-lg"> Ready </button>
+        <button id = "ready" type = "button" class="btn btn-secondary btn-lg"> Ready to be tested on speaker voices </button>
       </div>
       <div id ="next" class="col-md-12" style="display:none;">
       <a href = "{% url 'cochlear:goToNextModule' %}">
         <button type = "button" class="btn btn-secondary btn-lg">
-            <span class="glyphicon glyphicon-circle-arrow-right" aria-hidden="true" style="color:black"></span> Proceed To The Next Training Module
+            <span class="glyphicon glyphicon-circle-arrow-right" aria-hidden="true" style="color:black"></span> Proceed to the next training module
         </button>
         {% if thisisatest == 0 %}
         </br>
         <a href = "{% url 'cochlear:speaker' speaker_module=speaker_module_id repeatFlag=1 order_id=order_id %}" >
           <button type = "button" class="btn btn-secondary btn-lg" >
-              <span class="glyphicon glyphicon-repeat" aria-hidden="true"></span> Repeat This Question
+              <span class="glyphicon glyphicon-repeat" aria-hidden="true"></span> Repeat this question
           </button>
         </a>
         {% endif %}
@@ -53,7 +53,7 @@
 <script src="{% static 'js/CSRF.js' %}"></script>
 <script type="text/javascript">
 //max number of times an audio file can be played
-MAX_AUDIO_REPLAY = 5
+var MAX_AUDIO_REPLAY = 5;
 
 // an integer (0 or 1) indicating if the training module was answered correctly
 var answered_correctly;
@@ -138,14 +138,31 @@ function play_speaker(index) {
       }).mouseleave(function(){
           $(this).css("cursor","default");
       });
+    } else if (index > 0 && audioPlayed[index] == 1) {
+      $('[onclick="play_speaker(' + index + ')"]').css("color","#e5e5e5")
+      $('[onclick="play_speaker(' + index + ')"] span').css("color","#e5e5e5")
     }
+  }
+
+  // Set flag to indicate if user has played all speaker choices
+  var playedChoices = true;
+  for (var i = 1; i < audioPlayed.length; i++){
+    if (audioPlayed[i] == 0) {
+      playedChoices = false;
+    }
+  }
+
+  // If all speaker choices have been played and we have not revealed the test sound,
+  // slide down button for testing
+  if (playedChoices && audioPlayed[0] == 0) {
+    $("#ready").slideDown("swing");
   }
 }
 
 // Display unknown speaker and possible answer choices
 $( document ).ready(function() {
     // enable the bootstrap popover
-    var dashboardHelp = 'This is a Speaker identification training module. Listen to the speakers by clicking on their respective buttons. You can listen to each speaker a maximum of five times. Try your best to memorize each speaker\'s voice, then click "Ready." Listen to the unknown speaker, then select who you think the unknown speaker is. When you are finished, you may proceed to the next training module, or you may repeat this one. Click ? to close this message.'
+    var dashboardHelp = 'This is a Speaker identification training module. Listen to the speakers by clicking on their respective buttons. You can listen to each speaker a maximum of five times. Try your best to memorize each speaker\'s voice, then click "Ready to be tested on speaker voices." Listen to the unknown speaker, then select who you think the unknown speaker is. When you are finished, you may proceed to the next training module, or you may repeat this one. Click ? to close this message.'
     $('body').popover({title:"Help: Speaker Identification", content:dashboardHelp, selector:"#helpButton", placement:"left", trigger: "click"});
 
     $("#ready").click(function(event){

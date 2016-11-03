@@ -25,7 +25,7 @@ from django.http import StreamingHttpResponse
 
 SESSION_CAP = 4
 
-OPEN_SET_MODULE_TYPES = ['Other','Meaningful Sentence','Anomalous Sentence','Word','Environmental'] 
+OPEN_SET_MODULE_TYPES = ['Other','Meaningful Sentence','Anomalous Sentence','Word','Environmental']
 CLOSED_SET_TEXT_TYPES = ['Other','Phoneme','Environmental']
 ALL_MODULE_TYPES = ['Closed Set Text','Open Set','Speaker ID']
 
@@ -41,7 +41,7 @@ def index(request):
 	context['cochlearUser'] = userList[0]
 
 	# Once a user starts their first session on a given week, we give them one week to complete all their sessions
-	# If it's been over a week since the user started their first session of a week, We want the progress bar to show 
+	# If it's been over a week since the user started their first session of a week, We want the progress bar to show
 	# they they have completed 0 sessions that week
 	currentTime = timezone.now()
 	if (userList[0].current_week_start_date == None) or (currentTime - userList[0].current_week_start_date) > datetime.timedelta(days=7):
@@ -260,20 +260,23 @@ def getNextSession(userObj):
 	elif userObj.progression == 1: # This user gone through inital testing
 		userSequences = User_Sequence.objects.filter(user = userObj, date_completed__isnull = True, sequence__category = 1)
 	elif userObj.progression == 2: # This user has gone through week one and is therfore calibrated
-		userSequences = User_Sequence.objects.filter(user = userObj, date_completed__isnull = True, sequence__category = 0)
+		userSequences = User_Sequence.objects.filter(user = userObj, date_completed__isnull = True, sequence__category = 2)
 
-	if not userSequences: #TODO: generate a new sequence if this user has been calibrated
+	if not userSequences and userObj.progression == 2: #TODO: generate a new sequence if this user has been calibrated
 		return None
-	
+	elif not userSequences:
+		return None
+
+
 	userSequence = userSequences.earliest('date_assigned')
 	if not userSequence.sequence.sessions:
 		return None
-	
+
 	sessionOrder = Session_Order.objects.get(sequence = userSequence.sequence, order = userSequence.sessions_completed + 1)
-	
+
 	if sessionOrder.session.countModules() == 0: # If there are no models contained in this session
 		return None
-	
+
 	userSequence.date_started = timezone.now()
 	userSequence.save()
 	return sessionOrder.session
@@ -336,9 +339,9 @@ def openSetCompleted(request):
 	else:
 		# if this module IS being repeated, then create a new User_Open_Set_Module
 		user_session = User_Session.objects.get(user=user, date_completed=None) if User_Session.objects.filter(user=user, date_completed=None) else None
-		moduleHist = User_Open_Set_Module(open_set_module_order = open_set_module_order, user_attrib = user, repeat = True, 
+		moduleHist = User_Open_Set_Module(open_set_module_order = open_set_module_order, user_attrib = user, repeat = True,
 			date_completed = timezone.now(), user_response = user_response, percent_correct=percentCorrect, user_session=user_session)
-	
+
 	moduleHist.save()
 	return HttpResponse("Success")
 
@@ -382,7 +385,7 @@ def closedSetTextCompleted(request):
 	else:
 		# if this module IS being repeated, then create a new User_Speaker_ID
 		user_session = User_Session.objects.get(user=user, date_completed=None) if User_Session.objects.filter(user=user, date_completed=None) else None
-		moduleHist = User_Closed_Set_Text(closed_set_text_order = closed_set_text_order, user_attrib = user, repeat = True, date_completed = timezone.now(), 
+		moduleHist = User_Closed_Set_Text(closed_set_text_order = closed_set_text_order, user_attrib = user, repeat = True, date_completed = timezone.now(),
 			user_response = user_response, correct = answered_correctly, user_session = user_session)
 
 	moduleHist.save()
@@ -422,14 +425,14 @@ def speakerCompleted(request):
 	else:
 		# if this module IS being repeated, then create a new User_Speaker_ID
 		user_session = User_Session.objects.get(user=user, date_completed=None) if User_Session.objects.filter(user=user, date_completed=None) else None
-		moduleHist = User_Speaker_ID(speaker_id_order = speaker_id_order, user_attrib = user, repeat = True, date_completed = timezone.now(), 
+		moduleHist = User_Speaker_ID(speaker_id_order = speaker_id_order, user_attrib = user, repeat = True, date_completed = timezone.now(),
 			user_response = user_response, correct = answered_correctly, user_session = user_session)
 
 	moduleHist.save()
 	return HttpResponse("Success")
 
 def getDashboardData(request):
-	#Wrap dashboard data in json 
+	#Wrap dashboard data in json
 	ctx =  {}
 	loadDashboardData(ctx)
 	data = json.dumps(ctx)
@@ -531,7 +534,7 @@ def createSoundSource(request):
 # dropDownArr - A two dimensionsal array of arrays, with each inner arrray being a set of dropdown options for eac dropdown header
 # The outer array of dropdown arr should have as many elements as dropDownHeaderArr
 # IMPORTANT - user must populate context[ID][rows] and context[ID][rowData] themselves after using this function.
-# These are also arrays of arrays, with rows and rowData corresponding to headers and dropdown headers respectively.  
+# These are also arrays of arrays, with rows and rowData corresponding to headers and dropdown headers respectively.
 def loadTableData(context, ID, headerArr, dropDownHeaderArr, dropDownArr, subDropHeaderArr, subDropArr):
 	context[ID] = {}
 	context[ID]['headers'] = headerArr
@@ -552,7 +555,7 @@ def loadTableData(context, ID, headerArr, dropDownHeaderArr, dropDownArr, subDro
 	context[ID]['dropDownHeaderIDs'] = list(context[ID]['dropDownHeaders'])
 	for i in range(len(context[ID]['dropDownHeaderIDs'])):
 		context[ID]['dropDownHeaderIDs'][i] = context[ID]['dropDownHeaderIDs'][i].replace(' ','-')
-		context[ID]['dropDownHeaderIDs'][i] = context[ID]['dropDownHeaderIDs'][i].lower()	
+		context[ID]['dropDownHeaderIDs'][i] = context[ID]['dropDownHeaderIDs'][i].lower()
 	context[ID]['subDropHeaderIDs'] = list(context[ID]['subDropHeaders'])
 	for i in range(len(context[ID]['subDropHeaderIDs'])):
 		context[ID]['subDropHeaderIDs'][i] = context[ID]['subDropHeaderIDs'][i].replace(' ','-')
@@ -578,10 +581,10 @@ def loadSpeechDatatable(request):
 	maxObj = int(request.GET['length']) # maximum number of records the table can display
 	searchQ = request.GET['search[value]'] # global search
 	objCount = 0
-	
+
 	#Query based on the search parameter
 	speechFiles = Speech.objects.annotate(speech_file_name = Substr('speech_file',17)).filter(Q(speaker__name__icontains=searchQ) | Q(speaker__gender__icontains=searchQ) | Q(speech_file_name__icontains=searchQ));
-	
+
 	# Filter based on drop down selection
 	dropDownArr = json.loads(request.GET['dropdowns'])
 	for dropDown in dropDownArr:
@@ -633,7 +636,7 @@ def loadSpeechDatatable(request):
 		if (objCount == maxObj):
 			break
 
-	response = json.dumps(dataObj) 
+	response = json.dumps(dataObj)
 	return HttpResponse(response, content_type='application/json')
 
 def loadSpeakerData(context):
@@ -655,10 +658,10 @@ def loadSpeakerDatatable(request):
 	maxObj = int(request.GET['length']) # maximum number of records the table can display
 	searchQ = request.GET['search[value]'] # global search
 	objCount = 0
-	
+
 	#Query based on the search parameter
 	speakerList = Speaker.objects.filter(Q(name__icontains=searchQ) | Q(gender__icontains=searchQ) | Q(notes__icontains=searchQ));
-	
+
 	# Filter based on drop down selection
 	dropDownArr = json.loads(request.GET['dropdowns'])
 	for dropDown in dropDownArr:
@@ -710,7 +713,7 @@ def loadSpeakerDatatable(request):
 		if (objCount == maxObj):
 			break
 
-	response = json.dumps(dataObj) 
+	response = json.dumps(dataObj)
 	return HttpResponse(response, content_type='application/json')
 
 def loadSoundData(context):
@@ -732,10 +735,10 @@ def loadSoundDatatable(request):
 	maxObj = int(request.GET['length']) # maximum number of records the table can display
 	searchQ = request.GET['search[value]'] # global search
 	objCount = 0
-	
+
 	#Query based on the search parameter
 	soundFiles = Sound.objects.annotate(sound_file_name = Substr('sound_file', 16)).filter(Q(sound_file_name__icontains=searchQ) | Q(source__name__icontains=searchQ));
-	
+
 	# Filter based on drop-down selection
 	dropDownArr = json.loads(request.GET['dropdowns'])
 	for dropDown in dropDownArr:
@@ -776,7 +779,7 @@ def loadSoundDatatable(request):
 		if (objCount == maxObj):
 			break
 
-	response = json.dumps(dataObj) 
+	response = json.dumps(dataObj)
 	return HttpResponse(response, content_type='application/json')
 
 def loadSourceData(context):
@@ -798,10 +801,10 @@ def loadSourceDatatable(request):
 	maxObj = int(request.GET['length']) # maximum number of records the table can display
 	searchQ = request.GET['search[value]'] # global search
 	objCount = 0
-	
+
 	#Query based on the search parameter
 	sourceList = Sound_Source.objects.filter(Q(name__icontains=searchQ) | Q(notes__icontains=searchQ));
-	
+
 	# Filter based on drop-down selection
 	dropDownArr = json.loads(request.GET['dropdowns'])
 	for dropDown in dropDownArr:
@@ -842,7 +845,7 @@ def loadSourceDatatable(request):
 		if (objCount == maxObj):
 			break
 
-	response = json.dumps(dataObj) 
+	response = json.dumps(dataObj)
 	return HttpResponse(response, content_type='application/json')
 
 def loadClosedSetTextData(context):
@@ -861,11 +864,11 @@ def loadCSTDatatable(request):
 	maxObj = int(request.GET['length']) # maximum number of records the table can display
 	searchQ = request.GET['search[value]'] # global search
 	objCount = 0
-	
+
 	#Query based on the search parameter
 	cstList = Closed_Set_Text.objects.annotate(unknown_sound_file = Substr('unknown_sound__sound_file',16), unknown_speech_file = Substr('unknown_speech__speech_file', 17)).filter(
 		Q(unknown_speech_file__icontains=searchQ) | Q(unknown_sound_file__icontains=searchQ))
-	
+
 	# Filter based on drop-down selection
 	dropDownArr = json.loads(request.GET['dropdowns'])
 	for dropDown in dropDownArr:
@@ -905,7 +908,7 @@ def loadCSTDatatable(request):
 		if (objCount == maxObj):
 			break
 
-	response = json.dumps(dataObj) 
+	response = json.dumps(dataObj)
 	return HttpResponse(response, content_type='application/json')
 
 def loadOpenSetData(context):
@@ -924,11 +927,11 @@ def loadOSMDatatable(request):
 	maxObj = int(request.GET['length']) # maximum number of records the table can display
 	searchQ = request.GET['search[value]'] # global search
 	objCount = 0
-	
+
 	#Query based on the search parameter
 	osmList =Open_Set_Module.objects.annotate(unknown_sound_file = Substr('unknown_sound__sound_file',16), unknown_speech_file = Substr('unknown_speech__speech_file', 17)).filter(
 		Q(unknown_speech_file__icontains=searchQ) | Q(unknown_sound_file__icontains=searchQ) | Q(answer__icontains=searchQ) | Q(key_words__icontains=searchQ))
-	
+
 	# Filter based on drop-down selection
 	dropDownArr = json.loads(request.GET['dropdowns'])
 	for dropDown in dropDownArr:
@@ -972,7 +975,7 @@ def loadOSMDatatable(request):
 		if (objCount == maxObj):
 			break
 
-	response = json.dumps(dataObj) 
+	response = json.dumps(dataObj)
 	return HttpResponse(response, content_type='application/json')
 
 def loadSpeakerIDData(context):
@@ -988,7 +991,7 @@ def loadSIDDatatable(request):
 	maxObj = int(request.GET['length']) # maximum number of records the table can display
 	searchQ = request.GET['search[value]'] # global search
 	objCount = 0
-	
+
 	#Query based on the search parameter
 	sidList = Speaker_ID.objects.annotate(unknown_speech_file = Substr('unknown_speech__speech_file', 17)).filter(Q(unknown_speech_file__icontains=searchQ))
 
@@ -1024,7 +1027,7 @@ def loadSIDDatatable(request):
 		if (objCount == maxObj):
 			break
 
-	response = json.dumps(dataObj) 
+	response = json.dumps(dataObj)
 	return HttpResponse(response, content_type='application/json')
 
 def loadDashboardData(context):
@@ -1097,7 +1100,7 @@ def closedsettextAdd(request):
 	return render(request,'cochlear/closedsettextAdd.html',context)
 
 def refreshClosedSetTextAdd(request):
-	#Wrap dashboard data in json 
+	#Wrap dashboard data in json
 	context =  {}
 	context['speechFileList'] = {}
 	context['speechFileList']['Names'] = []
@@ -1181,7 +1184,7 @@ def speakeridAdd(request):
 	return render(request,'cochlear/speakeridAdd.html',context)
 
 def refreshspeakeridAdd(request):
-	#Wrap dashboard data in json 
+	#Wrap dashboard data in json
 	context =  {}
 	context['speechFileList'] = {}
 	context['speechFileList']['Names'] = []
@@ -1211,10 +1214,10 @@ def checkWeekProg(userObj):
 ###################
 
 def appendTalkerID(rows):
-	# Add Rows for the Talker Identification training module 
+	# Add Rows for the Talker Identification training module
 	rows.append(['Speaker Identification'])
-	talkerIDHeaders = ['User','Sequence','Session', 'Repeat', 'Session Completed (Date)','Session Completed (Time)', 
-		'Module Completed (Date)','Module Completed (Time)', 'Talker Identification ID', 'Test Sound Speaker', 'Test Sound File', 
+	talkerIDHeaders = ['User','Sequence','Session', 'Repeat', 'Session Completed (Date)','Session Completed (Time)',
+		'Module Completed (Date)','Module Completed (Time)', 'Talker Identification ID', 'Test Sound Speaker', 'Test Sound File',
 		'Choices Speakers','Choices Files', 'User Response (Speaker)','User Response (File)', 'Correct']
 	rows.append(talkerIDHeaders)
 	talkerIDs = User_Speaker_ID.objects.filter(date_completed__isnull = False)
@@ -1266,13 +1269,13 @@ def appendTalkerID(rows):
 		talkerIDRow.append(choicesSpeakers)
 		talkerIDRow.append(choicesFiles)
 		speakerName = talkerID.user_response.speaker.name
-		talkerIDRow.append('NA') if (speakerName == None) else talkerIDRow.append(speakerName) 
+		talkerIDRow.append('NA') if (speakerName == None) else talkerIDRow.append(speakerName)
 		talkerIDRow.append(talkerID.user_response.speech_file.name.strip('cochlear/speech/'))
 		talkerIDRow.append('correct' if talkerID.correct else 'incorrect')
 		rows.append(talkerIDRow)
 
 def appendOpenSets(rows, openSets):
-	openSetHeaders = ['User','Sequence','Session', 'Repeat', 'Session Completed (Date)','Session Completed (Time)', 
+	openSetHeaders = ['User','Sequence','Session', 'Repeat', 'Session Completed (Date)','Session Completed (Time)',
 	'Module Completed (Date)','Module Completed (Time)', 'Test Sound (Speaker)', 'Test Sound (File)', 'Correct Answer', 'Key Words','User Response','Percent Correct']
 	rows.append(openSetHeaders)
 	for openSet in openSets:
@@ -1322,9 +1325,9 @@ def appendOpenSets(rows, openSets):
 		rows.append(openSetRow)
 
 def appendClosedSetTexts(rows, closedSetTexts):
-	# Add Rows for the Talker Identification training module 
-	closedSetTextHeaders = ['User','Sequence','Session', 'Repeat', 'Session Completed (Date)','Session Completed (Time)', 
-		'Module Completed (Date)','Module Completed (Time)', 'Closed Set Text ID', 'Test Sound Source', 'Test Sound File', 
+	# Add Rows for the Talker Identification training module
+	closedSetTextHeaders = ['User','Sequence','Session', 'Repeat', 'Session Completed (Date)','Session Completed (Time)',
+		'Module Completed (Date)','Module Completed (Time)', 'Closed Set Text ID', 'Test Sound Source', 'Test Sound File',
 		'Choices', 'User Response', 'Correct']
 	rows.append(closedSetTextHeaders)
 	for closedSetText in closedSetTexts:
@@ -1375,7 +1378,7 @@ def appendClosedSetTexts(rows, closedSetTexts):
 			else:
 				textChoices += ", " + choice.text
 		closedSetTextRow.append(textChoices)
-		closedSetTextRow.append(closedSetText.user_response.text) 
+		closedSetTextRow.append(closedSetText.user_response.text)
 		closedSetTextRow.append('correct' if closedSetText.correct else 'incorrect')
 		rows.append(closedSetTextRow)
 
@@ -1398,7 +1401,7 @@ def getUserDataCSV(request,subset):
 		openSets = User_Open_Set_Module.objects.filter(open_set_module_order__open_set_module__module_type = 1, date_completed__isnull = False)
 		appendOpenSets(rows, openSets)
 		rows.append([])
-		
+
 		rows.append(['Anomalous (Open Set)'])
 		openSets = User_Open_Set_Module.objects.filter(open_set_module_order__open_set_module__module_type = 2, date_completed__isnull = False)
 		appendOpenSets(rows, openSets)
@@ -1474,7 +1477,7 @@ def getUserDataCSV(request,subset):
 		rows.append(['Environmental (Open Set)'])
 		openSets = User_Open_Set_Module.objects.filter(open_set_module_order__open_set_module__module_type = 4, date_completed__isnull = False)
 		appendOpenSets(rows, openSets)
-		
+
 		pseudo_buffer = Echo()
 		writer = csv.writer(pseudo_buffer)
 		response = StreamingHttpResponse((writer.writerow(row) for row in rows), content_type="text/csv")

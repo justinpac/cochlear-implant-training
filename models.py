@@ -16,7 +16,7 @@ class User_Attrib(models.Model):
 	speaker_id_countdown = models.PositiveSmallIntegerField(default = 80, help_text='The number of speaker id questions the user must complete before their proficiency for speaker id is evaluated. In effect after the user has completed week one.')
 	open_set_module_countdown = models.CharField(max_length=100, default="80-80-80-80-80", help_text='The number of open set modules of a given type the user must complete before their respective proficiency is re-evaluated. In effect after the user has completed week one.')
 	closed_set_text_countdown = models.CharField(max_length=100, default="80-80-80-80-80", help_text='The number of closed set text modules of a given type the user must complete before their respective proficiency is re-evaluated. In effect after the user has completed week one.')
-	
+
 	def __str__(self):
 		return self.username
 
@@ -48,7 +48,7 @@ class User_Session(models.Model):
 	first_speaker_id = models.BooleanField(default = True)
 	first_open_set_module = models.CharField(max_length=15, default="11111", help_text='A string of integers. The index represents module type, and each integer is a 0 or 1 indicating if this user has not yet completed a module of that type.')
 	first_closed_set_text = models.CharField(max_length=15, default="111", help_text='A string of integers. The index represents module type, and each integer is a 0 or 1 indicating if this user has not yet completed a module of that type.')
-	
+
 	def __str__(self):
 		return "User: " + self.user.username + ", Session: " + str(self.session)+ ", DateCompleted: " + str(self.date_completed)
 
@@ -95,7 +95,7 @@ class Speaker(models.Model):
 	name = models.CharField(max_length = 50, unique=True)
 	display_name = models.CharField(max_length = 50, help_text="This is the name the user will see when encountering this speaker, such as in the speaker identification module")
 	gender = models.CharField(max_length=20, help_text="Type 'male' for male or 'female' for female")
-	notes = models.TextField(help_text="Miscellaneous information", blank=True) 
+	notes = models.TextField(help_text="Miscellaneous information", blank=True)
 
 	def __str__(self):
 		return self.name
@@ -135,7 +135,7 @@ class Sound(models.Model):
 		return self.sound_file.name.strip('cochlear/sound/')
 
 # A text-based response, used in closed set training modules.
-class Text_Choice(models.Model):        
+class Text_Choice(models.Model):
 	text = models.TextField(unique=True)
 
 	def __str__(self):
@@ -156,7 +156,7 @@ class Closed_Set_Text(models.Model):
 	def __str__(self):
 		module_types = ["Other","Phoneme", "Environmental"]
 		test_sound = self.unknown_speech if self.unknown_speech else self.unknown_sound
-		return "(" + module_types[self.module_type] + ") " + str(test_sound) + ", Choices: " + str(self.text_choices.all().count())
+		return "(" + module_types[self.module_type] + ") " + str(test_sound)
 
 	class Meta:
 		verbose_name_plural = "(Training Module) Closed Set Text Modules"
@@ -184,7 +184,7 @@ class Closed_Set_Text_Order(models.Model):
 
 	def __str__(self):
 		return "Session: " + str(self.session) + ", Closed Set Text: ["+ str(self.closed_set_text) + "]"
-	
+
 	class Meta:
 		verbose_name_plural = "Closed Set Text Order"
 		verbose_name = "closed set text order"
@@ -215,7 +215,7 @@ class Speaker_ID(models.Model):
 	difficulty = models.PositiveSmallIntegerField(help_text="Enter a number between 0 and 9.")
 
 	def __str__(self):
-		return "Unknown Speech: " + str(self.unknown_speech) + ", Choices: " + str(self.choices.all().count())
+		return "Unknown Speech: " + str(self.unknown_speech)
 
 	class Meta:
 		# admin panel display name
@@ -277,7 +277,7 @@ class Open_Set_Module(models.Model):
 	unknown_sound = models.ForeignKey('Sound', on_delete = models.CASCADE, blank = True, null = True, help_text = "The unknown sound to be identified. Pick one sound or speech.")
 	answer = models.TextField()
 	module_type = models.PositiveSmallIntegerField(help_text="0 = other, 1 = meaningful sentence training, 2 = anomalous sentence training, 3 = word training, 4 = environmental sound training")
-	key_words = models.TextField(blank=True, help_text='''The keywords of this answer (used to determine accuracy). Enter each keyword separated by underscores. Group together alternate words and separate them by forward slashes. 
+	key_words = models.TextField(blank=True, help_text='''The keywords of this answer (used to determine accuracy). Enter each keyword separated by underscores. Group together alternate words and separate them by forward slashes.
 		For example, "birch_canoe_slid/hid/bid_down_smooth_planks/pluck ranks". The user is allow one typo (insertion, deletion, or substitution) when evaluating each keyword.''')
 	difficulty = models.PositiveSmallIntegerField(help_text="Enter a number between 0 and 9.")
 
