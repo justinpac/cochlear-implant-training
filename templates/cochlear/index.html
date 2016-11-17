@@ -10,7 +10,7 @@
 <div class="container"><!-- This is a bootstrap class -->
 	<h1> Welcome, {{cochlearUser.first_name}}! </h1>
 	<div class="progress">
-		
+
 		{% if percentComplete == 100 %}
 		<div id ="progressBar" class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="{{percentComplete}}" aria-valuemin="0" aria-valuemax="100" style="width:{{percentComplete}}%;background-color:#5cb85c;">
 		<span>Great job, all four sessions are completed this week!</span>
@@ -36,7 +36,13 @@
     	<a href = "{% url 'cochlear:history' %}" >
 	    	<button id = "history" type="button" class="btn btn-secondary btn-lg">view training history</button>
 	    </a>
+			{% if isManager %}
+			<a href = "{% url 'cochlear:dashboard' %}" >
+				<button id = "dashboard" type="button" class="btn btn-secondary btn-lg">manager dashboard</button>
+			</a>
+			{% endif %}
     </div>
+
 
 	<!-- Modal -->
 	<div id="24HourWarning" class="modal fade" role="dialog">

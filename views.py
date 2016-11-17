@@ -31,14 +31,13 @@ ALL_MODULE_TYPES = ['Closed Set Text','Open Set','Speaker ID']
 
 def index(request):
 	#If user is manager, redirect to the manager dashboard (so the homepage always takes the manager to their dashboard)
-	permission = cochlear.util.GetUserPermission(request.user.username);
-	if(permission > 0):
-		return redirect('cochlear:dashboard')
 
-	#Render a basic page
 	context = NavigationBar.generateAppContext(request,app="cochlear",title="index", navbarName=0)
 	userList = User_Attrib.objects.filter(username=request.user.username)
 	context['cochlearUser'] = userList[0]
+
+	permission = cochlear.util.GetUserPermission(request.user.username)
+	context['isManager'] = permission > 0
 
 	# Once a user starts their first session on a given week, we give them one week to complete all their sessions
 	# If it's been over a week since the user started their first session of a week, We want the progress bar to show
@@ -1045,6 +1044,9 @@ def dashboard(request):
 	context = NavigationBar.generateAppContext(request,app="cochlear",title="index", navbarName='manager',activeLink="Manager Dashboard")
 
 	loadDashboardData(context)
+
+	permission = cochlear.util.GetUserPermission(request.user.username)
+	context['isAdmin'] = permission > 1 
 
 	userAttribObj = User_Attrib.objects.get(username=request.user.username)
 	context['name'] = userAttribObj.first_name;

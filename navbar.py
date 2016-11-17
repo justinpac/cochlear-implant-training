@@ -10,6 +10,7 @@ appNavList = {
     		],
     'manager': [
     		{'text':'Manager Dashboard', 'url':'dashboard'},
-    		{'text':'Analytics', 'url':'analytics'}
+    		{'text':'Analytics', 'url':'analytics'},
+            {'text':'User Dashboard','url':'index'}
     ]
 }
