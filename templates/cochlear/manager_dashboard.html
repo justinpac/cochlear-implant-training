@@ -34,7 +34,22 @@
 			{% endfor %}
 	  </select>
 	</div>
-	<button class="btn btn-primary" id="csvDownload"> Download CSV </button>
+	<button class="btn btn-primary select-button" id="csvDownload"> Download CSV </button>
+	
+	{% if isAdmin %}
+		<center><h2>Manage Users</h2></center>
+		<h3>Add a manager</h3>
+		<div class="form-group inline">
+		  <select class="form-control" id="managerOptions">
+		  		{% for user in userOptions %}
+				<option value="{{user.username}}">{{user.username}}</option>
+				{% endfor %}
+		  </select>
+		</div>
+		<button class="btn btn-primary select-button" id="addManager"> Add Manager </button>
+		{% include "cochlear/embeds/big_table.html" with data=userList %}
+		{% include "cochlear/embeds/speechfiles_popup.html" %}
+	{% endif %}
 
 	<center><h2>Speech & Sound</h2></center>
 	<h3>Speech Files</h3>
@@ -84,6 +99,9 @@
 	$('document').ready(function(){
 		$('#csvDownload').click(function(){
 			location.replace('{% url "cochlear:getUserDataCSV" %}' + $('#csvOptions').val() +'/');
+		});
+		$('#addManager').click(function(){
+			$.post('{% url "cochlear:addManager" %}',{'newManager':$('#managerOptions').val(),'csrfmiddlewaretoken':'{{csrf_token}}'},RefreshData);
 		});
 	});
 	</script>

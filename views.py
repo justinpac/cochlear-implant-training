@@ -22,6 +22,12 @@ import csv
 from django.utils.six.moves import range
 from django.http import StreamingHttpResponse
 
+#Used in adding managers
+from django.contrib.auth.models import Permission
+from hipercore.models import HipercicUser
+from importlib import import_module
+import inspect
+from django.contrib.contenttypes.models import ContentType
 
 SESSION_CAP = 4
 
@@ -304,6 +310,59 @@ def createUserSessionData(sessionObj, userObj):
 ## Ajax methods ##
 ##################
 
+def addManager(request):
+	managername = request.POST['newManager']
+	userAttrib = User_Attrib.objects.get(username=managername)
+	userAttrib.status = 1
+	userAttrib.save()
+
+	user = HipercicUser.objects.get(username=managername)
+	#Get this app's models
+	appModelClass = import_module("cochlear.models")#Dynamically load the models
+	appModels = inspect.getmembers(appModelClass)#Get all the classes in that module
+	modelNames = []
+	for model in appModels:
+		try:#Only grab the ones who are a subclass of django Model
+			if(issubclass(model[1],django.db.models.Model)):
+				modelNames.append([model[0].lower(),model[1]])#Save the name and the actual model object
+		except:
+			pass
+	#Generate list of permissions we need to create (each model as 3: add, change, delete)
+	permNames = []
+	reverseTable = {}
+	for model in modelNames:
+		permNames.append("add_" + model[0])
+		permNames.append("change_" + model[0])
+		permNames.append("delete_" + model[0])
+		reverseTable["add_" + model[0]] = model
+		reverseTable["change_" + model[0]] = model
+		reverseTable["delete_" + model[0]] = model
+	appPermissions = Permission.objects.filter(content_type__app_label='cochlear')
+	codeNames = []
+	permList = []
+	for perm in appPermissions:
+		codeNames.append(perm.codename)
+		permList.append(perm)
+	#Create ones that are not created
+	for perm in permNames:
+		if(not perm in codeNames):
+			model = reverseTable[perm]
+			content_type = ContentType.objects.get_for_model(model[1])
+			newPerm = Permission.objects.create(codename=perm,name=perm,content_type=content_type)
+			permList.append(newPerm)
+	#Assign all of them to the user 
+	assignedCount = 0
+	for perm in permList:
+		if(not "user" in perm.codename and not user.has_perm("cochlear."+perm.codename)):
+			assignedCount += 1
+			user.user_permissions.add(perm)
+	#Make sure this user can access the admin panel
+	user.is_staff = True;
+
+	user.save()
+
+	return HttpResponse("success")
+
 def loadUserStat(request):
 	user_sessions = User_Session.objects.filter(date_completed__isnull = False)
 	rows = []
@@ -559,6 +618,71 @@ def loadTableData(context, ID, headerArr, dropDownHeaderArr, dropDownArr, subDro
 	for i in range(len(context[ID]['subDropHeaderIDs'])):
 		context[ID]['subDropHeaderIDs'][i] = context[ID]['subDropHeaderIDs'][i].replace(' ','-')
 		context[ID]['subDropHeaderIDs'][i] = context[ID]['subDropHeaderIDs'][i].lower()
+
+def loadUserData(context):
+	ID = 'userList'
+	headerArr = ['Username','Email','Permissions Group','Progression']
+	dropDownHeaderArr = ['Permissions Group','Progression']
+	dropDownArr = []
+	dropDownArr.append(['User','Manager','Admin'])
+	dropDownArr.append(['New User','Tested','Week One Complete'])
+	subDropHeaderArr = []
+	subDropArr = []
+	loadTableData(context, ID, headerArr, dropDownHeaderArr, dropDownArr, subDropHeaderArr, subDropArr)
+	context[ID]['ajaxurl'] = "cochlear:loadUserDatatable"
+
+def loadUserDatatable(request):
+	dataObj = {}
+	dataObj['data'] =[]
+	ID = 'userList'
+	maxObj = int(request.GET['length']) # maximum number of records the table can display
+	searchQ = request.GET['search[value]'] # global search
+	objCount = 0
+
+	#Query based on the search parameter
+	users = User_Attrib.objects.filter(Q(username__icontains=searchQ) | Q(email__icontains=searchQ))
+	# Filter based on drop down selection
+	dropDownArr = json.loads(request.GET['dropdowns'])
+	for dropDown in dropDownArr:
+		if dropDown['dropID'] == 'permissions-group':
+			dropFilter = int(dropDown['filter'])
+			users = users.filter(status=dropFilter)
+		else:
+			dropFilter = int(dropDown['filter'])
+			users = users.filter(progression=dropFilter)
+
+	dataObj['recordsFiltered'] = users.count()
+	dataObj['recordsTotal'] = User_Attrib.objects.count()
+
+	#sort by column
+	columnToSort = int(request.GET['order[0][column]'])
+	sortReverse = False if request.GET['order[0][dir]'] == 'asc' else True
+	colArr=['username','email','status','progression']
+	sortField = colArr[columnToSort]
+	if sortReverse:
+		if columnToSort > 1:
+			users = users.order_by('-' + sortField)
+		else:
+			users = users.order_by(Lower(sortField).desc())
+	else:
+		if columnToSort > 1:
+			users = users.order_by(sortField)
+		else:
+			users = users.order_by(Lower(sortField))
+
+	# start at an index based on the page number we're at
+	users = users[int(request.GET['start']):]
+
+	# append the appropiate number of rows
+	for u in users:
+		row = [u.username,u.email,u.status,u.progression]
+		dataObj['data'].append(row)
+		objCount += 1
+		if (objCount == maxObj):
+			break
+
+	response = json.dumps(dataObj)
+	return HttpResponse(response, content_type='application/json')
 
 def loadSpeechData(context):
 	ID = 'speechFileList'
@@ -1030,6 +1154,7 @@ def loadSIDDatatable(request):
 	return HttpResponse(response, content_type='application/json')
 
 def loadDashboardData(context):
+	loadUserData(context)
 	loadSpeechData(context)
 	loadSpeakerData(context)
 	loadSoundData(context)
@@ -1046,13 +1171,14 @@ def dashboard(request):
 	loadDashboardData(context)
 
 	permission = cochlear.util.GetUserPermission(request.user.username)
-	context['isAdmin'] = permission > 1 
+	context['isAdmin'] = permission > 1
 
 	userAttribObj = User_Attrib.objects.get(username=request.user.username)
 	context['name'] = userAttribObj.first_name;
 	#Just for fun, let's randomize the welcome message
 	context['welcome_msg'] = random.choice(["Welcome","Hello","Howdy","What a fine day","Welcome back","Good to see you"])
 	#Get the number of speech files and modules in the app
+	context['userOptions'] = User_Attrib.objects.all()
 	context['file_number'] = Speech.objects.all().count();
 	context['modules'] = Speaker_ID.objects.all().count();
 	return render(request,'cochlear/manager_dashboard.html',context)
