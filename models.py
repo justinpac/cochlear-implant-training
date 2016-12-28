@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib import admin
+from django.db.models import Avg
 
 # Information about the user
 class User_Attrib(models.Model):
@@ -10,13 +11,13 @@ class User_Attrib(models.Model):
 	status = models.PositiveSmallIntegerField(default = 0, help_text="0 = standard user, 1 = manager, 2 = admin") # 0 = standard user, 1 = manager, 2 = admin
 	current_week_start_date = models.DateTimeField(blank = True, null=True)
 	progression = models.PositiveSmallIntegerField(default=0, help_text='indicates which progression milestone the user has already passed. 0 = new user, 1 = tested, 2 = week one complete')
-	speaker_id_proficieny = models.PositiveSmallIntegerField(default = 0,help_text='The difficulty (0-9) of speaker identification best suited for this user.')
-	open_set_module_proficiency = models.CharField(max_length=15, default="00000", help_text='The difficulty (0-9) of open set modules best suited for this user.The index of the integer in this string correlates with the integer representation of module types.')
-	closed_set_text_proficiency = models.CharField(max_length=15, default="000", help_text='The difficulty (0-9) of closed set text modules best suited for this user.The index of the integer in this string correlates with the integer repersentation of module types.')
-	speaker_id_countdown = models.PositiveSmallIntegerField(default = 80, help_text='The number of speaker id questions the user must complete before their proficiency for speaker id is evaluated. In effect after the user has completed week one.')
-	open_set_module_countdown = models.CharField(max_length=100, default="80-80-80-80-80", help_text='The number of open set modules of a given type the user must complete before their respective proficiency is re-evaluated. In effect after the user has completed week one.')
-	closed_set_text_countdown = models.CharField(max_length=100, default="80-80-80-80-80", help_text='The number of closed set text modules of a given type the user must complete before their respective proficiency is re-evaluated. In effect after the user has completed week one.')
-
+	meaningful_proficiency = models.PositiveSmallIntegerField(default=0)
+	env_proficiency = models.PositiveSmallIntegerField(default=0)
+	anom_proficiency = models.PositiveSmallIntegerField(default=0)
+	word_proficiency = models.PositiveSmallIntegerField(default=0)
+	phon_proficiency = models.PositiveSmallIntegerField(default=0)
+	speaker_proficiency = models.PositiveSmallIntegerField(default=0)
+	
 	def __str__(self):
 		return self.username
 
@@ -30,6 +31,40 @@ class Session(models.Model):
 	open_set_modules = models.ManyToManyField('Open_Set_Module', through='Open_Set_Module_Order')
 	closed_set_texts = models.ManyToManyField('Closed_Set_Text', through='Closed_Set_Text_Order')
 	name = models.CharField(max_length=75, blank = True)
+	meaningful_difficulty = models.PositiveSmallIntegerField(editable = False, default = 0)
+	env_difficulty = models.PositiveSmallIntegerField(editable = False, default = 0)
+	anom_difficulty = models.PositiveSmallIntegerField(editable = False, default = 0)
+	word_difficulty = models.PositiveSmallIntegerField(editable = False, default = 0)
+	phon_difficulty = models.PositiveSmallIntegerField(editable = False, default = 0)
+	speaker_difficulty = models.PositiveSmallIntegerField(editable = False, default = 0)
+
+	# Overrrides the models.Model superclass save() method, called whenever model is updated
+	def save(self):
+		#If this is the first time saving the model, save it first before accessing the many to many fields and saving again
+		if not self.id:
+			super(Session, self).save()
+
+		# meaningful: open set
+		meaningful_temp = self.open_set_modules.filter(module_type = 1).aggregate(Avg('difficulty')).get('difficulty__avg')
+		meaningful_difficulty = 0 if meaningful_temp == None else round(meaningful_temp)
+		# Environmental: open/closed set
+		env_temp = self.open_set_modules.filter(module_type = 4).aggregate(Avg('difficulty')).get('difficulty__avg')
+		env_temp2 = self.open_set_modules.filter(module_type = 2).aggregate(Avg('difficulty')).get('difficulty__avg')
+		env_difficulty = 0 if env_temp == None or env_temp2 == None else round(env_temp + env_temp2)
+		# Anomalous: open set
+		anom_temp = self.open_set_modules.filter(module_type = 2).aggregate(Avg('difficulty')).get('difficulty__avg')
+		anom_difficulty = 0 if anom_temp == None else round(anom_temp)
+		# word: open set
+		word_temp = self.open_set_modules.filter(module_type = 3).aggregate(Avg('difficulty')).get('difficulty__avg')
+		word_difficulty = 0 if word_temp == None else round(word_temp)
+		# phoneme: closed set
+		phon_temp = self.closed_set_texts.filter(module_type = 1).aggregate(Avg('difficulty')).get('difficulty__avg')
+		phon_difficulty = 0 if phon_temp == None else round(phon_temp)
+		# speaker ids
+		speaker_temp = self.speaker_ids.aggregate(Avg('difficulty')).get('difficulty__avg')
+		speaker_difficulty = 0 if speaker_temp == None else round(speaker_temp)
+
+		super(Session, self).save()
 
 	def __str__ (self):
 		return self.name if self.name != "" else "Unnamed Session"
@@ -41,13 +76,14 @@ class Session(models.Model):
 # but also contains the timestamp for completion of the session.
 class User_Session(models.Model):
 	user = models.ForeignKey('User_Attrib', on_delete=models.CASCADE)
-	session = models.ForeignKey('Session',on_delete=models.SET_NULL, blank = True, null=True)
+	session = models.ForeignKey('Session', related_name='user_sessions', on_delete=models.SET_NULL, blank = True, null=True)
 	user_sequence = models.ForeignKey('User_Sequence', on_delete=models.CASCADE, blank = True, null=True)
 	date_completed = models.DateTimeField('date_completed', blank = True, null = True)
 	modules_completed = models.PositiveSmallIntegerField(default=0)
 	first_speaker_id = models.BooleanField(default = True)
 	first_open_set_module = models.CharField(max_length=15, default="11111", help_text='A string of integers. The index represents module type, and each integer is a 0 or 1 indicating if this user has not yet completed a module of that type.')
 	first_closed_set_text = models.CharField(max_length=15, default="111", help_text='A string of integers. The index represents module type, and each integer is a 0 or 1 indicating if this user has not yet completed a module of that type.')
+	calibrated = models.BooleanField(default = False)
 
 	def __str__(self):
 		return "User: " + self.user.username + ", Session: " + str(self.session)+ ", DateCompleted: " + str(self.date_completed)

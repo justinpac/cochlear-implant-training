@@ -29,11 +29,14 @@ from importlib import import_module
 import inspect
 from django.contrib.contenttypes.models import ContentType
 
-SESSION_CAP = 4
-
+PROMOTION_THRESHOLD = 70
+DEMOTION_THRESHOLD = 30
+MAX_PROFICIENCY = 9
+MIN_PROFICIENCY = 0
 OPEN_SET_MODULE_TYPES = ['Other','Meaningful Sentence','Anomalous Sentence','Word','Environmental']
 CLOSED_SET_TEXT_TYPES = ['Other','Phoneme','Environmental']
 ALL_MODULE_TYPES = ['Closed Set Text','Open Set','Speaker ID']
+
 
 def index(request):
 	#If user is manager, redirect to the manager dashboard (so the homepage always takes the manager to their dashboard)
@@ -265,11 +268,236 @@ def getNextSession(userObj):
 	elif userObj.progression == 1: # This user gone through inital testing
 		userSequences = User_Sequence.objects.filter(user = userObj, date_completed__isnull = True, sequence__category = 1)
 	elif userObj.progression == 2: # This user has gone through week one and is therfore calibrated
+		print("Entered: elif userObj.progression == 2")
+		
+		# fetch the two most recent user_sessions (completed) that have not been used for calibration
+		completedSessions = User_Session.objects.filter(calibrated = False)
+		
+		# update the user's proc\ficiencies if two sessions have been completed sice the last calibration
+		if completedSessions.count() >= 2:
+			#initalize  proficiencies to -1, in case the user never completed a module of a particular type
+			meaningfulAcc=envAcc=anomAcc=wordAcc=phonAcc=speakerAcc= -1
+
+			for cs in completedSessions:
+				# filter for each module if it exists else pass. for each module:
+				#	aggreagate percent accurary
+				
+				# meaningful: open set
+				meaningfulOSM = User_Open_Set_Module.objects.filter(user_session = cs, open_set_module_order__open_set_module__module_type = 1)
+				if meaningfulOSM.count() > 0:
+					meaningfulAcc = 0
+					meaningfulAcc += meaningfulOSM.aggregate(Avg('percent_correct'))
+
+				# Environmental: open/closed set
+				envCST = User_Closed_Set_Text.objects.filter(user_session = cs, closed_set_text_order__closed_set_text__module_type = 2)
+				envOSM = User_Open_Set_Module.objects.filter(user_session = cs, open_set_module_order__open_set_module__module_type = 4)
+				if envCST.count() > 0 and envOSM.count() > 0:
+					envAcc = 0
+					envAcc += (envCST.filter(correct = True).count() / envCST.count()) * 100
+					envAcc += envOSM.aggregate(Avg('percent_correct'))
+
+				# Anomalous: open set
+				anomOSM = User_Open_Set_Module.objects.filter(user_session = cs, open_set_module_order__open_set_module__module_type = 2)
+				if anomOSM.count() > 0:
+					anomAcc = 0
+					anomAcc += anomOSM.aggregate(Avg('percent_correct'))
+
+				# word: open set
+				wordOSM = User_Open_Set_Module.objects.filter(user_session = cs, open_set_module_order__open_set_module__module_type = 3)
+				if wordOSM.count() > 0:
+					wordAcc = 0
+					wordAcc += wordOSM.aggregate(Avg('percent_correct'))
+
+				# phoneme: closed set
+				phonCST = User_Closed_Set_Text.objects.filter(user_session = cs, closed_set_text_order__closed_set_text__module_type = 1)
+				if phonCST.count() > 0:
+					phonAcc = 0
+					phonAcc += (phonCST.filter(correct = True).count() / speaker_ids.count()) * 100
+
+				# speaker ids
+				speaker_ids = User_Speaker_ID.objects.filter(user_session = cs)
+				if speaker_ids.count() > 0:
+					speakerAcc = 0
+					speakerAcc += (speaker_ids.filter(correct = True).count() / speaker_ids.count()) * 100
+
+				# indicate that this user_session has been used for calibration
+				cs.calibrated = True
+
+			# 	if >70 promote <30 demote
+			# meaningful
+			if meaningfulAcc != -1 and meaningfulAcc > PROMOTION_THRESHOLD and userObj.meaningful_proficiency < MAX_PROFICIENCY:
+				userObj.meaningful_proficiency += 1
+			elif meaningfulAcc < DEMOTION_THRESHOLD and userObj.meaningful_proficiency > MIN_PROFICIENCY:
+				userObj.meaningful_proficiency -= 1
+
+			# environmental
+			if envAcc != -1 and envAcc > PROMOTION_THRESHOLD and userObj.env_proficiency < MAX_PROFICIENCY:
+				userObj.env_proficiency += 1
+			elif envAcc < PROMOTION_THRESHOLD and userObj.env_proficiency > MIN_PROFICIENCY:
+				userObj.env_proficiency -= 1
+
+			# anomalous
+			if anomAcc != -1 and anomAcc > PROMOTION_THRESHOLD and userObj.anom_proficiency < MAX_PROFICIENCY:
+				userObj.anom_proficiency += 1
+			elif anomAcc < DEMOTION_THRESHOLD and userObj.anom_proficiency > MIN_PROFICIENCY:
+				userObj.anom_proficiency -= 1
+
+			# word
+			if wordAcc != -1 and wordAcc > PROMOTION_THRESHOLD and userObj.word_proficiency < MAX_PROFICIENCY:
+				userObj.word_proficiency += 1
+			elif wordAcc < DEMOTION_THRESHOLD and userObj.word_proficiency > MIN_PROFICIENCY:
+				userObj.word_proficiency -= 1
+
+			# phoneme
+			if phonAcc != -1 and phonAcc > PROMOTION_THRESHOLD and userObj.phoneme_proficiency < MAX_PROFICIENCY:
+				userObj.phoneme_proficiency += 1
+			elif phonAcc < DEMOTION_THRESHOLD and userObj.phoneme_proficiency > MIN_PROFICIENCY:
+				userObj.phoneme_proficiency -= 1
+
+			#speaker ids
+			if speakerAcc != -1 and speakerAcc > PROMOTION_THRESHOLD and userObj.speaker_proficiency < MAX_PROFICIENCY:
+				userObj.speaker_proficiency += 1
+			elif speakerAcc < DEMOTION_THRESHOLD and userObj.speaker_proficiency > MIN_PROFICIENCY:
+				userObj.speaker_proficiency -= 1
+
+			userObj.save()
+
 		userSequences = User_Sequence.objects.filter(user = userObj, date_completed__isnull = True, sequence__category = 2)
 
 	if not userSequences and userObj.progression == 2: #TODO: generate a new sequence if this user has been calibrated
-		return None
+		print("Entered: if not userSequences and userObj.progression == 2")
+		# CREATING A SEQUENCE:
+		# search for an auto-generated sesssion that matches the user's proficiencies and has yet to be used
+		autoSession = Session.objects.filter(sequence__category = 2, user_sessions__isnull = True, meaningful_difficulty = userObj.meaningful_proficiency,
+		 env_difficulty = userObj.env_proficiency, anom_difficulty = userObj.anom_proficiency, word_difficulty = userObj.word_proficiency,
+		  phon_difficulty = userObj.phon_proficiency, speaker_difficulty = userObj.speaker_proficiency)
+		if autoSession:
+			# If we've already created a session that matches the user's proficienceis and has yet to be used, then let's just use that one!
+			#create a sequence with this session
+			newAutoSequence = Sequence()
+			newAutoSequence.name = "(Auto Sequence) Created " + str(timezone.now()).split(' ')[0].replace('-','')
+			newAutoSequence.category = 2
+			newAutoSequence.save()
+			Session_Order(sequence = newAutoSequence, session = autoSession[0], order = 1).save()
+
+			# assign this sequence to the user
+			newAutoUserSequence = User_Sequence()
+			newAutoUserSequence.user = userObj
+			newAutoUserSequence.sequence = newAutoSequence
+			newAutoUserSequence.date_started = timezone.now()
+			newAutoUserSequence.save()
+
+			return autoSession[0]
+		else:
+			# If it does not exist or is already completed, then create a new session
+			newAutoSession = Session() # our new auto-generated session
+			newAutoSession.name = "(Auto Session) Created " + str(timezone.now()).split(' ')[0].replace('-','')
+			newAutoSession.save()
+
+			orderIndx = 1 # order of a module in a given
+			profRange = [-1, 0 , 1] # The proficiences we want to use 
+			#grab all modules the user has not used
+			uosmid = User_Open_Set_Module.objects.all().values('open_set_module_order__open_set_module__id')
+			unusedOSM = Open_Set_Module.objects.exclude(id=uosmid)
+
+			ucstid = User_Closed_Set_Text.objects.all().values('closed_set_text_order__closed_set_text__id')
+			unusedCST  = Closed_Set_Text.objects.exclude(id=ucstid)
+
+			usidid = User_Speaker_ID.objects.all().values('speaker_id_order__speaker_id__id')
+			unusedSID = Speaker_ID.objects.exclude(id=usidid)
+
+			try:
+				# 10: meaningful - closed set (0-1), open set (2-9)
+				#MEANINGFUL_MIN_OPEN = 2 # The min difficulty of an open set module
+				NUM_MEANINGFUL = 10
+				meaningfulModNums = [2, 6, 2] # Number of modules for -1, +0, and +1 user profiency, respectively
+				for curProf, modNum in zip(profRange, meaningfulModNums):
+					for __ in range(modNum):
+						unusedMods = unusedOSM.filter(difficulty = userObj.meaningful_proficiency + curProf, module_type = 1)
+						for modCount in range(NUM_MEANINGFUL):
+							Open_Set_Module_Order.objects.create(session = newAutoSession, open_set_module = unusedMods[modCount], order = orderIndx)
+							orderIndx += 1
+
+				# 10: env - closed set (0-4), open set (5-9)
+				NUM_ENV = 10
+				ENV_MIN_OPEN = 5 # The min difficulty of an open set module
+				envModNums = [2, 6, 2] # Number of modules for -1, +0, and +1 user profiency, respectively
+				for curProf, modNum in zip(profRange, envModNums):
+					for __ in range(modNum):
+						thisProf = userObj.env_proficiency + curProf
+						if thisProf < ENV_MIN_OPEN:
+							unusedMods = unusedCST.filter(difficulty = thisProf, module_type = 2)
+							for modCount in range(NUM_ENV):
+								Closed_Set_Text_Order.objects.create(session = newAutoSession, closed_set_text = unusedMods[modCount], order = orderIndx)
+								orderIndx += 1
+						else:
+							unusedMods = unusedOSM.filter(difficulty = thisProf, module_type = 4)
+							for modCount in range(NUM_ENV):
+								Open_Set_Module_Order.objects.create(session = newAutoSession, open_set_module = unusedMods[modCount], order = orderIndx)
+								orderIndx += 1
+
+				# 10: anom - closed set (0-1), open set (2-9)
+				NUM_ANOM = 10
+				anomModNums = [2, 6, 2] # Number of modules for -1, +0, and +1 user profiency, respectively
+				for curProf, modNum in zip(profRange, anomModNums):
+					for __ in range(modNum):
+						unusedMods = unusedOSM.filter(difficulty = userObj.anom_proficiency + curProf, module_type = 2)
+						for modCount in range(NUM_ANOM):
+							Open_Set_Module_Order.objects.create(session = newAutoSession, open_set_module = unusedMods[modCount], order = orderIndx)
+							orderIndx += 1
+
+				# 15: word - closed set (0-1), open set (2-9)
+				NUM_WORD = 15
+				wordModNums = [3, 9, 3] # Number of modules for -1, +0, and +1 user profiency, respectively
+				for curProf, modNum in zip(profRange, wordModNums):
+					for __ in range(modNum):
+						unusedMods = unusedOSM.filter(difficulty = userObj.word_proficiency + curProf, module_type = 3)
+						for modCount in range(NUM_WORD):
+							Open_Set_Module_Order.objects.create(session = newAutoSession, open_set_module = unusedMods[modCount], order = orderIndx)
+							orderIndx += 1
+
+				# 10: phoneme - wait for a week (all closed)
+				NUM_PHON = 10
+				phonModNums = [2, 6, 2] # Number of modules for -1, +0, and +1 user profiency, respectively
+				for curProf, modNum in zip(profRange, phonModNums):
+					for __ in range(modNum):
+						unusedMods = unusedCST.filter(difficulty = userObj.phon_proficiency + curProf, module_type = 1)
+						for modCount in range(NUM_PHON):
+							Closed_Set_Text_Order.objects.create(session = newAutoSession, closed_set_text = unusedMods[modCount], order = orderIndx)
+							orderIndx += 1
+
+				# 20: speaker
+				NUM_SPEAKER = 20
+				speakerModNums = [4, 12, 4] # Number of modules for -1, +0, and +1 user profiency, respectively
+				for curProf, modNum in zip(profRange, speakerModNums):
+					for __ in range(modNum):
+						unusedMods = unusedSID.filter(difficulty = userObj.speaker_proficiency + curProf)
+						for modCount in range(NUM_SPEAKER):
+							Speaker_ID_Order.objects.create(session = newAutoSession, speaker_id = unusedMods[modCount], order = orderIndx)
+							orderIndx += 1
+							
+			except IndexError:
+				# there was not enough of a module to create this session
+				return None
+
+			# create a sequence with this session
+			newAutoSequence = Sequence()
+			newAutoSequence.name = "(Auto Sequence) Created " + str(timezone.now()).split(' ')[0].replace('-','')
+			newAutoSequence.category = 2
+			newAutoSequence.save()
+			Session_Order(sequence = newAutoSequence, session = newAutoSession, order = 1).save()
+
+			# assign this sequence to the user
+			newAutoUserSequence = User_Sequence()
+			newAutoUserSequence.user = userObj
+			newAutoUserSequence.sequence = newAutoSequence
+			newAutoUserSequence.date_started = timezone.now()
+			newAutoUserSequence.save()
+
+			return newAutoSession
+
 	elif not userSequences:
+		print("Entered: elif not userSequences")
 		return None
 
 

@@ -16,16 +16,16 @@
 		<span>Great job, all four sessions are completed this week!</span>
 		{% elif sessions > 4 %}
 		<div id ="progressBar" class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="{{percentComplete}}" aria-valuemin="0" aria-valuemax="100" style="width:{{percentComplete}}%;background-color:#5cb85c;">
-	  	<span>{{sessions}} out of 4 sessions completed this week</span>
+	  	<span>{{sessions}} sessions completed this week</span>
 		{% else %}
 		<div id ="progressBar" class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="{{percentComplete}}" aria-valuemin="0" aria-valuemax="100" style="width:{{percentComplete}}%;">
-	  	<span>{{sessions}} out of 4 sessions completed this week</span>
+	  	<span>{{sessions}} sessions completed this week</span>
 	  	{% endif %}
 		</div>
 	</div>
 	<div class="row">
 	{% if sessionFlag == 0 %}
-		<span id="noSessions"><span class="glyphicon glyphicon-lock" style="color:#CD9B37"></span> no new sessions avaiable at this time</span>
+		<span id="noSessions"><span class="glyphicon glyphicon-lock" style="color:#CD9B37"></span> no new sessions available at this time</span>
     {% elif sessionFlag == 1 %}
 	<button id = "startSession" type="button" class="btn btn-primary btn-lg">start a new training session</button>
     {% else %}
