@@ -284,7 +284,7 @@ def getNextSession(userObj):
 				meaningfulOSM = User_Open_Set_Module.objects.filter(user_session = cs, open_set_module_order__open_set_module__module_type = 1)
 				if meaningfulOSM.count() > 0:
 					meaningfulAcc = 0
-					meaningfulAcc += meaningfulOSM.aggregate(Avg('percent_correct'))
+					meaningfulAcc += meaningfulOSM.aggregate(Avg('percent_correct')).get('percent_correct__avg')
 
 				# Environmental: open/closed set
 				envCST = User_Closed_Set_Text.objects.filter(user_session = cs, closed_set_text_order__closed_set_text__module_type = 2)
@@ -292,19 +292,19 @@ def getNextSession(userObj):
 				if envCST.count() > 0 and envOSM.count() > 0:
 					envAcc = 0
 					envAcc += (envCST.filter(correct = True).count() / envCST.count()) * 100
-					envAcc += envOSM.aggregate(Avg('percent_correct'))
+					envAcc += envOSM.aggregate(Avg('percent_correct')).get('percent_correct__avg')
 
 				# Anomalous: open set
 				anomOSM = User_Open_Set_Module.objects.filter(user_session = cs, open_set_module_order__open_set_module__module_type = 2)
 				if anomOSM.count() > 0:
 					anomAcc = 0
-					anomAcc += anomOSM.aggregate(Avg('percent_correct'))
+					anomAcc += anomOSM.aggregate(Avg('percent_correct')).get('percent_correct__avg')
 
 				# word: open set
 				wordOSM = User_Open_Set_Module.objects.filter(user_session = cs, open_set_module_order__open_set_module__module_type = 3)
 				if wordOSM.count() > 0:
 					wordAcc = 0
-					wordAcc += wordOSM.aggregate(Avg('percent_correct'))
+					wordAcc += wordOSM.aggregate(Avg('percent_correct')).get('percent_correct__avg')
 
 				# phoneme: closed set
 				phonCST = User_Closed_Set_Text.objects.filter(user_session = cs, closed_set_text_order__closed_set_text__module_type = 1)
