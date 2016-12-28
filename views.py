@@ -267,9 +267,7 @@ def getNextSession(userObj):
 		userSequences = User_Sequence.objects.filter(user = userObj, date_completed__isnull = True, sequence__category = 0)
 	elif userObj.progression == 1: # This user gone through inital testing
 		userSequences = User_Sequence.objects.filter(user = userObj, date_completed__isnull = True, sequence__category = 1)
-	elif userObj.progression == 2: # This user has gone through week one and is therfore calibrated
-		print("Entered: elif userObj.progression == 2")
-		
+	elif userObj.progression == 2: # This user has gone through week one and is therfore calibrated		
 		# fetch the two most recent user_sessions (completed) that have not been used for calibration
 		completedSessions = User_Session.objects.filter(calibrated = False)
 		
@@ -365,7 +363,6 @@ def getNextSession(userObj):
 		userSequences = User_Sequence.objects.filter(user = userObj, date_completed__isnull = True, sequence__category = 2)
 
 	if not userSequences and userObj.progression == 2: #TODO: generate a new sequence if this user has been calibrated
-		print("Entered: if not userSequences and userObj.progression == 2")
 		# CREATING A SEQUENCE:
 		# search for an auto-generated sesssion that matches the user's proficiencies and has yet to be used
 		autoSession = Session.objects.filter(sequence__category = 2, user_sessions__isnull = True, meaningful_difficulty = userObj.meaningful_proficiency,
@@ -412,8 +409,11 @@ def getNextSession(userObj):
 				NUM_MEANINGFUL = 10
 				meaningfulModNums = [2, 6, 2] # Number of modules for -1, +0, and +1 user profiency, respectively
 				for curProf, modNum in zip(profRange, meaningfulModNums):
+					thisProf = userObj.meaningful_proficiency + curProf
+					if thisProf > MAX_PROFICIENCY or thisProf < MIN_PROFICIENCY:
+						thisProf = userObj.meaningful_proficiency
 					for __ in range(modNum):
-						unusedMods = unusedOSM.filter(difficulty = userObj.meaningful_proficiency + curProf, module_type = 1)
+						unusedMods = unusedOSM.filter(difficulty = thisProf, module_type = 1)
 						for modCount in range(NUM_MEANINGFUL):
 							Open_Set_Module_Order.objects.create(session = newAutoSession, open_set_module = unusedMods[modCount], order = orderIndx)
 							orderIndx += 1
@@ -423,8 +423,10 @@ def getNextSession(userObj):
 				ENV_MIN_OPEN = 5 # The min difficulty of an open set module
 				envModNums = [2, 6, 2] # Number of modules for -1, +0, and +1 user profiency, respectively
 				for curProf, modNum in zip(profRange, envModNums):
+					thisProf = userObj.env_proficiency + curProf
+					if thisProf > MAX_PROFICIENCY or thisProf < MIN_PROFICIENCY:
+						thisProf = userObj.env_proficiency
 					for __ in range(modNum):
-						thisProf = userObj.env_proficiency + curProf
 						if thisProf < ENV_MIN_OPEN:
 							unusedMods = unusedCST.filter(difficulty = thisProf, module_type = 2)
 							for modCount in range(NUM_ENV):
@@ -440,8 +442,11 @@ def getNextSession(userObj):
 				NUM_ANOM = 10
 				anomModNums = [2, 6, 2] # Number of modules for -1, +0, and +1 user profiency, respectively
 				for curProf, modNum in zip(profRange, anomModNums):
+					thisProf = userObj.anom_proficiency + curProf
+					if thisProf > MAX_PROFICIENCY or thisProf < MIN_PROFICIENCY:
+						thisProf = userObj.anom_proficiency
 					for __ in range(modNum):
-						unusedMods = unusedOSM.filter(difficulty = userObj.anom_proficiency + curProf, module_type = 2)
+						unusedMods = unusedOSM.filter(difficulty = thisProf, module_type = 2)
 						for modCount in range(NUM_ANOM):
 							Open_Set_Module_Order.objects.create(session = newAutoSession, open_set_module = unusedMods[modCount], order = orderIndx)
 							orderIndx += 1
@@ -450,8 +455,11 @@ def getNextSession(userObj):
 				NUM_WORD = 15
 				wordModNums = [3, 9, 3] # Number of modules for -1, +0, and +1 user profiency, respectively
 				for curProf, modNum in zip(profRange, wordModNums):
+					thisProf = userObj.word_proficiency + curProf
+					if thisProf > MAX_PROFICIENCY or thisProf < MIN_PROFICIENCY:
+						thisProf = userObj.word_proficiency
 					for __ in range(modNum):
-						unusedMods = unusedOSM.filter(difficulty = userObj.word_proficiency + curProf, module_type = 3)
+						unusedMods = unusedOSM.filter(difficulty = thisProf, module_type = 3)
 						for modCount in range(NUM_WORD):
 							Open_Set_Module_Order.objects.create(session = newAutoSession, open_set_module = unusedMods[modCount], order = orderIndx)
 							orderIndx += 1
@@ -460,8 +468,11 @@ def getNextSession(userObj):
 				NUM_PHON = 10
 				phonModNums = [2, 6, 2] # Number of modules for -1, +0, and +1 user profiency, respectively
 				for curProf, modNum in zip(profRange, phonModNums):
+					thisProf = userObj.phon_proficiency + curProf
+					if thisProf > MAX_PROFICIENCY or thisProf < MIN_PROFICIENCY:
+						thisProf = userObj.phon_proficiency
 					for __ in range(modNum):
-						unusedMods = unusedCST.filter(difficulty = userObj.phon_proficiency + curProf, module_type = 1)
+						unusedMods = unusedCST.filter(difficulty = thisProf, module_type = 1)
 						for modCount in range(NUM_PHON):
 							Closed_Set_Text_Order.objects.create(session = newAutoSession, closed_set_text = unusedMods[modCount], order = orderIndx)
 							orderIndx += 1
@@ -470,8 +481,11 @@ def getNextSession(userObj):
 				NUM_SPEAKER = 20
 				speakerModNums = [4, 12, 4] # Number of modules for -1, +0, and +1 user profiency, respectively
 				for curProf, modNum in zip(profRange, speakerModNums):
+					thisProf = userObj.speaker_proficiency + curProf
+					if thisProf > MAX_PROFICIENCY or thisProf < MIN_PROFICIENCY:
+						thisProf = userObj.speaker_proficiency
 					for __ in range(modNum):
-						unusedMods = unusedSID.filter(difficulty = userObj.speaker_proficiency + curProf)
+						unusedMods = unusedSID.filter(difficulty = thisProf)
 						for modCount in range(NUM_SPEAKER):
 							Speaker_ID_Order.objects.create(session = newAutoSession, speaker_id = unusedMods[modCount], order = orderIndx)
 							orderIndx += 1
@@ -497,7 +511,6 @@ def getNextSession(userObj):
 			return newAutoSession
 
 	elif not userSequences:
-		print("Entered: elif not userSequences")
 		return None
 
 
