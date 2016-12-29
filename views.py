@@ -3,6 +3,7 @@ from django.http import HttpResponse
 import json, datetime, logging
 from django.db.models import Q, Max, Sum, Count
 from django.db.models.functions import Lower, Substr, Coalesce
+import logging
 
 # We need this to generate the navbar
 from hipercore.helpers import NavigationBar
@@ -28,6 +29,7 @@ from hipercore.models import HipercicUser
 from importlib import import_module
 import inspect
 from django.contrib.contenttypes.models import ContentType
+
 
 PROMOTION_THRESHOLD = 70
 DEMOTION_THRESHOLD = 30
@@ -411,13 +413,13 @@ def getNextSession(userObj):
 			profRange = [-1, 0 , 1] # The proficiences we want to use 
 			#grab all modules the user has not used
 			uosmid = User_Open_Set_Module.objects.all().values('open_set_module_order__open_set_module__id')
-			unusedOSM = Open_Set_Module.objects.exclude(id=uosmid)
+			unusedOSM = Open_Set_Module.objects.exclude(id__in=uosmid)
 
 			ucstid = User_Closed_Set_Text.objects.all().values('closed_set_text_order__closed_set_text__id')
-			unusedCST  = Closed_Set_Text.objects.exclude(id=ucstid)
+			unusedCST  = Closed_Set_Text.objects.exclude(id__in=ucstid)
 
 			usidid = User_Speaker_ID.objects.all().values('speaker_id_order__speaker_id__id')
-			unusedSID = Speaker_ID.objects.exclude(id=usidid)
+			unusedSID = Speaker_ID.objects.exclude(id__in=usidid)
 
 			try:
 				# 10: meaningful - closed set (0-1), open set (2-9)
@@ -506,8 +508,9 @@ def getNextSession(userObj):
 							Speaker_ID_Order.objects.create(session = newAutoSession, speaker_id = unusedMods[modCount], order = orderIndx)
 							orderIndx += 1
 							
-			except IndexError:
+			except IndexError as ie:
 				# there was not enough of a module to create this session
+				print(ie)
 				return None
 
 			# create a sequence with this session
