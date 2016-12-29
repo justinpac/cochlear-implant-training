@@ -271,7 +271,7 @@ def getNextSession(userObj):
 		userSequences = User_Sequence.objects.filter(user = userObj, date_completed__isnull = True, sequence__category = 1)
 	elif userObj.progression == 2: # This user has gone through week one and is therfore calibrated		
 		# fetch the two most recent user_sessions (completed) that have not been used for calibration
-		completedSessions = User_Session.objects.filter(calibrated = False)
+		completedSessions = User_Session.objects.filter(user = userObj, calibrated = False, user_sequence__sequence__category__gt = 0)
 		
 		# update the user's proc\ficiencies if two sessions have been completed sice the last calibration
 		if completedSessions.count() >= 2:
@@ -422,7 +422,7 @@ def getNextSession(userObj):
 			unusedSID = Speaker_ID.objects.exclude(id__in=usidid)
 
 			try:
-				# 10: meaningful - closed set (0-1), open set (2-9)
+				# 10: meaningful - open set (0-9)
 				#MEANINGFUL_MIN_OPEN = 2 # The min difficulty of an open set module
 				NUM_MEANINGFUL = 10
 				meaningfulModNums = [2, 6, 2] # Number of modules for -1, +0, and +1 user profiency, respectively
@@ -456,7 +456,7 @@ def getNextSession(userObj):
 								Open_Set_Module_Order.objects.create(session = newAutoSession, open_set_module = unusedMods[modCount], order = orderIndx)
 								orderIndx += 1
 
-				# 10: anom - closed set (0-1), open set (2-9)
+				# 10: anom - open set (0-9)
 				NUM_ANOM = 10
 				anomModNums = [2, 6, 2] # Number of modules for -1, +0, and +1 user profiency, respectively
 				for curProf, modNum in zip(profRange, anomModNums):
@@ -469,7 +469,7 @@ def getNextSession(userObj):
 							Open_Set_Module_Order.objects.create(session = newAutoSession, open_set_module = unusedMods[modCount], order = orderIndx)
 							orderIndx += 1
 
-				# 15: word - closed set (0-1), open set (2-9)
+				# 15: word - open set (0-9)
 				NUM_WORD = 15
 				wordModNums = [3, 9, 3] # Number of modules for -1, +0, and +1 user profiency, respectively
 				for curProf, modNum in zip(profRange, wordModNums):
