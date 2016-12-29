@@ -284,76 +284,92 @@ def getNextSession(userObj):
 				meaningfulOSM = User_Open_Set_Module.objects.filter(user_session = cs, open_set_module_order__open_set_module__module_type = 1)
 				if meaningfulOSM.count() > 0:
 					meaningfulAcc = 0
-					meaningfulAcc += meaningfulOSM.aggregate(Avg('percent_correct')).get('percent_correct__avg')
+					meaningfulTemp = meaningfulOSM.aggregate(Avg('percent_correct')).get('percent_correct__avg')
+					meaningfulAcc += 0 if meaningfulTemp == None else meaningfulTemp
 
 				# Environmental: open/closed set
 				envCST = User_Closed_Set_Text.objects.filter(user_session = cs, closed_set_text_order__closed_set_text__module_type = 2)
 				envOSM = User_Open_Set_Module.objects.filter(user_session = cs, open_set_module_order__open_set_module__module_type = 4)
 				if envCST.count() > 0 and envOSM.count() > 0:
 					envAcc = 0
-					envAcc += (envCST.filter(correct = True).count() / envCST.count()) * 100
-					envAcc += envOSM.aggregate(Avg('percent_correct')).get('percent_correct__avg')
+					envAcc += 0 if envCST.count() == 0 else (envCST.filter(correct = True).count() / envCST.count()) * 100
+					envTemp =  envOSM.aggregate(Avg('percent_correct')).get('percent_correct__avg')
+					envAcc += 0 if envTemp == None else envTemp
 
 				# Anomalous: open set
 				anomOSM = User_Open_Set_Module.objects.filter(user_session = cs, open_set_module_order__open_set_module__module_type = 2)
 				if anomOSM.count() > 0:
 					anomAcc = 0
-					anomAcc += anomOSM.aggregate(Avg('percent_correct')).get('percent_correct__avg')
+					anomTemp = anomOSM.aggregate(Avg('percent_correct')).get('percent_correct__avg')
+					anomAcc += 0 if anomTemp == None else anomTemp
 
 				# word: open set
 				wordOSM = User_Open_Set_Module.objects.filter(user_session = cs, open_set_module_order__open_set_module__module_type = 3)
 				if wordOSM.count() > 0:
 					wordAcc = 0
-					wordAcc += wordOSM.aggregate(Avg('percent_correct')).get('percent_correct__avg')
+					wordTemp = wordOSM.aggregate(Avg('percent_correct')).get('percent_correct__avg')
+					wordAcc += 0 if wordTemp == None else wordTemp
 
 				# phoneme: closed set
 				phonCST = User_Closed_Set_Text.objects.filter(user_session = cs, closed_set_text_order__closed_set_text__module_type = 1)
 				if phonCST.count() > 0:
 					phonAcc = 0
-					phonAcc += (phonCST.filter(correct = True).count() / speaker_ids.count()) * 100
+					phonAcc += 0 if phonCST.count() == 0 else (phonCST.filter(correct = True).count() / phonCST.count()) * 100
 
 				# speaker ids
 				speaker_ids = User_Speaker_ID.objects.filter(user_session = cs)
 				if speaker_ids.count() > 0:
 					speakerAcc = 0
-					speakerAcc += (speaker_ids.filter(correct = True).count() / speaker_ids.count()) * 100
+					speakerAcc += 0 if speaker_ids.count() == 0 else (speaker_ids.filter(correct = True).count() / speaker_ids.count()) * 100
 
 				# indicate that this user_session has been used for calibration
 				cs.calibrated = True
 
 			# 	if >70 promote <30 demote
 			# meaningful
-			if meaningfulAcc != -1 and meaningfulAcc > PROMOTION_THRESHOLD and userObj.meaningful_proficiency < MAX_PROFICIENCY:
+			if meaningfulAcc < 0:
+				pass
+			elif meaningfulAcc > PROMOTION_THRESHOLD and userObj.meaningful_proficiency < MAX_PROFICIENCY:
 				userObj.meaningful_proficiency += 1
 			elif meaningfulAcc < DEMOTION_THRESHOLD and userObj.meaningful_proficiency > MIN_PROFICIENCY:
 				userObj.meaningful_proficiency -= 1
 
 			# environmental
-			if envAcc != -1 and envAcc > PROMOTION_THRESHOLD and userObj.env_proficiency < MAX_PROFICIENCY:
+			if envAcc < 0:
+				pass
+			elif envAcc > PROMOTION_THRESHOLD and userObj.env_proficiency < MAX_PROFICIENCY:
 				userObj.env_proficiency += 1
 			elif envAcc < PROMOTION_THRESHOLD and userObj.env_proficiency > MIN_PROFICIENCY:
 				userObj.env_proficiency -= 1
 
 			# anomalous
-			if anomAcc != -1 and anomAcc > PROMOTION_THRESHOLD and userObj.anom_proficiency < MAX_PROFICIENCY:
+			if anomAcc < 0:
+				pass
+			elif anomAcc > PROMOTION_THRESHOLD and userObj.anom_proficiency < MAX_PROFICIENCY:
 				userObj.anom_proficiency += 1
 			elif anomAcc < DEMOTION_THRESHOLD and userObj.anom_proficiency > MIN_PROFICIENCY:
 				userObj.anom_proficiency -= 1
 
 			# word
-			if wordAcc != -1 and wordAcc > PROMOTION_THRESHOLD and userObj.word_proficiency < MAX_PROFICIENCY:
+			if wordAcc < 0:
+				pass
+			elif wordAcc > PROMOTION_THRESHOLD and userObj.word_proficiency < MAX_PROFICIENCY:
 				userObj.word_proficiency += 1
 			elif wordAcc < DEMOTION_THRESHOLD and userObj.word_proficiency > MIN_PROFICIENCY:
 				userObj.word_proficiency -= 1
 
 			# phoneme
-			if phonAcc != -1 and phonAcc > PROMOTION_THRESHOLD and userObj.phoneme_proficiency < MAX_PROFICIENCY:
+			if phonAcc < 0:
+				pass
+			elif phonAcc > PROMOTION_THRESHOLD and userObj.phoneme_proficiency < MAX_PROFICIENCY:
 				userObj.phoneme_proficiency += 1
 			elif phonAcc < DEMOTION_THRESHOLD and userObj.phoneme_proficiency > MIN_PROFICIENCY:
 				userObj.phoneme_proficiency -= 1
 
 			#speaker ids
-			if speakerAcc != -1 and speakerAcc > PROMOTION_THRESHOLD and userObj.speaker_proficiency < MAX_PROFICIENCY:
+			if speakerAcc < 0:
+				pass
+			elif speakerAcc > PROMOTION_THRESHOLD and userObj.speaker_proficiency < MAX_PROFICIENCY:
 				userObj.speaker_proficiency += 1
 			elif speakerAcc < DEMOTION_THRESHOLD and userObj.speaker_proficiency > MIN_PROFICIENCY:
 				userObj.speaker_proficiency -= 1
