@@ -1426,6 +1426,7 @@ def loadDashboardData(context):
 	context['csvOptions'] = [ 'All Modules', 'Speaker ID', '(Open Set) Meaningful Sentence',  '(Open Set) Anomalous Sentence',
 	  '(Open Set) Word','(Open Set) Environmental', '(Open Set) Other', '(Closed Set Text) Phoneme', '(Closed Set Text) Environmental', '(Closed Set Text) Other']
 	usernameList = list(User_Attrib.objects.values_list('username', flat = True))
+	usernameList = sorted(usernameList, key = lambda s: s.lower())
 	usernameList.insert(0,"All Users")
 	usernameRegexList = usernameList[:]
 	for usernameRegexIndex in range(len(usernameRegexList) - 1):
