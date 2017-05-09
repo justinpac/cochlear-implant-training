@@ -52,7 +52,7 @@
         <button type = "button" class="btn btn-secondary btn-lg" style="margin-bottom:20px">
             <span class="glyphicon glyphicon-circle-arrow-right" aria-hidden="true" style="color:black"></span> Proceed To The Next Training Module
         </button>
-        {% if thisisatest  == 0 %}
+        {% if thisIsAPretest  == 0 %}
         </br>
         <a href = "{% url 'cochlear:openSet' open_set_module=open_set_module_id repeatFlag=1 order_id=order_id %}" >
           <button type = "button" class="btn btn-secondary btn-lg" style="margin-bottom:20px">
@@ -75,7 +75,7 @@ var MAX_AUDIO_REPLAY = 5; //max number of times the user can replay the test sou
 var questionUnanswered = true;
 var audioPlayed = 0;
 //indicate if this is a test
-var thisisatest = {{thisisatest}};
+var thisIsAPretest = {{thisIsAPretest}};
 
 
 String.prototype.replaceWholeWord  = function(orig, replacement) {
@@ -207,7 +207,7 @@ $( document ).ready(function() {
                 var keyWords = data[0].keyWords;
                 var accuracy = calcAccuracy(answer,keyWords, correctAnswer);
 
-    			if (thisisatest) {
+    			if (thisIsAPretest) {
                     $('#next').slideDown("swing");
                 } else if (accuracy.percentCorrect < MIN_CORRECT_ACCURACY) {
                     if (keyWords == '' || {{module_type}} == 4){

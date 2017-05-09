@@ -26,13 +26,21 @@
 	<center><h2>Get Data</h2></center>
 	<h3>Download as a CSV</h3>
 
-
 	<div class="form-group inline">
-	  <select class="form-control" id="csvOptions">
-	  		{% for option in csvOptions %}
+		<label for="csvUserOptions">User</label>
+		<select class="form-control" id="csvUserOptions">
+			{% for username, usernameRegex in csvUserOptions %}
+			<option value="{{usernameRegex}}">{{username}}</option>
+			{% endfor %}
+		</select>
+	</div>
+	<div class="form-group inline">
+		<label for="csvOptions">Module</label>
+		<select class="form-control" id="csvOptions">
+			{% for option in csvOptions %}
 			<option value="{{forloop.counter0}}">{{option}}</option>
 			{% endfor %}
-	  </select>
+		</select>
 	</div>
 	<button class="btn btn-primary select-button" id="csvDownload"> Download CSV </button>
 	
@@ -98,7 +106,7 @@
 	}
 	$('document').ready(function(){
 		$('#csvDownload').click(function(){
-			location.replace('{% url "cochlear:getUserDataCSV" %}' + $('#csvOptions').val() +'/');
+			location.replace('{% url "cochlear:getUserDataCSV" %}' + $('#csvOptions').val() +'/' + $('#csvUserOptions').val() + '/');
 		});
 		$('#addManager').click(function(){
 			$.post('{% url "cochlear:addManager" %}',{'newManager':$('#managerOptions').val(),'csrfmiddlewaretoken':'{{csrf_token}}'},RefreshData);

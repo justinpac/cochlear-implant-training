@@ -120,7 +120,7 @@ def speaker(request, speaker_module, repeatFlag, order_id):
 	context['user_attrib_id'] = userObj.id
 	context['repeatFlag'] = repeatFlag
 	context['order_id'] = order_id
-	context['thisisatest'] = 1 if userObj.progression == 0 else 0 # If the user hasn't completed their testing, we are assuming this is a test
+	context['thisIsAPretest'] = 1 if userObj.progression == 0 else 0 # If the user hasn't completed their testing, we are assuming this is a test
 
 	return render(request,'cochlear/speaker.html',context)
 
@@ -136,7 +136,7 @@ def closedSetText(request, closed_set_text, repeatFlag, order_id):
 	context['user_attrib_id'] = userObj.id
 	context['repeatFlag'] = repeatFlag
 	context['order_id'] = order_id
-	context['thisisatest'] = 1 if userObj.progression == 0 else 0 # If the user hasn't completed their testing, we are assuming this is a test
+	context['thisIsAPretest'] = 1 if userObj.progression == 0 else 0 # If the user hasn't completed their testing, we are assuming this is a test
 
 	return render(request,'cochlear/closedSetText.html',context)
 
@@ -154,7 +154,7 @@ def openSet(request, open_set_module, repeatFlag, order_id):
 	context['order_id'] = order_id
 	context['open_set_module_id'] = open_set_module
 	context['user_attrib_id'] = userObj.id
-	context['thisisatest'] = 1 if userObj.progression == 0 else 0 # If the user hasn't completed their testing, we are assuming this is a test
+	context['thisIsAPretest'] = 1 if userObj.progression == 0 else 0 # If the user hasn't completed their testing, we are assuming this is a test
 
 	return render(request,'cochlear/openSet.html',context)
 
@@ -511,6 +511,7 @@ def getNextSession(userObj):
 			except IndexError as ie:
 				# there was not enough of a module to create this session
 				print(ie)
+				newAutoSession.delete()
 				return None
 
 			# create a sequence with this session
@@ -1422,8 +1423,18 @@ def loadDashboardData(context):
 	loadClosedSetTextData(context)
 	loadOpenSetData(context)
 	loadSpeakerIDData(context)
-	context['csvOptions'] = [ 'All User Data', 'Speaker ID', '(Open Set) Meaningful Sentence',  '(Open Set) Anomalous Sentence',
+	context['csvOptions'] = [ 'All Modules', 'Speaker ID', '(Open Set) Meaningful Sentence',  '(Open Set) Anomalous Sentence',
 	  '(Open Set) Word','(Open Set) Environmental', '(Open Set) Other', '(Closed Set Text) Phoneme', '(Closed Set Text) Environmental', '(Closed Set Text) Other']
+	usernameList = list(User_Attrib.objects.values_list('username', flat = True))
+	usernameList.insert(0,"All Users")
+	usernameRegexList = usernameList[:]
+	for usernameRegexIndex in range(len(usernameRegexList) - 1):
+		usernameRegexList[usernameRegexIndex + 1] = "^" + usernameRegexList[usernameRegexIndex + 1] + "$"
+	usernameRegexList[0] = ".*"
+	context['csvUserOptions'] = []
+	for usernameRegexIndex in range(len(usernameRegexList)):
+		context['csvUserOptions'].append([usernameList[usernameRegexIndex], usernameRegexList[usernameRegexIndex]])
+
 
 def dashboard(request):
 	context = NavigationBar.generateAppContext(request,app="cochlear",title="index", navbarName='manager',activeLink="Manager Dashboard")
@@ -1601,14 +1612,14 @@ def checkWeekProg(userObj):
 ## CSV downloads ##
 ###################
 
-def appendTalkerID(rows):
+def appendTalkerID(rows, userRegex):
 	# Add Rows for the Talker Identification training module
 	rows.append(['Speaker Identification'])
 	talkerIDHeaders = ['User','Sequence','Session', 'Repeat', 'Session Completed (Date)','Session Completed (Time)',
 		'Module Completed (Date)','Module Completed (Time)', 'Talker Identification ID', 'Test Sound Speaker', 'Test Sound File',
 		'Choices Speakers','Choices Files', 'User Response (Speaker)','User Response (File)', 'Correct']
 	rows.append(talkerIDHeaders)
-	talkerIDs = User_Speaker_ID.objects.filter(date_completed__isnull = False)
+	talkerIDs = User_Speaker_ID.objects.filter(date_completed__isnull = False, user_attrib__username__regex = userRegex)
 	for talkerID in talkerIDs:
 		talkerIDRow = []
 		talkerIDRow.append(talkerID.user_attrib.username)
@@ -1776,49 +1787,51 @@ class Echo(object):
 		# Write the value by returning it, instead of storing in a buffer.
 		return value
 
-def getUserDataCSV(request,subset):
+def getUserDataCSV(request,subset,userRegex):
 	# A view that streams a large CSV file.
 	# Documentation: https://docs.djangoproject.com/en/1.8/howto/outputting-csv/
+	print(userRegex)
+
 	rows = []
 	subset = int(subset)
 	if subset == 0:
-		appendTalkerID(rows)
+		appendTalkerID(rows, userRegex)
 		rows.append([]) #skip a line in the csv file
 
 		rows.append(['Meaningful (Open Set)'])
-		openSets = User_Open_Set_Module.objects.filter(open_set_module_order__open_set_module__module_type = 1, date_completed__isnull = False)
+		openSets = User_Open_Set_Module.objects.filter(open_set_module_order__open_set_module__module_type = 1, date_completed__isnull = False, user_attrib__username__regex = userRegex)
 		appendOpenSets(rows, openSets)
 		rows.append([])
 
 		rows.append(['Anomalous (Open Set)'])
-		openSets = User_Open_Set_Module.objects.filter(open_set_module_order__open_set_module__module_type = 2, date_completed__isnull = False)
+		openSets = User_Open_Set_Module.objects.filter(open_set_module_order__open_set_module__module_type = 2, date_completed__isnull = False, user_attrib__username__regex = userRegex)
 		appendOpenSets(rows, openSets)
 		rows.append([])
 
 		rows.append(['Word (Open Set)'])
-		openSets = User_Open_Set_Module.objects.filter(open_set_module_order__open_set_module__module_type = 3, date_completed__isnull = False)
+		openSets = User_Open_Set_Module.objects.filter(open_set_module_order__open_set_module__module_type = 3, date_completed__isnull = False, user_attrib__username__regex = userRegex)
 		appendOpenSets(rows, openSets)
 		rows.append([])
 
 		rows.append(['Environmental (Open Set)'])
-		openSets = User_Open_Set_Module.objects.filter(open_set_module_order__open_set_module__module_type = 4, date_completed__isnull = False)
+		openSets = User_Open_Set_Module.objects.filter(open_set_module_order__open_set_module__module_type = 4, date_completed__isnull = False, user_attrib__username__regex = userRegex)
 		appendOpenSets(rows, openSets)
 		rows.append([])
 
 		rows.append(['Other (Open Set)'])
-		openSets = User_Open_Set_Module.objects.filter(open_set_module_order__open_set_module__module_type = 0, date_completed__isnull = False)
+		openSets = User_Open_Set_Module.objects.filter(open_set_module_order__open_set_module__module_type = 0, date_completed__isnull = False, user_attrib__username__regex = userRegex)
 		appendOpenSets(rows, openSets)
 
 		rows.append(['Phoneme (Closed Set Text)'])
-		closedSetTexts = User_Closed_Set_Text.objects.filter(closed_set_text_order__closed_set_text__module_type = 1, date_completed__isnull = False)
+		closedSetTexts = User_Closed_Set_Text.objects.filter(closed_set_text_order__closed_set_text__module_type = 1, date_completed__isnull = False, user_attrib__username__regex = userRegex)
 		appendClosedSetTexts(rows, closedSetTexts)
 
 		rows.append(['Environmental (Closed Set Text)'])
-		closedSetTexts = User_Closed_Set_Text.objects.filter(closed_set_text_order__closed_set_text__module_type = 2, date_completed__isnull = False)
+		closedSetTexts = User_Closed_Set_Text.objects.filter(closed_set_text_order__closed_set_text__module_type = 2, date_completed__isnull = False, user_attrib__username__regex = userRegex)
 		appendClosedSetTexts(rows, closedSetTexts)
 
 		rows.append(['Other (Closed Set Text)'])
-		closedSetTexts = User_Closed_Set_Text.objects.filter(closed_set_text_order__closed_set_text__module_type = 0, date_completed__isnull = False)
+		closedSetTexts = User_Closed_Set_Text.objects.filter(closed_set_text_order__closed_set_text__module_type = 0, date_completed__isnull = False, user_attrib__username__regex = userRegex)
 		appendClosedSetTexts(rows, closedSetTexts)
 
 		pseudo_buffer = Echo()
@@ -1835,7 +1848,7 @@ def getUserDataCSV(request,subset):
 
 	elif subset == 2:
 		rows.append(['Meaningful (Open Set)'])
-		openSets = User_Open_Set_Module.objects.filter(open_set_module_order__open_set_module__module_type = 1, date_completed__isnull = False)
+		openSets = User_Open_Set_Module.objects.filter(open_set_module_order__open_set_module__module_type = 1, date_completed__isnull = False, user_attrib__username__regex = userRegex)
 		appendOpenSets(rows, openSets)
 
 		pseudo_buffer = Echo()
@@ -1845,7 +1858,7 @@ def getUserDataCSV(request,subset):
 
 	elif subset == 3:
 		rows.append(['Anomalous (Open Set)'])
-		openSets = User_Open_Set_Module.objects.filter(open_set_module_order__open_set_module__module_type = 2, date_completed__isnull = False)
+		openSets = User_Open_Set_Module.objects.filter(open_set_module_order__open_set_module__module_type = 2, date_completed__isnull = False, user_attrib__username__regex = userRegex)
 		appendOpenSets(rows, openSets)
 
 		pseudo_buffer = Echo()
@@ -1854,7 +1867,7 @@ def getUserDataCSV(request,subset):
 		filename = "CI_Training_OpenSet_Anomalous_Sentence_Data_" + str(timezone.now()).split(' ')[0].replace('-','') + ".csv"
 	elif subset == 4:
 		rows.append(['Word (Open Set)'])
-		openSets = User_Open_Set_Module.objects.filter(open_set_module_order__open_set_module__module_type = 3, date_completed__isnull = False)
+		openSets = User_Open_Set_Module.objects.filter(open_set_module_order__open_set_module__module_type = 3, date_completed__isnull = False, user_attrib__username__regex = userRegex)
 		appendOpenSets(rows, openSets)
 
 		pseudo_buffer = Echo()
@@ -1863,7 +1876,7 @@ def getUserDataCSV(request,subset):
 		filename = "CI_Training_OpenSet_Word_Data_" + str(timezone.now()).split(' ')[0].replace('-','') + ".csv"
 	elif subset == 5:
 		rows.append(['Environmental (Open Set)'])
-		openSets = User_Open_Set_Module.objects.filter(open_set_module_order__open_set_module__module_type = 4, date_completed__isnull = False)
+		openSets = User_Open_Set_Module.objects.filter(open_set_module_order__open_set_module__module_type = 4, date_completed__isnull = False, user_attrib__username__regex = userRegex)
 		appendOpenSets(rows, openSets)
 
 		pseudo_buffer = Echo()
@@ -1872,7 +1885,7 @@ def getUserDataCSV(request,subset):
 		filename = "CI_Training_OpenSet_Environmental_Data_" + str(timezone.now()).split(' ')[0].replace('-','') + ".csv"
 	elif subset == 6:
 		rows.append(['Other (Open Set)'])
-		openSets = User_Open_Set_Module.objects.filter(open_set_module_order__open_set_module__module_type = 0, date_completed__isnull = False)
+		openSets = User_Open_Set_Module.objects.filter(open_set_module_order__open_set_module__module_type = 0, date_completed__isnull = False, user_attrib__username__regex = userRegex)
 		appendOpenSets(rows, openSets)
 
 		pseudo_buffer = Echo()
@@ -1882,7 +1895,7 @@ def getUserDataCSV(request,subset):
 		response['Content-Disposition'] = 'attachment; filename="' + filename + '"'
 	elif subset == 7:
 		rows.append(['Phoneme (Closed Set Text)'])
-		closedSetTexts = User_Closed_Set_Text.objects.filter(closed_set_text_order__closed_set_text__module_type = 1, date_completed__isnull = False)
+		closedSetTexts = User_Closed_Set_Text.objects.filter(closed_set_text_order__closed_set_text__module_type = 1, date_completed__isnull = False, user_attrib__username__regex = userRegex)
 		appendClosedSetTexts(rows, closedSetTexts)
 
 		pseudo_buffer = Echo()
@@ -1891,7 +1904,7 @@ def getUserDataCSV(request,subset):
 		filename = "CI_Training_ClosedSetText_Phoneme_Data_" + str(timezone.now()).split(' ')[0].replace('-','') + ".csv"
 	elif subset == 8:
 		rows.append(['Environmental (Closed Set Text)'])
-		closedSetTexts = User_Closed_Set_Text.objects.filter(closed_set_text_order__closed_set_text__module_type = 2, date_completed__isnull = False)
+		closedSetTexts = User_Closed_Set_Text.objects.filter(closed_set_text_order__closed_set_text__module_type = 2, date_completed__isnull = False, user_attrib__username__regex = userRegex)
 		appendClosedSetTexts(rows, closedSetTexts)
 
 		pseudo_buffer = Echo()
@@ -1900,7 +1913,7 @@ def getUserDataCSV(request,subset):
 		filename = "CI_Training_ClosedSetText_Environmental_Data_" + str(timezone.now()).split(' ')[0].replace('-','') + ".csv"
 	elif subset == 9:
 		rows.append(['Other (Closed Set Text)'])
-		closedSetTexts = User_Closed_Set_Text.objects.filter(closed_set_text_order__closed_set_text__module_type = 0, date_completed__isnull = False)
+		closedSetTexts = User_Closed_Set_Text.objects.filter(closed_set_text_order__closed_set_text__module_type = 0, date_completed__isnull = False, user_attrib__username__regex = userRegex)
 		appendClosedSetTexts(rows, closedSetTexts)
 
 		pseudo_buffer = Echo()

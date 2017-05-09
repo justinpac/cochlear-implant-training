@@ -26,7 +26,7 @@
             </button>
         </div>
       {% endfor %}
-      <div class="col-md-12" style="text-align:center">
+      <div class="col-md-12" style="text-align:center;{% if thisIsAPretest == 1 %} display:none; {% endif %}">
         <button id = "ready" type = "button" class="btn btn-secondary btn-lg"> Ready to be tested on speaker voices </button>
       </div>
       <div id ="next" class="col-md-12" style="display:none;">
@@ -34,7 +34,7 @@
         <button type = "button" class="btn btn-secondary btn-lg">
             <span class="glyphicon glyphicon-circle-arrow-right" aria-hidden="true" style="color:black"></span> Proceed to the next training module
         </button>
-        {% if thisisatest == 0 %}
+        {% if thisIsAPretest == 0 %}
         </br>
         <a href = "{% url 'cochlear:speaker' speaker_module=speaker_module_id repeatFlag=1 order_id=order_id %}" >
           <button type = "button" class="btn btn-secondary btn-lg" >
@@ -60,7 +60,7 @@ var answered_correctly;
 //Switches to false once question is answered in order to disable button functionality
 var questionUnanswered = true;
 // 1 or 0 indicating if this is a test
-var thisisatest = {{thisisatest}};
+var thisIsAPretest = {{thisIsAPretest}};
 
 // Create arrays of ID's on which I want to perform the same operations on
 var choiceIDs = [];
@@ -110,7 +110,7 @@ function checkAnswer(choice_id) {
       iscorrect = data[0].iscorrect;
       // The speech id of the user's answer to this training module
       answered_correctly =  (String(iscorrect) == 'true') ? 1 : 0;
-      if (!(thisisatest)) {
+      if (!(thisIsAPretest)) {
         if(answered_correctly){
           $("#correct_" + choice_id).show("fast","linear").css("display", "inline-block");;
         } else {
@@ -152,9 +152,10 @@ function play_speaker(index) {
     }
   }
 
+  // In pretest only:
   // If all speaker choices have been played and we have not revealed the test sound,
   // slide down button for testing
-  if (playedChoices && audioPlayed[0] == 0) {
+  if (thisIsAPretest && playedChoices && audioPlayed[0] == 0) {
     $("#ready").slideDown("swing");
   }
 }

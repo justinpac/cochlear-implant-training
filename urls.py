@@ -53,5 +53,5 @@ urlpatterns = patterns('cochlear',
     url(r'^createSoundSource/$','views.createSoundSource', name = 'createSoundSource'),
     #CSV downloads
     url(r'^getUserDataCSV/$','views.getUserDataCSV', name = 'getUserDataCSV'),
-    url(r'^getUserDataCSV/(?P<subset>[\d]+)/$','views.getUserDataCSV', name = 'getUserDataCSV'),
+    url(r'^getUserDataCSV/(?P<subset>[\d]+)/(?P<userRegex>.*)/$','views.getUserDataCSV', name = 'getUserDataCSV'),
 )
